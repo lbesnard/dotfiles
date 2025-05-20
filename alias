@@ -669,6 +669,90 @@ function funk_rsync_config() {
     funk_rsync "$server_ip" "$folder_to_bckp" "$dest" "${extra_rsync_options[@]}" "$@"
 }
 
+function funk_rsync_cron() {
+    local out_machine="$1"
+    local config_file="$HOME/.funk_rsync_config.json"
+
+    if [[ -z "$out_machine" ]]; then
+        echo "Usage: funk_rsync_cron <out_machine_name>"
+        return 1
+    fi
+
+    if ! command -v jq &>/dev/null; then
+        echo "Error: 'jq' is not installed."
+        return 1
+    fi
+
+    if [[ ! -f "$config_file" ]]; then
+        echo "Error: Configuration file '$config_file' not found."
+        return 1
+    fi
+
+    jq -c --arg out_machine "$out_machine" \
+        '.tasks[] | select(.name | test("OUT:" + $out_machine + "$"))' "$config_file" | \
+    while read -r task_json; do
+        local name
+        name=$(jq -r '.name' <<< "$task_json")
+        
+        # Skip if disable_auto_rsync is true
+        local disable
+        disable=$(jq -r '.disable_auto_rsync // false' <<< "$task_json")
+        if [[ "$disable" == "true" ]]; then
+            echo "[$name] Skipping (disable_auto_rsync is true)"
+            continue
+        fi
+
+        local server_ip
+        server_ip=$(jq -r '.server' <<< "$task_json")
+        local folder_to_bckp
+        folder_to_bckp=$(jq -r '.source' <<< "$task_json")
+        local dest
+        dest=$(jq -r '.destination' <<< "$task_json")
+        local src="/data/$folder_to_bckp"
+        local target="$dest/$folder_to_bckp"
+
+        mkdir -p "$target"
+
+        local extra_rsync_options=()
+        while IFS= read -r line; do
+            extra_rsync_options+=("$line")
+        done < <(jq -r '.rsync_options[]?' <<< "$task_json")
+
+        local rsync_base=(
+            rsync -auvh -P --delete-after --delete-excluded
+            -e "ssh -i ~/.ssh/id_rsa -p 9000 -l root"
+            "${extra_rsync_options[@]}"
+            --stats --progress
+            --exclude ".*lrprev" --exclude jellyfin/
+            --exclude "uploaded_piwigo" --exclude "piwigo" --exclude='*.tmp'
+            --exclude="*.jpg_original*"
+            --exclude="docker_photoprism"
+            --exclude="photoprism"
+            --exclude="komga/logs/.*"
+            --exclude="komga/lucene/.*"
+            --exclude="komga/artemis/.*"
+            --exclude='.bazarr.log.*'
+            --exclude='lidarr/logs/*'
+            --exclude='radarr/logs/*'
+            --exclude='radarr_fr/logs/.*'
+            --exclude='MediaCover/*'
+            --exclude='Navidrome/cache/.*'
+            --exclude="*.log" --exclude="*.log\..*\.gz"
+            --exclude="*.page" --exclude="*.amq"
+            --exclude=".deleted"
+        )
+
+        echo "[$name] Running dry-run..."
+        if "${rsync_base[@]}" --dry-run "$server_ip:$src/" "$target/"; then
+            echo "[$name] Dry-run succeeded. Starting sync..."
+            "${rsync_base[@]}" --bwlimit 1500 "$server_ip:$src/" "$target/"
+        else
+            echo "[$name] Dry-run failed. Skipping task."
+        fi
+    done
+}
+
+
 
 # BFUNK sync to BEEFUNK
 #alias bfunk_bckp_docker="funk_rsync $BFUNK_IP docker /media/$USER/beefunk_data"
