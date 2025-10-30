@@ -42,6 +42,10 @@ mouse:
   url:
     launcher:
       program: opera
-      args:  --new-tab
+      args: --new-tab
       #program: firefox
       #args:  -P default-release -no-remote --new-tab
+
+key_bindings:
+  - { key: Up, mods: Shift, action: ScrollPageUp }
+  - { key: Down, mods: Shift, action: ScrollPageDown }

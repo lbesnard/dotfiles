@@ -139,11 +139,32 @@ function aws_select_profile_login() {
 
     # Export AWS_PROFILE with the selected profile
     export AWS_PROFILE="$selected_profile"
-    aws sso login --profile $AWS_PROFILE --no-browser
+    aws sso login --profile $AWS_PROFILE --no-browser --use-device-code
 
     # Optionally, you can print the selected profile for confirmation
     echo "Selected AWS profile: $selected_profile"
 }
+
+function aws_okta_forward_port() {
+    if [ -z "$1" ]; then
+        echo "Usage: forward_port <port_number>"
+        return 1
+    fi
+
+    local port=$1
+    /usr/bin/ssh -L ${port}:localhost:${port} nectar_co -N
+}
+
+function ssh-agent-fix() {
+    if [[ -n "$SSH_AUTH_SOCK" ]]; then
+        tmux set-environment -g SSH_AUTH_SOCK "$SSH_AUTH_SOCK" 2>/dev/null
+        export SSH_AUTH_SOCK=$(tmux show-environment -s SSH_AUTH_SOCK 2>/dev/null | sed 's/^SSH_AUTH_SOCK=//')
+        echo "SSH_AUTH_SOCK refreshed for tmux ✅"
+    else
+        echo "No SSH agent found ❌"
+    fi
+}
+
 
 # start jupyter lab
 alias jupyter_lab_start="jupyter notebook --ip=0.0.0.0 --port=8888"
@@ -818,28 +839,108 @@ alias beet="[ -f ~/miniforge3/envs/beets/bin/python ] && conda activate beets;be
 
 
 
+#dask_tunnel() {
+# if [ "$#" -ne 3 ]; then
+# echo "Usage: dask_tunnel <target_host> <ssh_host> <token>"
+# return 1
+# fi
+#
+# target_host="$1"
+# ssh_host="$2"
+# token="$3"
+#
+#
+# full_url="https://localhost:8080/status?token=$token"
+#
+# echo "Connecting to Dask cluster at: $full_url"
+#
+# /usr/bin/ssh -L 8080:"$target_host":443 "$ssh_host" -N &
+#
+# ssh_pid=$!
+#
+# sleep 2
+#
+# echo "Please open the following URL in your browser: $full_url"
+#
+# echo "SSH tunnel established with PID: $ssh_pid"
+#}
+#
 dask_tunnel() {
- if [ "$#" -ne 3 ]; then
- echo "Usage: dask_tunnel <target_host> <ssh_host> <token>"
- return 1
- fi
+  if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+    echo "Usage: dask_tunnel <ssh_host> <dask_url> [local_port]"
+    return 1
+  fi
 
- target_host="$1"
- ssh_host="$2"
- token="$3"
+  ssh_host="$1"
+  dask_url="$2"
 
+  # Optional explicit local port
+  if [ -n "$3" ]; then
+    local_port="$3"
+  else
+    # Find free port using Python (checks both IPv4 and IPv6 when possible)
+    local_port=$(python - <<'PY'
+import socket
+def try_bind(af, addr, p):
+    s = socket.socket(af, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    try:
+        s.bind((addr, p))
+        s.close()
+        return True
+    except OSError:
+        return False
+# Try ports in range; require IPv4 bind to succeed. If IPv6 is unsupported, ignore IPv6.
+for p in range(8080, 8192):
+    v4 = try_bind(socket.AF_INET, '127.0.0.1', p)
+    try:
+        v6 = try_bind(socket.AF_INET6, '::1', p)
+    except Exception:
+        v6 = True
+    if v4 and v6:
+        print(p)
+        break
+else:
+    # fallback: get an ephemeral port from the OS
+    s = socket.socket()
+    s.bind(('', 0))
+    print(s.getsockname()[1])
+    s.close()
+PY
+)
+  fi
 
- full_url="https://localhost:8080/status?token=$token"
+  # Parse target host and token from URL
+  target_host=$(printf '%s' "$dask_url" | sed -E 's#https?://([^/]+)/?.*#\1#')
+  token=$(printf '%s' "$dask_url" | sed -nE 's/.*[?&]token=([^&]+).*/\1/p')
 
- echo "Connecting to Dask cluster at: $full_url"
+  full_url="https://localhost:${local_port}/status?token=${token}"
+  echo "Connecting to Dask cluster at: $full_url"
 
- /usr/bin/ssh -L 8080:"$target_host":443 "$ssh_host" -N &
+  # Use absolute ssh path to avoid tmux aliasing; ExitOnForwardFailure forces failure if port in use.
+  /usr/bin/ssh -f -o ExitOnForwardFailure=yes -L "${local_port}:${target_host}:443" "${ssh_host}" -N
+  rc=$?
+  if [ "$rc" -ne 0 ]; then
+    echo "SSH failed to set up the tunnel (exit code $rc). Port ${local_port} may already be in use."
+    return $rc
+  fi
 
- ssh_pid=$!
+  # short wait and check listener
+  sleep 0.2
+  if command -v ss >/dev/null 2>&1; then
+    if ! ss -ltn | grep -qE "(:|\\.)${local_port}(\s|$)"; then
+      echo "Warning: no local listener found on port ${local_port} -- tunnel may not be active."
+    fi
+  elif command -v lsof >/dev/null 2>&1; then
+    if ! lsof -iTCP:"${local_port}" -sTCP:LISTEN -P -n >/dev/null 2>&1; then
+      echo "Warning: no local listener found on port ${local_port} -- tunnel may not be active."
+    fi
+  fi
 
- sleep 2
-
- echo "Please open the following URL in your browser: $full_url"
-
- echo "SSH tunnel established with PID: $ssh_pid"
+  # Try to find the backgrounded ssh pid
+  ssh_pid=$(pgrep -f "/usr/bin/ssh -L ${local_port}:${target_host}:443 ${ssh_host}" | head -n1)
+  echo "Please open: $full_url"
+  echo "SSH tunnel established (pid: ${ssh_pid:-unknown})"
 }
+
+ 

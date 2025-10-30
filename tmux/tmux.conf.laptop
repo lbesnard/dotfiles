@@ -346,3 +346,10 @@ set -g default-terminal "tmux-256color"
 set -g allow-passthrough on
 set -ga update-environment TERM
 set -ga update-environment TERM_PROGRAM
+
+# for keyboard missing page up and down key
+# Scroll up one page with Shift+Up
+bind -n S-Up copy-mode \; send-keys PageUp
+
+# Scroll down one page with Shift+Down
+bind -n S-Down send-keys PageDown
