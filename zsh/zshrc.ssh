@@ -11,3 +11,9 @@ if [ ! -z ${SSH_TTY} ] && [ ! -z $DATA_SERVICES_DIR ]; then
     alias sudo_project_officer='PATH=$(getconf PATH):/usr/local/bin; sudo -u projectofficer -i'
 fi
 
+# --- Fix SSH agent forwarding inside tmux ---
+if [[ -n "$SSH_AUTH_SOCK" && -n "$TMUX" ]]; then
+    tmux set-environment -g SSH_AUTH_SOCK "$SSH_AUTH_SOCK" 2>/dev/null
+    export SSH_AUTH_SOCK=$(tmux show-environment -s SSH_AUTH_SOCK 2>/dev/null | sed 's/^SSH_AUTH_SOCK=//')
+fi
+
