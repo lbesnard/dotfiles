@@ -2,7 +2,128 @@ version: "3.3"
 networks:
   proxy:
     external: true
+  frontend:
+    ipam:
+      config:
+        - subnet: $DOCKER_SUBNET_1
+
 services:
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    ports:
+      # DNS Ports
+      - "53:53/tcp"
+      - "53:53/udp"
+      # Default HTTP Port
+      - "8002:80/tcp"
+      # Default HTTPs Port. FTL will generate a self-signed certificate
+      - "455:443/tcp"
+      # Uncomment the line below if you are using Pi-hole as your DHCP server
+      - "67:67/udp"
+      # Uncomment the line below if you are using Pi-hole as your NTP server
+      #- "123:123/udp"
+    environment:
+      # Set the appropriate timezone for your location (https://en.wikipedia.org/wiki/List_of_tz_database_time_zones), e.g:
+      TZ: $TZ
+      # Set a password to access the web interface. Not setting one will result in a random password being assigned
+      FTLCONF_webserver_api_password: $PIHOLE_PWD
+      # If using Docker's default `bridge` network setting the dns listening mode should be set to 'all'
+      FTLCONF_dns_listeningMode: 'all'
+
+      # FTLCONF_LOCAL_IPV4: 192.168.1.100
+    # Volumes store your data between container upgrades
+    volumes:
+      # For persisting Pi-hole's databases and common configuration file
+      - $DOCKER_CONFIG_PATH/pihole/etc/pihole/:/etc/pihole/
+      - $DOCKER_CONFIG_PATH/pihole/etc-dnsmasq.d/:/etc/dnsmasq.d/
+      # Uncomment the below if you have custom dnsmasq config files that you want to persist. Not needed for most starting fresh with Pi-hole v6. If you're upgrading from v5 you and have used this directory before, you should keep it enabled for the first v6 container start to allow for a complete migration. It can be removed afterwards. Needs environment variable FTLCONF_misc_etc_dnsmasq_d: 'true'
+      #- './etc-dnsmasq.d:/etc/dnsmasq.d'
+    cap_add:
+      # See https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+      # Required if you are using Pi-hole as your DHCP server, else not needed
+      # - NET_ADMIN
+      # Required if you are using Pi-hole as your NTP client to be able to set the host's system time
+      - SYS_TIME
+      # Optional, if Pi-hole should get some more processing time
+      - SYS_NICE
+    networks:
+      frontend:
+        ipv4_address: $PIHOLE_DOCKER_SUB_IP_DNS
+    restart: always
+#
+  wireguard2:
+    image: linuxserver/wireguard
+    container_name: wireguard2
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=$PUID_USER
+      - PGID=$PGID_USER
+      - TZ=$TZ
+      - SERVERURL=${DUCKDNS_DOMAIN}.duckdns.org
+      - SERVERPORT=51821 #optional
+      - PEERS=$WG2_PEERS #optional
+      - PEERDNS=$PIHOLE_DOCKER_SUB_IP_DNS #using pihole docker, default port is 53, which is dsn by default # docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' pihole
+      - INTERNAL_SUBNET=10.13.13.0 #optional
+    volumes:
+      - $DOCKER_CONFIG_PATH/wireguard2/config:/config
+      - /lib/modules:/lib/modules
+      - /usr/src/:/usr/src
+    depends_on:
+      - pihole
+    ports:
+      - 51821:51820/udp
+    networks:
+      - frontend
+    #sysctls:
+      #- net.ipv4.conf.all.src_valid_mark=1
+    restart: always
+
+
+  homer:
+    image: b4bz/homer:latest
+    container_name: homer
+    environment:
+      - PUID=$PUID_USER
+      - PGID=$PGID_USER
+      - TZ=${TZ}
+      - WATCHTOWER_CLEANUP=true
+    volumes:
+      - $DOCKER_CONFIG_PATH/homer/config.yml:/www/config.yml
+      - $DOCKER_CONFIG_PATH/homer/local/assets/:/www/assets
+    ports:
+      - 80:8080
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      #traefik.enable: true
+      #traefik.http.routers.home.rule: Host(`home.brownfunk.lan`)
+      #traefik.http.routers.home.entrypoints: web
+      #traefik.http.services.home.loadbalancer.server.port: 80
+    depends_on:
+      - pihole
+#
+  firefox:
+    image: lscr.io/linuxserver/firefox:latest
+    container_name: firefox
+    security_opt:
+      - seccomp:unconfined #optional
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=$TZ
+      - FIREFOX_CLI=https://www.google.com
+    volumes:
+      - $DOCKER_CONFIG_PATH/firefox:/config
+    ports:
+      - 3008:3000
+      - 3009:3001
+    shm_size: "1gb"
+    restart: unless-stopped
+
+
 ###################
   mariadb:
     image:  lscr.io/linuxserver/mariadb
@@ -116,6 +237,48 @@ services:
       - $DOCKER_CONFIG_PATH/audiobookshelf_metadata>:/metadata
     labels:
       com.centurylinklabs.watchtower.enable: true
+  calibre:
+    image: linuxserver/calibre
+    container_name: calibre
+    environment:
+      - PUID=$PUID_USER
+      - PGID=$PGID_USER
+      - TZ=${TZ}
+      - WATCHTOWER_CLEANUP=true
+      #- GUAC_USER=admin
+      #- GUAC_PASS=admin
+    volumes:
+      - $EBOOKS_PATH:/config
+      # - $SHARE_PATH:/share
+      # - $TORRENT_PATH:/torrent
+      - $DOCKER_CONFIG_PATH/firefox/Downloads:/firefox
+    ports:
+      - 7080:8080
+      - 8081:8081
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+######################################
+  calibre-web:
+    image: linuxserver/calibre-web
+    container_name: calibre-web
+    environment:
+      - PUID=$PUID_USER
+      - PGID=$PGID_USER
+      - TZ=${TZ}
+      - DOCKER_MODS=linuxserver/calibre-web:calibre
+      - WATCHTOWER_CLEANUP=true
+    volumes:
+      - $DOCKER_CONFIG_PATH/calibre-web:/config
+      - $EBOOKS_PATH:/books:ro
+    ports:
+      - 8083:8083
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+    depends_on:
+      - calibre
+#
 # Audiobooks
 #  gonic:
     #image: sentriz/gonic:latest
@@ -413,39 +576,44 @@ services:
       - $PICTURES_PATH:/share5
       - $PICTURES_EXPORT_PATH:/share4
       - $SELF_IMPROVEMENT_PATH:/share3:ro
+      - $MOVIES_PATH:/share1:ro
+      - $TV_SHOWS_PATH:/share2:ro
     command: |
       -s "Pictures;/share5;yes;no;no;$USER;$USER;$USER;pictures ro except user"
       -s "Pictures_export;/share4;yes;no;no;$USER;$USER;$USER;pictures_export ro except user"
       -s "Self Improvement;/share3;yes;no;no;$USER;$USER;$USER;Self Improvement share ro"
+      -s "Movies;/share1;yes;yes;yes;all;none;$USER;movies share ro"
+      -s "Shows;/share2;yes;yes;yes;all;none;$USER;shows share ro"
       -u "$USER;$SAMBA_PASSWORD"
       -u "guest;guest"
       -g "map to guest = Bad User"
       -g "guest account = nobody"
 
- # filebrowser:
-    #image: filebrowser/filebrowser
-    #container_name: filebrowser
-    #environment:
-      #- PUID=$PUID_USER
-      #- PGID=$PGID_USER
-      #- TZ=$TZ
-      #- FB_NOAUTH=False
-      #- FB_BASEURL=/filebrowser
-      #- FB_DATABASE=/config/filebrowser.db
-      #- WATCHTOWER_CLEANUP=true
-    #ports:
-      #- 9295:80
-    #volumes:
-      #- $DOCKER_CONFIG_PATH/filebrowser/database:/database
-      #- $DOCKER_CONFIG_PATH/filebrowser/config:/config
-      #- $EBOOKS_AUDIOBOOKS_PATH:/srv/ebooks_audiobooks:ro
-      #- $MUSIC_PATH:/srv/music:ro
-      #- $MOVIES_PATH:/srv/movies:ro
-      #- $SELF_IMPROVEMENT_PATH:/srv/self_improvement:ro
-      #- $GAMES_PATH:/srv/games:ro
-    #restart: unless-stopped
-    #labels:
- #     com.centurylinklabs.watchtower.enable: true
+  filebrowser:
+    image: filebrowser/filebrowser
+    container_name: filebrowser
+    environment:
+      - PUID=$PUID_USER
+      - PGID=$PGID_USER
+      - TZ=$TZ
+      - FB_NOAUTH=False
+      - FB_BASEURL=/filebrowser
+      - FB_DATABASE=/config/filebrowser.db
+      - WATCHTOWER_CLEANUP=true
+    ports:
+      - 9295:80
+    volumes:
+      - $DOCKER_CONFIG_PATH/filebrowser/database:/database
+      - $DOCKER_CONFIG_PATH/filebrowser/config:/config
+      - $EBOOKS_AUDIOBOOKS_PATH:/srv/ebooks_audiobooks:ro
+      - $MUSIC_PATH:/srv/music:ro
+      - $MOVIES_PATH:/srv/movies:ro
+      - $SELF_IMPROVEMENT_PATH:/srv/self_improvement:ro
+      - $GAMES_PATH:/srv/games:ro
+      - $SHARE_PATH:/srv/share
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: true
 #######################
   memos:
     image: neosmemo/memos:latest
@@ -455,6 +623,18 @@ services:
     ports:
       - 5230:5230
 ###############
+  #
+  peanut:
+    image: brandawg93/peanut:latest
+    container_name: PeaNUT
+    restart: unless-stopped
+    volumes:
+      - $DOCKER_CONFIG_PATH/peanut:/config
+    ports:
+      - 8686:8080
+    environment:
+      - WEB_PORT=8080
+
   ownfoil:
     container_name: ownfoil
     image: a1ex4/ownfoil
@@ -468,24 +648,43 @@ services:
       # Uncomment to setup basic auth
       #- ./nginx:/etc/nginx
     environment:
-      - USERNAME=$OWNFOIL_USERNAME
-      - PASSWORD=$OWNFOIL_PASSWORD
+      - USER_ADMIN_NAME=$OWNFOIL_USERNAME
+      - USER_ADMIN_NAME_PASSWORD=$OWNFOIL_PASSWORD
       - SAVE_ENABLED=true
     restart: unless-stopped
     ports:
       - "8465:8465"
-  #ownfoil2:
-    #container_name: ownfoil2
-    #image: a1ex4/ownfoil:v2
-    #environment:
-      ## For write permission in config directory
-      #- PUID=1000
-      #- PGID=1000
-    #volumes:
-      #- $SWITCH_PATH:/games
-      #- $DOCKER_CONFIG_PATH/ownfoil2:/app/config
-    #ports:
-  #    - "8465:8465"
+  ownfoil_v1:
+    container_name: ownfoil_v1
+    image: a1ex4/ownfoil:v1
+    environment:
+      # For write permission in config directory
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - $SWITCH_PATH:/games
+      - $DOCKER_CONFIG_PATH/ownfoil_v1:/app/config
+    ports:
+      - "8000:80"
+
+  syncthing:
+    image: lscr.io/linuxserver/syncthing:latest
+    container_name: syncthing
+    hostname: syncthing #optional
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - $DOCKER_CONFIG_PATH/syncthing/config:/config
+      - $SYNCTHING_DATA_PATH:/data
+      # - /path/to/data2:/data2
+    ports:
+      - 8384:8384
+      - 22000:22000/tcp
+      - 22000:22000/udp
+      - 21027:21027/udp
+    restart: unless-stopped
 #######################
 #### jupyterlab
 #  jupyter:
@@ -555,6 +754,9 @@ services:
       - $DOCKER_CONFIG_PATH/scrutiny/influxdb:/opt/scrutiny/influxdb
     devices:
       - "/dev/sda"
+      - "/dev/sdb"
+      - "/dev/sdc"
+      - "/dev/sdd"
     environment:
       - COLLECTOR_CRON_SCHEDULE="*/5 * * * *"
       - PUID=$PUID_USER
@@ -564,6 +766,21 @@ services:
     labels:
       com.centurylinklabs.watchtower.enable: true
 
+  duckdns:
+    image: linuxserver/duckdns
+    container_name: duckdns
+    dns: 1.1.1.1
+    environment:
+      - PUID=$PUID_USER #optional
+      - PGID=$PGID_USER #optional
+      - TZ=$TZ
+      - SUBDOMAINS=$DUCKDNS_DOMAIN
+      - TOKEN=$DUCKDNS_TOKEN
+      - LOG_FILE=false #optional
+    volumes:
+      - $DOCKER_CONFIG_PATH/duckdns:/config #optional
+    restart: always
+#
 
 #### netdata
   netdata:
