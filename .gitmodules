@@ -31,3 +31,6 @@
 [submodule "bfunk/docker-compose/explorer"]
 	path = bfunk/docker-compose/explorer
 	url = git@github.com:soyuka/explorer.git
+[submodule "config/beets/whatlastgenre_org"]
+	path = config/beets/whatlastgenre_org
+	url = https://github.com/YetAnotherNerd/whatlastgenre.git

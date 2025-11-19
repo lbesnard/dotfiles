@@ -20,7 +20,7 @@ convert:
         command: ffmpeg -i $source -y -vn -aq 2 $dest
         extension: flac
 
-directory: /media/lbesnard/bfunk_10tb_3/music/beet_library/
+directory: /media/lbesnard/bfunk_12tb_1/music/beet_library/
 
 duplicates:
     album: yes
@@ -58,6 +58,7 @@ item_fields:
     genre_no_space: genre.lower().replace(' ','_')
 
 lastgenre:
+    count: 1
     auto: yes
     fallback: 'unknown'
     source: artist
@@ -66,14 +67,13 @@ lastgenre:
     #prefer_specific: true
 
 wlg:
-    auto: no
+    auto: yes
     force: no
     count: 1
     separator: ', '
     whitelist: ~/.config/beets/beets_genre
 
-#library: /media/lbesnard/bfunk_10tb_3/music/musiclibrary2.blb
-library: /media/lbesnard/bfunk_10tb_3/music/beets_library.blb
+library: /media/lbesnard/bfunk_12tb_1/music/beets_library.blb
 
 replaygain:
     backend: ffmpeg
@@ -116,18 +116,24 @@ paths:
 
 per_disc_numbering: true
 
+musicbrainz:
+    data_source_mismatch_penalty: 0.3  # Lower penalty = preferred
+discogs:
+    data_source_mismatch_penalty: 0.8  # Higher penalty = less preferred
+
 plugins:
-    - acousticbrainz
-    - artistcountry
+    # - acousticbrainz
+    # - artistcountry
     - badfiles
     - bareasc
+    - chroma
     - cmus
     - convert
     - discogs
     - duplicates
     - edit
-    - fetchartist
     - fetchart
+    - fetchartist
     - fromfilename
     - ftintitle
     - fuzzy
@@ -137,6 +143,7 @@ plugins:
     - inline
     - lastgenre
     - mbsync
+    - musicbrainz
     - parentwork
     - play
     - random
@@ -145,19 +152,20 @@ plugins:
     - scrub
     - smartplaylist
     - web
-    - wlg
+    # - wlg
+    - xtractor
 
 pluginpath:
     - ~/.config/beets/plugins/
     - ~/.config/beets/plugins/bandcamp/beetsplug
     - ~/.config/beets/plugins/airsonic/
     - ~/.config/beets/plugins/fetchartist/beetsplug/
-    - ~/.config/beets/whatlastgenre/plugin/beets/beetsplug
+    - ~/.config/beets/whatlastgenre_org/plugin/beets/beetsplug/
 
 # recreated at each run monthly import playlists
 smartplaylist:
-    relative_to: /media/lbesnard/bfunk_10tb_3/music/beet_library# as setup on docker container
-    playlist_dir: /media/lbesnard/bfunk_10tb_3/music/playlists
+    relative_to: /media/lbesnard/bfunk_12tb_1/music/beet_library# as setup on docker container
+    playlist_dir: /media/lbesnard/bfunk_12tb_1/music/playlists
     playlists:
         - name: 'New_%time{$added,%Y-%m}_$genre_no_space.m3u'
           query: 'added:2018-10..' # first month of using beet. monthly playlists will be created afterwards
@@ -228,7 +236,7 @@ ui:
 # Auto Tagger ----------------------------------------------------------------
 
 match:
-    strong_rec_thresh: 0.1      # match 90% or better for auto import
+    strong_rec_thresh: 0.17      # match 90% or better for auto import
     medium_rec_thresh: 0.25
     rec_gap_thresh: 0.25
     max_rec:
@@ -256,7 +264,7 @@ match:
         track_id: 5.0
     preferred:
         countries: []
-        media: []
+        media: ['CD', 'Digital Media', 'File', 'Vinyl']
         original_year: no
     ignored: []
     track_length_grace: 10
@@ -264,3 +272,30 @@ match:
 
 fetchartist:
     cover_name: "folder"
+
+xtractor:
+  auto: no
+  dry-run: no
+  write: yes
+  threads: 1
+  force: no
+  quiet: no
+  keep_output: yes
+  keep_profiles: no
+  output_path: /media/lbesnard/bfunk_12tb_1/music/xtractor/xtraction_data
+  essentia_extractor: /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/streaming_extractor_music
+  extractor_profile:
+    highlevel:
+      svm_models:
+        - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/danceability.history
+        - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/gender.history
+        - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/genre_rosamerica.history
+        - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/mood_acoustic.history
+        - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/mood_aggressive.history
+        - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/mood_electronic.history
+        - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/mood_happy.history
+        - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/mood_sad.history
+        - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/mood_party.history
+        - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/mood_relaxed.history
+        - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/voice_instrumental.history
+        - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/moods_mirex.history
