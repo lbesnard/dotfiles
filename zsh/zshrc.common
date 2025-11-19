@@ -1,78 +1,174 @@
-# check if zinit is installed
+# ==============================================
+# ZSH Fast Startup Optimized .zshrc
+# ==============================================
+
+# -----------------------------
+# Zinit bootstrap
+# -----------------------------
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 [ ! -d $ZINIT_HOME ] && mkdir -p "$(dirname $ZINIT_HOME)"
 [ ! -d $ZINIT_HOME/.git ] && git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
 source "${ZINIT_HOME}/zinit.zsh"
 
-# Skip the not really helping Ubuntu global compinit
+# Skip Ubuntu global compinit to speed up
 skip_global_compinit=1
-
 autoload -Uz _zinit
 (( ${+_comps} )) && _comps[zinit]=_zinit
 
-# Unified duplicate code added by refactor
-_cmpl_inputlog() {
-    reply=($(ls -d $ERROR_DIR/* | sed 's@.*/@@'))
-    reply=($(echo $reply | tr -s " " "\012"))
-}
-compctl -K _cmpl_inputlog input_logf
-compctl -K _cmpl_inputlog input_log
-
-export PATH="$HOMEBREW_PREFIX/bin:$PATH"
+# -----------------------------
+# Basic Environment
+# -----------------------------
 export SHELL="$HOMEBREW_PREFIX/bin/zsh"
+export PATH="$HOME/.local/bin:$PATH"
+export LANGUAGE="en_AU:en"
+export LANG="en_IE.UTF-8"
 
-# TMUX conf
-if [ ! -n "${SSH_TTY+1}" ]; then
+# Homebrew prefix detection
+if [[ -d $HOME/.linuxbrew ]]; then
+    export HOMEBREW_PREFIX=$HOME/.linuxbrew
+elif [[ -d /home/linuxbrew ]]; then
+    export HOMEBREW_PREFIX=/home/linuxbrew/.linuxbrew
+fi
+test -d $HOMEBREW_PREFIX && PATH="$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin:$PATH"
+
+# History
+export HISTSIZE=32768
+export HISTFILESIZE=$HISTSIZE
+export HISTFILE=$HOME/.zsh_history
+setopt append_history hist_expire_dups_first hist_ignore_all_dups hist_reduce_blanks hist_save_no_dups hist_lex_words hist_fcntl_lock
+
+# -----------------------------
+# pyenv
+# -----------------------------
+export PYENV_ROOT="$HOME/.pyenv"
+PATH="$PYENV_ROOT/bin:$PATH"
+# eval "$(pyenv init --path)"
+
+# -----------------------------
+# Prompt & starship
+# -----------------------------
+# Starship deferred init for faster startup
+zinit ice as"command" from"gh-r" atclone"./starship init zsh > init.zsh; ./starship completions zsh > _starship" atpull"%atclone" src"init.zsh"
+zinit light starship/starship
+# eval "$(starship init zsh)"
+
+# -----------------------------
+# Colors & terminal settings
+# -----------------------------
+export CLICOLOR=1
+export BLOCK_SIZE=human-readable # https://www.gnu.org/software/coreutils/manual/html_node/Block-size.html
+
+zinit ice wait"2" lucid
+zinit light "chrissicool/zsh-256color"
+
+# GRC colorisation
+[[ -s "$HOMEBREW_PREFIX/etc/grc.zsh" ]] && source $HOMEBREW_PREFIX/etc/grc.zsh
+
+# -----------------------------
+# TMUX autostart & pane rename
+# -----------------------------
+if [ -z "${SSH_TTY+1}" ]; then
     ZSH_TMUX_AUTOSTART=true
     ZSH_TMUX_AUTOCONNECT=true
     ZSH_TMUX_FIXTERM=true
     ZSH_TMUX_AUTOQUIT=true
 fi
 
-# fix perl language issues
-export LANGUAGE="en_AU:en"
-export LANG="en_IE.UTF-8"
+rename_tmux_pane() {
+    local pane=$(tmux display-message -p '#{pane_id}')
+    local cmd=${1:-$(fc -ln -1 | awk '{print $1}')}
+    tmux select-pane -T "$cmd" -t "$pane"
+}
+
+preexec() {
+    rename_tmux_pane "$1"
+}
+
+# -----------------------------
+# Zsh options
+# -----------------------------
+setopt prompt_subst
+setopt nomatch
+
+# inherit aliases completion
+# https://unix.stackexchange.com/questions/177902/zsh-completion-on-the-second-command-or-after-an-alias/178054#178054
+unsetopt complete_aliases
 
 
-# check where is linuxbrew installed
-if [[ -d $HOME/.linuxbrew ]]; then
-    export HOMEBREW_PREFIX=$HOME/.linuxbrew
-elif [[ -d /home/linuxbrew ]]; then
-    export HOMEBREW_PREFIX=/home/linuxbrew/.linuxbrew
+# -----------------------------
+# zsh functions autoload (lazy)
+# -----------------------------
+fpath=(~/.zsh_functions "${fpath[@]}")
+autoload -Uz history-search-end cani vmc vmi lps kp fp cani bip bup bcp tmuxify utils ll lx
+typeset -U PATH fpath
+
+files=($HOME/.zsh_functions/*.zsh)
+if (( ${#files[@]} > 0 )); then
+  for file in "${files[@]}"; do
+    zinit ice wait"1" as"program"
+    zinit snippet "$file"
+  done
 fi
 
-# Configure ssh-agent plugin
-zstyle :omz:plugins:ssh-agent agent-forwarding on # Enabled agent forwarding
-zstyle :omz:plugins:ssh-agent identities id_rsa # Only auto load rsa keys
+# -----------------------------
+# SSH-agent plugin
+# -----------------------------
+zstyle :omz:plugins:ssh-agent agent-forwarding on
+zstyle :omz:plugins:ssh-agent identities id_rsa
 
-# if you want red dots to be displayed while waiting for completion
-COMPLETION_WAITING_DOTS="true"
+# -----------------------------
+# Zoxide / autojump / navigation
+# -----------------------------
+# Lazy load zoxide
+zinit ice as'null' from"gh-r" sbin
+zinit light ajeetdsouza/zoxide
+zinit has'zoxide' wait lucid for z-shell/zsh-zoxide
 
-# change the size of history files
-export HISTSIZE=32768;
-export HISTFILESIZE=$HISTSIZE;
+# Autojump lazy
+zinit lucid light-mode wait'[[ -n ${ZLAST_COMMANDS[(r)j*]} ]]' for OMZP::autojump
 
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH:$HOME/.local/bin"
-eval "$(pyenv init --path)"
+# Interactive CD
+zinit lucid light-mode wait"2" for OMZP::zsh-interactive-cd
 
-setopt prompt_subst # Make sure prompt is able to be generated properly.
+# -----------------------------
+# Plugins: syntax highlighting, autosuggestions, completions
+# -----------------------------
+zinit wait lucid for atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" \
+    atload"zicompinit; zicdreplay" blockf \
+    light-mode zsh-users/zsh-completions \
+    compile'{src/*.zsh,src/strategies/*}' atload"!_zsh_autosuggest_start" \
+    light-mode zsh-users/zsh-autosuggestions
 
-# starship theme
-zinit ice as"command" from"gh-r" \
-          atclone"./starship init zsh > init.zsh; ./starship completions zsh > _starship" \
-          atpull"%atclone" src"init.zsh"
-# zinit light starship/starship
+# -----------------------------
+# OMZP core plugins (lazy)
+# -----------------------------
+zi lucid light-mode wait'3' for \
+  OMZP::"brew" OMZP::"command-not-found" OMZP::"common-aliases" \
+  OMZP::"docker-compose" OMZP::"extract" OMZP::"nmap" \
+  OMZP::"pip" OMZP::"rsync" OMZP::"sudo" OMZP::"systemd" \
+  OMZP::"taskwarrior" OMZP::"vagrant" OMZP::"virtualenv" OMZP::"web-search" \
+  "zsh-users/zsh-history-substring-search" \
+  "rummik/zsh-tailf" \
+  OMZP::"cp" # cp with rsync -> call cpv
+  # "zsh-users/zsh-syntax-highlighting" \
 
-eval "$(starship init zsh)"
 
-zinit ice wait"2" lucid
-zinit light "chrissicool/zsh-256color"
+# TMUX plugin for non-SSH
+if [ -z "${SSH_TTY+1}" ]; then
+    zinit snippet OMZP::"tmux"
+fi
 
-zi lucid light-mode wait'[[ -n ${ZLAST_COMMANDS[(r)g*]} ]]' for \
+# -----------------------------
+# Git / Forgit / AWS / Conda / Translate
+# -----------------------------
+zi lucid light-mode wait'3' for \
   "OMZ::plugins/git-extras/git-extras.plugin.zsh" \
   "wfxr/forgit" \
-  "fdw/ranger_zoxide"
+  "fdw/ranger-zoxide" \
+  "eastokes/aws-plugin-zsh" \
+  "esc/conda-zsh-completion" \
+  "soimort/translate-shell"
+
 
 # conflict with https://github.com/garabik/grc/ so removing default forgit aliases
 export FORGIT_NO_ALIASES=True
@@ -80,97 +176,16 @@ zi lucid light-mode wait'[[ $PWD = */github || $PWD = */github_repo/* ]]' for \
   "wfxr/forgit"
 source ~/.alias_forgit
 
-# install zoxide, autojump replacement
-zi ice as'null' from"gh-r" sbin
-zi light ajeetdsouza/zoxide
-
-zi has'zoxide' wait lucid for \
-  z-shell/zsh-zoxide
-
-zi lucid light-mode wait'[[ -n ${ZLAST_COMMANDS[(r)j*]} ]]' for \
-    "OMZP::autojump"
-    #
-
-zi lucid light-mode wait"2" for \
-    "OMZP::zsh-interactive-cd" \
-    "zsh-users/zsh-history-substring-search" \
-    "zsh-users/zsh-syntax-highlighting" \
-    "rummik/zsh-tailf" \
-    "OMZP::cp" # cp with rsync -> call cpv
-    #"z-shell/zsh-navigation-tools" \
-    #"OMZP::zsh-navigation-tools" \
-
-
-zi lucid light-mode wait'3' for \
-  "eastokes/aws-plugin-zsh" \
-  "esc/conda-zsh-completion" \
-  "soimort/translate-shell" \
-
-zi wait lucid for \
-  atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" \
-    light-mode zdharma-continuum/fast-syntax-highlighting \
-  atload"zicompinit; zicdreplay" blockf \
-    light-mode zsh-users/zsh-completions \
-  compile'{src/*.zsh,src/strategies/*}' atload"!_zsh_autosuggest_start" \
-    light-mode zsh-users/zsh-autosuggestions
-
-zi lucid light-mode wait'3' for \
-    OMZP::"brew" \
-    OMZP::"command-not-found" \
-    OMZP::"common-aliases" \
-    OMZP::"docker-compose" \
-    OMZP::"extract" \
-    OMZP::"nmap" \
-    OMZP::"pip" \
-    OMZP::"rsync" \
-    OMZP::"sudo" \
-    OMZP::"systemd" \
-    OMZP::"taskwarrior" \
-    OMZP::"vagrant" \
-    OMZP::"virtualenv" \
-    OMZP::"web-search" 
-    #OMZP::"docker" \
-
-#
-if [ ! -n "${SSH_TTY+1}" ]; then
-    zinit snippet OMZP::"tmux" #,   from:oh-my-zsh
-fi
-
-# overwrite aliases if needed
+# -----------------------------
+# Aliases - overwrite here
+# -----------------------------
 [ -f $HOME/.alias ] && source $HOME/.alias
 
-#ZSH history
-setopt append_history
-setopt hist_expire_dups_first
-setopt hist_fcntl_lock
-setopt hist_ignore_all_dups
-setopt hist_lex_words
-setopt hist_reduce_blanks
-setopt hist_save_no_dups
-#setopt share_history
 
-export CLICOLOR=1
-export BLOCK_SIZE=human-readable # https://www.gnu.org/software/coreutils/manual/html_node/Block-size.html
-export HISTSIZE=11000
-export SAVEHIST=10000
-export HISTFILE=$HOME/.zsh_history
+# -----------------------------
+# FZF (lazy preview, faster)
+# -----------------------------
 
-# TLDR
-export TLDR_HEADER='magenta bold underline'
-export TLDR_QUOTE='italic'
-export TLDR_DESCRIPTION='green'
-export TLDR_CODE='red'
-export TLDR_PARAM='blue'
-
-# binkey for HOME END
-bindkey "\033[1~" beginning-of-line
-bindkey "\033[4~" end-of-line
-bindkey "^[[3~" delete-char
-
-# GRC colorisation
-[[ -s "$HOMEBREW_PREFIX/etc/grc.zsh" ]] && source $HOMEBREW_PREFIX/etc/grc.zsh
-
-#FZF
 if command -v fd > /dev/null; then
     export FZF_DEFAULT_COMMAND="fd" # CTRL-T's command
     # for more info see fzf/shell/completion.zsh
@@ -216,66 +231,66 @@ export FORGIT_FZF_DEFAULT_OPTS="
 --height '80%'
 "
 
+
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND --type f -LHI" # ALT-C's command
 export FZF_ALT_C_COMMAND="$FZF_DEFAULT_COMMAND --type d"
 export FZF_CTRL_T_OPTS="--select-1 --exit-0"
-# open vim with fzf; type ctrl e
+#
+# -----------------------------
+# TLDR formatting
+# -----------------------------
+export TLDR_HEADER='magenta bold underline'
+export TLDR_QUOTE='italic'
+export TLDR_DESCRIPTION='green'
+export TLDR_CODE='red'
+export TLDR_PARAM='blue'
+
+# -----------------------------
+# Keybindings
+# -----------------------------
+bindkey "\033[1~" beginning-of-line
+bindkey "\033[4~" end-of-line
+bindkey "^[[3~" delete-char
+
+# FZF shortcuts
 bindkey -s '^e' 'vim $(fd -LIH --type f | fzf -m --preview "([[ -f {} ]] && (bat --style=numbers --color=always {} || cat {}))")\n'
-#bindkey -s '^e' 'vim $(fd --type f | fzf -m --preview "head -200 {}")\n'
-#bindkey -s '^e' 'fd --type f | vim $(fzf  --preview "([[ -f {} ]] && (bat --style=numbers --color=always {} || cat {})) || ([[ -d {} ]] && (tree -C {} | less)) || echo {} 2> /dev/null | head -200")\n'
-bindkey -s '^n' 'vim $(fd -e nc | fzf -m --preview "([[ -f {} ]] && ncdump -h {})"\n'
-bindkey -s '^n' 'ncdump -t $(fd -HI -e nc | fzf -m --preview "([[ -f {} ]] && ncdump -h {})") | less\n ' # ctrl n -> ncdump 
+bindkey -s '^n' 'ncdump -t $(fd -HI -e nc | fzf -m --preview "([[ -f {} ]] && ncdump -h {})") | less\n'
 
-#####################
-fpath=(~/.zsh_alias "${fpath[@]}")
-autoload -Uz history-search-end cani vmc vmi lps kp fp cani bip bup bcp tmuxify utils ll lx
-typeset -U PATH fpath
+# -----------------------------
+# Source completions
+# -----------------------------
+autoload -Uz compinit
+compinit
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 
-test -d $HOMEBREW_PREFIX && PATH="$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin:$PATH"
-test -r ~/.bash_profile && echo "export PATH='$(brew --prefix)/bin:$(brew --prefix)/sbin'":'"$PATH"' >>~/.bash_profile
-echo "export PATH='$(brew --prefix)/bin:$(brew --prefix)/sbin'":'"$PATH"' >>~/.profile
-
+# -----------------------------
+# Optional utilities
+# -----------------------------
 [ -f ~/.cheat/fzf.bash ] && source ~/.cheat/fzf.bash
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-[ -f ~/bin/tldr ] && compctl -k "($( tldr 2>/dev/null --list))" tldr ## tldr completion
+[ -f ~/bin/tldr ] && compctl -k "($(tldr 2>/dev/null --list))" tldr
+
+# rbenv support
+command -v rbenv >/dev/null && eval "$(rbenv init - zsh)"
+
+# yazi function
+y() {
+    local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+    yazi "$@" --cwd-file="$tmp"
+    if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+        builtin cd -- "$cwd"
+    fi
+    rm -f -- "$tmp"
+}
+
 
 if command -v gh > /dev/null; then
     gh completion -s zsh > ~/.zsh_alias/_gh && chmod +x ~/.zsh_alias/_gh
 fi
 
-
-# inherit aliases completion
-# https://unix.stackexchange.com/questions/177902/zsh-completion-on-the-second-command-or-after-an-alias/178054#178054
-unsetopt complete_aliases
-
-# rbenv
-if command -v rbenv > /dev/null; then
-    eval "$(rbenv init - zsh)"
-fi
-
-
-# Use Zsh's built-in globbing to check for .zsh files
-# Enable nomatch to prevent errors when no matches are found
-setopt nomatch
-
-# Use Zsh's built-in globbing to check for .zsh files
-files=($HOME/.zsh_functions/*.zsh)
-
-# Check if files array is non-empty
-if (( ${#files[@]} > 0 )); then
-  # Loop through each .zsh file and source it with zinit
-  for file in "$files[@]"; do
-    zinit snippet "$file"
-  done
-else
-  echo "No .zsh files found in $HOME/.zsh_functions/"
-fi
-#
-# Ensure completions are available
-autoload -Uz compinit
-compinit
-# to check setup
-#type _fzf_complete_docker
+# ------------------------
+# ssh select-pane 
+# ------------------------
 
 # FOR ssh autocomplete
 # Highlight the current autocomplete option
@@ -286,33 +301,7 @@ zstyle ':completion:*:(scp|rsync):*' tag-order ' hosts:-ipaddr:ip\ address hosts
 zstyle ':completion:*:(ssh|scp|rsync):*:hosts-host' ignored-patterns '*(.|:)*' loopback ip6-loopback localhost ip6-localhost broadcasthost
 zstyle ':completion:*:(ssh|scp|rsync):*:hosts-ipaddr' ignored-patterns '^(<->.<->.<->.<->|(|::)([[:xdigit:].]##:(#c,2))##(|%*))' '127.0.0.<->' '255.255.255.255' '::1' 'fe80::*'
 
-
-# Automatically rename tmux pane based on the running command
-rename_tmux_pane() {
-    # Get the current tmux pane ID
-    local pane=$(tmux display-message -p '#{pane_id}')
-    # Get the last executed command
-    local cmd=${1:-$(fc -ln -1 | awk '{print $1}')}
-    # Set the pane name
-    tmux select-pane -T "$cmd" -t "$pane"
-}
-
-# Hook into the zsh preexec function to rename the pane
-preexec() {
-    rename_tmux_pane "$1"
-}
-
-
-# yazi
-function y() {
-	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
-	yazi "$@" --cwd-file="$tmp"
-	if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
-		builtin cd -- "$cwd"
-	fi
-	rm -f -- "$tmp"
-}
-# https://github.com/zdharma-continuum/zinit/discussions/312
+# zoxide init (lazy)
 eval "$(zoxide init zsh --cmd j)"
 unalias jq 2>/dev/null
 
