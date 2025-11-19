@@ -319,7 +319,21 @@ else
 fi
 
 # vpn
-alias s='var=$(grep -e "^Host " ~/.ssh/config | sed "s#Host ##" | fzf) && ssh $var' # ssh with fzf to list known hosts from ssh/config
+#
+fzf_ssh() {
+    local host
+    host=$(awk '/^Host / {for(i=2;i<=NF;i++) if ($i !~ /\*|^$/) print $i}' ~/.ssh/config | sort -u \
+        | fzf --height 40% --reverse --border --prompt='SSH> ' \
+            --preview 'awk "/^Host {}$/,/^Host /{if (!/^Host /) print}" ~/.ssh/config | head -20' \
+            --preview-window=down:5:hidden)
+
+    if [[ -n $host ]]; then
+        echo "Connecting to $host ..."
+        ssh "$host"
+    fi
+}
+alias s=fzf_ssh
+#alias s='var=$(grep -e "^Host " ~/.ssh/config | sed "s#Host ##" | fzf) && ssh $var' # ssh with fzf to list known hosts from ssh/config
 [ -f ~/.utas_vpnc.conf ] && alias vpn_utas_connect='sudo vpnc ~/.utas_vpnc.conf --local-port 0' && alias vpn_utas_disconnect='sudo vpnc-disconnect'
 
 alias vpn_bfunk_start='sudo openvpn --cd $DOTFILES_PRIVATE_PATH/openvpn/ --writepid /run/openvpn/home.pid --config lbesnard.ovpn'
