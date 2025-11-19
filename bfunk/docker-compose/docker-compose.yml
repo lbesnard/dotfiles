@@ -5,7 +5,7 @@ networks:
         - subnet: $DOCKER_SUBNET_1
 services:
   pihole:
-    container_name: pihole
+    #container_name: pihole
     image: pihole/pihole:latest
     hostname: brownfunk
     ports:
@@ -27,19 +27,25 @@ services:
       frontend:
         ipv4_address: $PIHOLE_DOCKER_SUB_IP_DNS
     restart: always
-##################
+  ##################
   crowdsec:
     image: docker.io/crowdsecurity/crowdsec:latest
-    container_name: crowdsec
+    #container_name: crowdsec
     environment:
-      - GID=$PGID_USER
+      - GID="${GID-1000}"
       - COLLECTIONS=crowdsecurity/nginx crowdsecurity/http-cve crowdsecurity/whitelist-good-actors crowdsecurity/linux
       - CUSTOM_HOSTNAME=brownfunk
     volumes:
-      - $DOCKER_CONFIG_PATH/crowdsec/config:/etc/crowdsec:rw
-      - $DOCKER_CONFIG_PATH/crowdsec/data:/var/lib/crowdsec/data:rw
-      - $DOCKER_CONFIG_PATH/swag/log/nginx:/var/log/swag:ro
-      - /var/log:/var/log/host:ro
+      # - $DOCKER_CONFIG_PATH/crowdsec/config:/etc/crowdsec:rw
+      # - $DOCKER_CONFIG_PATH/crowdsec/data:/var/lib/crowdsec/data:rw
+      # - $DOCKER_CONFIG_PATH/swag/log/nginx:/var/log/swag:ro
+      # - logs:/var/log/nginx
+      - ./crowdsec/acquis.yaml:/etc/crowdsec/acquis.yaml
+
+      # - $DOCKER_CONFIG_PATH/crowdsec2/acquis.yaml:/etc/crowdsec/acquis.yaml
+      - $DOCKER_CONFIG_PATH/crowdsec2/data:/var/lib/crowdsec/data/
+      # - $DOCKER_CONFIG_PATH/crowdsec2/config:/etc/crowdsec/
+      - /var/log:/var/log:ro
     networks:
       - frontend
     ports:
@@ -48,10 +54,12 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges=true
-###################
+    #metabase, because security is cool, but dashboards are cooler
+  ###################
   mariadb:
-    image:  lscr.io/linuxserver/mariadb
-    container_name: mariadb
+    image: lscr.io/linuxserver/mariadb:11.4.8-r0-ls197 #10.6.13
+    # image: lscr.io/linuxserver/mariadb:10.11.10-r0-ls162 #10.6.13
+    #container_name: mariadb
     environment:
       - PUID=$PUID_USER
       - PGID=$PGID_USER
@@ -69,7 +77,7 @@ services:
       frontend:
   phpmyadmin:
     image: lscr.io/linuxserver/phpmyadmin:latest
-    container_name: phpmyadmin
+    #container_name: phpmyadmin
     environment:
       - PUID=$PUID_USER
       - PGID=$PGID_USER
@@ -86,28 +94,28 @@ services:
     dns:
       - $PIHOLE_DOCKER_SUB_IP_DNS
 
-#  periodic-backup:
-    #build: ./mariadb_bckp
-    #container_name: database-backup
-    #environment:
-      #MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      #MYSQL_ROOT_USER: ${MYSQL_ROOT_USER}
-      #DB_HOST: $DB_HOST
-      #DB_PORT: $DB_PORT
-    #volumes:
-      #- /etc/localtime:/etc/localtime:ro
-      #- /opt/mysql/backup:/opt/mysql/backup
-    #dns:
-      #- $PIHOLE_DOCKER_SUB_IP_DNS
-    #networks:
-      #- frontend
-    ##command: crond -f -d 8
-    #command: /etc/periodic/daily/backup-database
-#    restart: always
-######################
+  #  periodic-backup:
+  #build: ./mariadb_bckp
+  #container_name: database-backup
+  #environment:
+  #MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+  #MYSQL_ROOT_USER: ${MYSQL_ROOT_USER}
+  #DB_HOST: $DB_HOST
+  #DB_PORT: $DB_PORT
+  #volumes:
+  #- /etc/localtime:/etc/localtime:ro
+  #- /opt/mysql/backup:/opt/mysql/backup
+  #dns:
+  #- $PIHOLE_DOCKER_SUB_IP_DNS
+  #networks:
+  #- frontend
+  ##command: crond -f -d 8
+  #command: /etc/periodic/daily/backup-database
+  #    restart: always
+  ######################
   watchtower:
     image: containrrr/watchtower
-    container_name: watchtower
+    #container_name: watchtower
     environment:
       WATCHTOWER_LABEL_ENABLE: 1
       WATCHTOWER_CLEANUP: "true"
@@ -117,10 +125,10 @@ services:
     command: --interval 3600
     labels:
       com.centurylinklabs.watchtower.enable: true
-##################
+  ##################
   jellyfin:
     image: linuxserver/jellyfin
-    container_name: jellyfin
+    #container_name: jellyfin
     environment:
       - PUID=$PUID_USER
       - PGID=$PGID_USER
@@ -146,10 +154,10 @@ services:
     restart: unless-stopped
     labels:
       com.centurylinklabs.watchtower.enable: true
-###########################
+  ###########################
   navidrome:
     image: deluan/navidrome
-    container_name: navidrome
+    #container_name: navidrome
     user: $PUID_USER:$PGID_USER # should be owner of volumes
     ports:
       - "8082:4533"
@@ -161,12 +169,16 @@ services:
       ND_SESSIONTIMEOUT: 24h
       ND_BASEURL: ""
       ND_AUTOIMPORTPLAYLISTS: "true"
+      # ND_PLAYLISTSPATH: "/music/playlists_navidrome"
       ND_RECENTLYADDEDBYMODTIME: "true"
       ND_LASTFM_APIKEY: $LASTFM_API
       ND_LASTFM_SECRET: $LASTFM_SECRET
       ND_SPOTIFY_ID: $SPOTIFY_ID
       ND_SPOTIFY_SECRET: $SPOTIFY_SECRET
       ND_ENABLETRANSCODINGCONFIG: "true"
+      ND_SCANNER_GROUPALBUMRELEASES: "true"
+      ND_ENABLE_ARTWORKPRECACHE: "true"
+      ND_ENABLE_FAVOURITES: "true"
       ND_ENABLEGRAVATAR: "true"
       WATCHTOWER_CLEANUP: "true"
     volumes:
@@ -178,10 +190,10 @@ services:
       - frontend
     labels:
       com.centurylinklabs.watchtower.enable: true
-##################
-# Audiobooks
+  ##################
+  # Audiobooks
   audiobookshelf:
-    container_name: audiobookshelf
+    #container_name: audiobookshelf
     image: ghcr.io/advplyr/audiobookshelf:latest
     ports:
       - 4040:80
@@ -198,118 +210,116 @@ services:
     labels:
       com.centurylinklabs.watchtower.enable: true
 
-#  gonic:
-    #image: sentriz/gonic:latest
-    #container_name: gonic
-    #environment:
-      #- TZ
-      #- PUID=$PUID_USER
-      #- PGID=$PGID_USER
-      #- WATCHTOWER_CLEANUP=true
-    #expose:
-      #- 80
-    #ports:
-      #- "4040:80"
-    #volumes:
-    #- $DOCKER_CONFIG_PATH/gonic:/data                # gonic db etc
-    #- $AUDIOBOOKS_PATH:/music:ro    # your music
-    #- $DOCKER_CONFIG_PATH/gonic/cache:/cache       # transcode / covers / etc cache dir
-    #restart: unless-stopped
-    #labels:
-#      com.centurylinklabs.watchtower.enable: true
-######################################
+  #  gonic:
+  #image: sentriz/gonic:latest
+  #container_name: gonic
+  #environment:
+  #- TZ
+  #- PUID=$PUID_USER
+  #- PGID=$PGID_USER
+  #- WATCHTOWER_CLEANUP=true
+  #expose:
+  #- 80
+  #ports:
+  #- "4040:80"
+  #volumes:
+  #- $DOCKER_CONFIG_PATH/gonic:/data                # gonic db etc
+  #- $AUDIOBOOKS_PATH:/music:ro    # your music
+  #- $DOCKER_CONFIG_PATH/gonic/cache:/cache       # transcode / covers / etc cache dir
+  #restart: unless-stopped
+  #labels:
+  #      com.centurylinklabs.watchtower.enable: true
+  ######################################
   #metube:
-    #image: ghcr.io/alexta69/metube
-    #container_name: metube
-    #restart: unless-stopped
-    #ports:
-      #- "4848:8081"
-    #volumes:
-      #- $DOCKER_CONFIG_PATH/metube/:/config
-      #- $MOVIES_SPORT_PATH/youtube-movies:/downloads
-    #environment:
+  #image: ghcr.io/alexta69/metube
+  #container_name: metube
+  #restart: unless-stopped
+  #ports:
+  #- "4848:8081"
+  #volumes:
+  #- $DOCKER_CONFIG_PATH/metube/:/config
+  #- $MOVIES_SPORT_PATH/youtube-movies:/downloads
+  #environment:
   #    - 'YTDL_OPTIONS={"writesubtitles":true,"subtitleslangs":["en","-live_chat"],"updatetime":false,"postprocessors":[{"key":"Exec","exec_cmd":"chmod 0664","when":"after_move"},{"key":"FFmpegEmbedSubtitle","already_have_subtitle":false},{"key":"FFmpegMetadata","add_chapters":true}]}'
 
-#  tubesync:
-    #image: ghcr.io/meeb/tubesync:latest
-    #depends_on:
-      #- mariadb
-      #- pihole
-    #container_name: tubesync
-    #restart: unless-stopped
-    #ports:
-      #- 4848:4848
-    #volumes:
-      #- $DOCKER_CONFIG_PATH/tubesync-config:/config
-      #- $TV_SHOWS_PATH/tubesync-downloads:/downloads
-    #environment:
-      #- TZ=$TZ
-      #- PUID=$PUID_USER
-      #- PGID=$PGID_USER
-      #- WATCHTOWER_CLEANUP=true
-      #- DATABASE_CONNECTION=mysql://${DB_TUBESYNC_USER}:${DB_TUBESYNC_PWD}@${DB_HOST}:${DB_PORT}/${DB_TUBESYNC_SCHEMA}
-    #dns:
-      #- $PIHOLE_DOCKER_SUB_IP_DNS
-    #networks:
-      #- frontend
-    #labels:
-      #com.centurylinklabs.watchtower.enable: true
-####
-#  emulatorjs:
-    #image: lscr.io/linuxserver/emulatorjs
-    #container_name: emulatorjs
-    #environment:
-      #- PUID=1000
-      #- PGID=1000
-      #- TZ=Europe/London
-      #- SUBFOLDER=/ #optional
-    #volumes:
-      #- $DOCKER_CONFIG_PATH/emulatorjs:/config
-      #- $GAMES_PATH/Nintendo/NES:/data/nes/roms:ro
-      #- $GAMES_PATH/Nintendo/SNES/roms:/data/snes/roms:ro
-    #ports:
-      #- 3333:3000
-      #- 3334:80
-      #- 4001:4001 #optional
-    #restart: unless-stopped
-##
-#
- # romm:
-    #image: rommapp/romm:latest
-    #container_name: romm
-    #restart: unless-stopped
-    #environment:
-      #- PUID=$PUID_USER
-      #- PGID=$PGID_USER
-      #- DB_HOST=$DB_HOST
-      #- DB_NAME=$DB_ROMM_SCHEMA # Should match MYSQL_DATABASE in mariadb
-      #- DB_USER=$DB_ROMM_USER # Should match MYSQL_USER in mariadb
-      #- DB_PASSWD=$DB_ROMM_PWD # Should match MYSQL_PASSWORD in mariadb
-      #- ROMM_AUTH_SECRET_KEY=$ROMM_AUTH # Generate a key with `openssl rand -hex 32`
-      #- IGDB_CLIENT_ID= # Generate an ID and SECRET in IGDB
-      #- IGDB_CLIENT_SECRET= # https://api-docs.igdb.com/#account-creation
-      #- MOBYGAMES_API_KEY=moby_uxSWwgF43OqG8T8psJnGS1CrBwF # https://www.mobygames.com/info/api/
-      #- STEAMGRIDDB_API_KEY=fe55cf33dfb49b567856075f2cb9b614# https://github.com/rommapp/romm/wiki/Generate-API-Keys#steamgriddb
-    #volumes:
-      #- romm_resources:/romm/resources # Resources fetched from IGDB (covers, screenshots, etc.)
-      #- romm_redis_data:/redis-data # Cached data for background tasks
-      #- $GAMES_PATH/romm:/romm/library # Your game library
-      #- $DOCKER_CONFIG_PATH/romm/assets:/romm/assets # Uploaded saves, states, etc.
-      #- $DOCKER_CONFIG_PATH/romm/config:/romm/config # Path where config.yml is stored
-    #ports:
-      #- 1445:8080
-    #labels:
-      #com.centurylinklabs.watchtower.enable: true
-    #dns:
-      #- $PIHOLE_DOCKER_SUB_IP_DNS
-    #networks:
- #     - frontend
-
-
+  #  tubesync:
+  #image: ghcr.io/meeb/tubesync:latest
+  #depends_on:
+  #- mariadb
+  #- pihole
+  #container_name: tubesync
+  #restart: unless-stopped
+  #ports:
+  #- 4848:4848
+  #volumes:
+  #- $DOCKER_CONFIG_PATH/tubesync-config:/config
+  #- $TV_SHOWS_PATH/tubesync-downloads:/downloads
+  #environment:
+  #- TZ=$TZ
+  #- PUID=$PUID_USER
+  #- PGID=$PGID_USER
+  #- WATCHTOWER_CLEANUP=true
+  #- DATABASE_CONNECTION=mysql://${DB_TUBESYNC_USER}:${DB_TUBESYNC_PWD}@${DB_HOST}:${DB_PORT}/${DB_TUBESYNC_SCHEMA}
+  #dns:
+  #- $PIHOLE_DOCKER_SUB_IP_DNS
+  #networks:
+  #- frontend
+  #labels:
+  #com.centurylinklabs.watchtower.enable: true
+  ####
+  #  emulatorjs:
+  #image: lscr.io/linuxserver/emulatorjs
+  #container_name: emulatorjs
+  #environment:
+  #- PUID=1000
+  #- PGID=1000
+  #- TZ=Europe/London
+  #- SUBFOLDER=/ #optional
+  #volumes:
+  #- $DOCKER_CONFIG_PATH/emulatorjs:/config
+  #- $GAMES_PATH/Nintendo/NES:/data/nes/roms:ro
+  #- $GAMES_PATH/Nintendo/SNES/roms:/data/snes/roms:ro
+  #ports:
+  #- 3333:3000
+  #- 3334:80
+  #- 4001:4001 #optional
+  #restart: unless-stopped
+  ##
+  #
+  # romm:
+  #image: rommapp/romm:latest
+  #container_name: romm
+  #restart: unless-stopped
+  #environment:
+  #- PUID=$PUID_USER
+  #- PGID=$PGID_USER
+  #- DB_HOST=$DB_HOST
+  #- DB_NAME=$DB_ROMM_SCHEMA # Should match MYSQL_DATABASE in mariadb
+  #- DB_USER=$DB_ROMM_USER # Should match MYSQL_USER in mariadb
+  #- DB_PASSWD=$DB_ROMM_PWD # Should match MYSQL_PASSWORD in mariadb
+  #- ROMM_AUTH_SECRET_KEY=$ROMM_AUTH # Generate a key with `openssl rand -hex 32`
+  #- IGDB_CLIENT_ID= # Generate an ID and SECRET in IGDB
+  #- IGDB_CLIENT_SECRET= # https://api-docs.igdb.com/#account-creation
+  #- MOBYGAMES_API_KEY=moby_uxSWwgF43OqG8T8psJnGS1CrBwF # https://www.mobygames.com/info/api/
+  #- STEAMGRIDDB_API_KEY=fe55cf33dfb49b567856075f2cb9b614# https://github.com/rommapp/romm/wiki/Generate-API-Keys#steamgriddb
+  #volumes:
+  #- romm_resources:/romm/resources # Resources fetched from IGDB (covers, screenshots, etc.)
+  #- romm_redis_data:/redis-data # Cached data for background tasks
+  #- $GAMES_PATH/romm:/romm/library # Your game library
+  #- $DOCKER_CONFIG_PATH/romm/assets:/romm/assets # Uploaded saves, states, etc.
+  #- $DOCKER_CONFIG_PATH/romm/config:/romm/config # Path where config.yml is stored
+  #ports:
+  #- 1445:8080
+  #labels:
+  #com.centurylinklabs.watchtower.enable: true
+  #dns:
+  #- $PIHOLE_DOCKER_SUB_IP_DNS
+  #networks:
+  #     - frontend
 
   calibre:
     image: linuxserver/calibre
-    container_name: calibre
+    #container_name: calibre
     environment:
       - PUID=$PUID_USER
       - PGID=$PGID_USER
@@ -325,18 +335,21 @@ services:
     ports:
       - 7080:8080
       - 8081:8081
+      - 8181:8181
+    security_opt:
+      - seccomp:unconfined
     restart: unless-stopped
     labels:
       com.centurylinklabs.watchtower.enable: true
-######################################
+  ######################################
   calibre-web:
     image: linuxserver/calibre-web
-    container_name: calibre-web
+    #container_name: calibre-web
     environment:
       - PUID=$PUID_USER
       - PGID=$PGID_USER
       - TZ=${TZ}
-      - DOCKER_MODS=linuxserver/calibre-web:calibre
+      - DOCKER_MODS=linuxserver/mods:universal-calibre
       - WATCHTOWER_CLEANUP=true
     volumes:
       - $DOCKER_CONFIG_PATH/calibre-web:/config
@@ -346,10 +359,10 @@ services:
     restart: unless-stopped
     labels:
       com.centurylinklabs.watchtower.enable: true
-#####################################
+  #####################################
   homer:
     image: b4bz/homer:latest
-    container_name: homer
+    #container_name: homer
     environment:
       - PUID=$PUID_USER
       - PGID=$PGID_USER
@@ -369,31 +382,32 @@ services:
       #traefik.http.services.home.loadbalancer.server.port: 80
     depends_on:
       - pihole
-###################
+  ###################
   #flame:
-    #image: pawelmalak/flame:latest
-    #container_name: flame
-    #environment:
-      #- WATCHTOWER_CLEANUP=true
-    #volumes:
-      #- $DOCKER_CONFIG_PATH/flame:/app/data
-      #- /var/run/docker.sock:/var/run/docker.sock # optional but required for Docker integration feature
-    #ports:
-      #- 5005:5005
-    #restart: unless-stopped
-    #labels:
-#      com.centurylinklabs.watchtower.enable: true
-#####################################
+  #image: pawelmalak/flame:latest
+  #container_name: flame
+  #environment:
+  #- WATCHTOWER_CLEANUP=true
+  #volumes:
+  #- $DOCKER_CONFIG_PATH/flame:/app/data
+  #- /var/run/docker.sock:/var/run/docker.sock # optional but required for Docker integration feature
+  #ports:
+  #- 5005:5005
+  #restart: unless-stopped
+  #labels:
+  #      com.centurylinklabs.watchtower.enable: true
+  #####################################
   nextcloud:
     #image:  lscr.io/linuxserver/nextcloud:27.0.1-ls259
-    image:  lscr.io/linuxserver/nextcloud:latest
-    container_name: nextcloud
+    image: lscr.io/linuxserver/nextcloud:latest
+    #container_name: nextcloud
     environment:
       - WATCHTOWER_CLEANUP=true
       - PUID=$PUID_USER
       - PGID=$PGID_USER
       - TZ=$TZ
-      - DOCKER_MODS=ghcr.io/linuxserver/mods:pull_request_733|linuxserver/mods:universal-package-install
+      # - DOCKER_MODS=ghcr.io/linuxserver/mods:pull_request_733|linuxserver/mods:universal-package-install
+      - DOCKER_MODS=ghcr.io/linuxserver/mods:nextcloud-mediadc|linuxserver/mods:universal-package-install
       - INSTALL_PACKAGES=ffmpeg
     labels:
       - com.centurylinklabs.watchtower.enable=true
@@ -416,33 +430,33 @@ services:
       start_period: 10m
       timeout: 5s
     restart: unless-stopped
-#  gitea:
-    #image: gitea/gitea:1.15.5
-    #container_name: gitea
-    #environment:
-      #- USER_UID=1000
-      #- USER_GID=1000
-    #restart: always
-    ##networks:
-      #- gitea
-    #volumes:
-      #- $DOCKER_CONFIG_PATH/gitea:/data
-      #- /etc/timezone:/etc/timezone:ro
-      #- /etc/localtime:/etc/localtime:ro
-    #ports:
-      #- "3400:3000"
-      #- "222:22"
-    #dns:
-      #- $PIHOLE_DOCKER_SUB_IP_DNS
-    #networks:
-#      - frontend
-##################
+  #  gitea:
+  #image: gitea/gitea:1.15.5
+  #container_name: gitea
+  #environment:
+  #- USER_UID=1000
+  #- USER_GID=1000
+  #restart: always
+  ##networks:
+  #- gitea
+  #volumes:
+  #- $DOCKER_CONFIG_PATH/gitea:/data
+  #- /etc/timezone:/etc/timezone:ro
+  #- /etc/localtime:/etc/localtime:ro
+  #ports:
+  #- "3400:3000"
+  #- "222:22"
+  #dns:
+  #- $PIHOLE_DOCKER_SUB_IP_DNS
+  #networks:
+  #      - frontend
+  ##################
   piwigo:
     image: linuxserver/piwigo
     # conf of DB in www/gallery/local/config/database.inc.php
     # using pihole dns. DB is setup as hostname.domain
     # helps to make sure piwigo is always pointing to the right db
-    container_name: piwigo
+    #container_name: piwigo
     environment:
       - WATCHTOWER_CLEANUP=true
       - PUID=$PUID_USER
@@ -461,9 +475,9 @@ services:
     restart: unless-stopped
     labels:
       com.centurylinklabs.watchtower.enable: true
-###################
+  ###################
   php_piwigo_slideshow:
-    container_name: php_piwigo_slideshow
+    #container_name: php_piwigo_slideshow
     image: php:7.4-apache
     ports:
       - 5671:80
@@ -481,10 +495,10 @@ services:
     depends_on:
       - pihole
     restart: unless-stopped
-####################
+  ####################
   photoprism:
     image: photoprism/photoprism:latest
-    container_name: photoprism
+    #container_name: photoprism
     depends_on:
       - mariadb
     restart: unless-stopped
@@ -497,29 +511,29 @@ services:
       - "2342:2342" # [server]:[container]
     environment:
       WATCHTOWER_CLEANUP: "true"
-      PHOTOPRISM_ADMIN_PASSWORD: "insecure"          # PLEASE CHANGE: Your initial admin password (min 4 characters)
-      PHOTOPRISM_SITE_URL: "http://$DB_HOST:2342/"  # Public URL incl http:// or https:// and /path, :port is optional
-      PHOTOPRISM_ORIGINALS_LIMIT: 5000               # File size limit for originals in MB (increase for high-res video)
-      PHOTOPRISM_HTTP_COMPRESSION: "gzip"            # Improves transfer speed and bandwidth utilization (none or gzip)
-      PHOTOPRISM_DEBUG: "false"                      # Run in debug mode (shows additional log messages)
-      PHOTOPRISM_PUBLIC: "false"                     # No authentication required (disables password protection)
-      PHOTOPRISM_READONLY: "true"                   # Don't modify originals directory (reduced functionality)
-      PHOTOPRISM_EXPERIMENTAL: "false"               # Enables experimental features
-      PHOTOPRISM_DISABLE_CHOWN: "true"              # Disables storage permission updates on startup
-      PHOTOPRISM_DISABLE_WEBDAV: "false"             # Disables built-in WebDAV server
-      PHOTOPRISM_DISABLE_SETTINGS: "false"           # Disables Settings in Web UI
-      PHOTOPRISM_DISABLE_TENSORFLOW: "false"         # Disables all features depending on TensorFlow
-      PHOTOPRISM_DISABLE_FACES: "false"              # Disables facial recognition
-      PHOTOPRISM_DISABLE_CLASSIFICATION: "false"     # Disables image classification
-      PHOTOPRISM_DARKTABLE_PRESETS: "true"          # Enables Darktable presets and disables concurrent RAW conversion
-      PHOTOPRISM_DETECT_NSFW: "false"                # Flag photos as private that MAY be offensive (requires TensorFlow)
-      PHOTOPRISM_UPLOAD_NSFW: "true"                 # Allow uploads that MAY be offensive
+      PHOTOPRISM_ADMIN_PASSWORD: "insecure" # PLEASE CHANGE: Your initial admin password (min 4 characters)
+      PHOTOPRISM_SITE_URL: "http://$DB_HOST:2342/" # Public URL incl http:// or https:// and /path, :port is optional
+      PHOTOPRISM_ORIGINALS_LIMIT: 5000 # File size limit for originals in MB (increase for high-res video)
+      PHOTOPRISM_HTTP_COMPRESSION: "gzip" # Improves transfer speed and bandwidth utilization (none or gzip)
+      PHOTOPRISM_DEBUG: "false" # Run in debug mode (shows additional log messages)
+      PHOTOPRISM_PUBLIC: "false" # No authentication required (disables password protection)
+      PHOTOPRISM_READONLY: "true" # Don't modify originals directory (reduced functionality)
+      PHOTOPRISM_EXPERIMENTAL: "false" # Enables experimental features
+      PHOTOPRISM_DISABLE_CHOWN: "true" # Disables storage permission updates on startup
+      PHOTOPRISM_DISABLE_WEBDAV: "false" # Disables built-in WebDAV server
+      PHOTOPRISM_DISABLE_SETTINGS: "false" # Disables Settings in Web UI
+      PHOTOPRISM_DISABLE_TENSORFLOW: "false" # Disables all features depending on TensorFlow
+      PHOTOPRISM_DISABLE_FACES: "false" # Disables facial recognition
+      PHOTOPRISM_DISABLE_CLASSIFICATION: "false" # Disables image classification
+      PHOTOPRISM_DARKTABLE_PRESETS: "true" # Enables Darktable presets and disables concurrent RAW conversion
+      PHOTOPRISM_DETECT_NSFW: "false" # Flag photos as private that MAY be offensive (requires TensorFlow)
+      PHOTOPRISM_UPLOAD_NSFW: "true" # Allow uploads that MAY be offensive
       # PHOTOPRISM_DATABASE_DRIVER: "sqlite"         # SQLite is an embedded database that doesn't require a server
-      PHOTOPRISM_DATABASE_DRIVER: "mysql"            # Use MariaDB 10.5+ or MySQL 8+ instead of SQLite for improved performance
-      PHOTOPRISM_DATABASE_SERVER: "$DB_HOST:$DB_PORT"     # MariaDB or MySQL database server (hostname:port)
-      PHOTOPRISM_DATABASE_NAME: "$DB_PHOTOPRISM_SCHEMA"         # MariaDB or MySQL database schema name
-      PHOTOPRISM_DATABASE_USER: "$DB_PHOTOPRISM_USER"         # MariaDB or MySQL database user name
-      PHOTOPRISM_DATABASE_PASSWORD: "$DB_PHOTOPRISM_PWD"      # MariaDB or MySQL database user password
+      PHOTOPRISM_DATABASE_DRIVER: "mysql" # Use MariaDB 10.5+ or MySQL 8+ instead of SQLite for improved performance
+      PHOTOPRISM_DATABASE_SERVER: "$DB_HOST:$DB_PORT" # MariaDB or MySQL database server (hostname:port)
+      PHOTOPRISM_DATABASE_NAME: "$DB_PHOTOPRISM_SCHEMA" # MariaDB or MySQL database schema name
+      PHOTOPRISM_DATABASE_USER: "$DB_PHOTOPRISM_USER" # MariaDB or MySQL database user name
+      PHOTOPRISM_DATABASE_PASSWORD: "$DB_PHOTOPRISM_PWD" # MariaDB or MySQL database user password
       PHOTOPRISM_SITE_TITLE: "PhotoPrism"
       PHOTOPRISM_SITE_CAPTION: "Browse Your Life"
       PHOTOPRISM_SITE_DESCRIPTION: ""
@@ -539,7 +553,7 @@ services:
       HOME: "/photoprism"
     # Optional hardware devices for video transcoding and machine learning:
     devices:
-    #  - "/dev/video11:/dev/video11" # Video4Linux (h264_v4l2m2m)
+      #  - "/dev/video11:/dev/video11" # Video4Linux (h264_v4l2m2m)
       - "/dev/dri/renderD128:/dev/dri/renderD128" # Intel GPU
     #  - "/dev/dri/card0:/dev/dri/card0"
     working_dir: "/photoprism"
@@ -559,41 +573,41 @@ services:
       - frontend
     labels:
       com.centurylinklabs.watchtower.enable: true
-##########################
-  darktable:
-    image: lscr.io/linuxserver/darktable
-    container_name: darktable
-    environment:
-      - PUID=$PUID_USER
-      - PGID=$PGID_USER
-      - TZ=$TZ
-    volumes:
-      - $DOCKER_CONFIG_PATH/darktable:/config
-      - $PICTURES_PATH:/pictures
-    ports:
-      - 3030:3000
-    restart: unless-stopped
-    labels:
-      com.centurylinklabs.watchtower.enable: true
-##########################
-  glance:
-    image: nicolargo/glances:latest-alpine
-    container_name: glances
-    restart: unless-stopped
-    pid: host
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - WATCHTOWER_CLEANUP=true
-      - "GLANCES_OPT=-w"
-    ports:
-      - 61208:61208
-    labels:
-      com.centurylinklabs.watchtower.enable: true
-###############
+  ##########################
+  #  darktable:
+  #image: lscr.io/linuxserver/darktable
+  ##container_name: darktable
+  #environment:
+  #- PUID=$PUID_USER
+  #- PGID=$PGID_USER
+  #- TZ=$TZ
+  #volumes:
+  #- $DOCKER_CONFIG_PATH/darktable:/config
+  #- $PICTURES_PATH:/pictures
+  #ports:
+  #- 3030:3000
+  #restart: unless-stopped
+  #labels:
+  #com.centurylinklabs.watchtower.enable: true
+  ###########################
+  #glance:
+  #image: nicolargo/glances:latest-alpine
+  ##container_name: glances
+  #restart: unless-stopped
+  #pid: host
+  #volumes:
+  #- /var/run/docker.sock:/var/run/docker.sock
+  #environment:
+  #- WATCHTOWER_CLEANUP=true
+  #- "GLANCES_OPT=-w"
+  #ports:
+  #- 61208:61208
+  #labels:
+  #      com.centurylinklabs.watchtower.enable: true
+  ###############
   lidarr:
     image: linuxserver/lidarr
-    container_name: lidarr
+    #container_name: lidarr
     environment:
       - PUID=$PUID_USER
       - PGID=$PGID_USER
@@ -616,10 +630,10 @@ services:
     restart: "no"
     labels:
       com.centurylinklabs.watchtower.enable: true
-#############
+  #############
   radarr:
     image: linuxserver/radarr
-    container_name: radarr
+    #container_name: radarr
     environment:
       - PUID=$PUID_USER
       - PGID=$PGID_USER
@@ -629,8 +643,8 @@ services:
     volumes:
       - $DOCKER_CONFIG_PATH/radarr:/config
       - $MOVIES_ENG_PATH:/movies
-      - $TORRENT_PATH/movies:/downloads
-      - $TORRENT_PATH/movies:/data/completed
+      # - $TORRENT_PATH/downloads/movies:/downloads
+      - $TORRENT_PATH/data/movies:/data/completed
     ports:
       - 7878:7878
     dns:
@@ -642,10 +656,10 @@ services:
     restart: unless-stopped
     labels:
       com.centurylinklabs.watchtower.enable: true
-#######################
+  #######################
   radarr_fr:
     image: linuxserver/radarr
-    container_name: radarr_fr
+    #container_name: radarr_fr
     environment:
       - PUID=$PUID_USER
       - PGID=$PGID_USER
@@ -655,8 +669,8 @@ services:
     volumes:
       - $DOCKER_CONFIG_PATH/radarr_fr:/config
       - $MOVIES_FR_PATH:/movies
-      - $TORRENT_PATH/completed:/downloads
-      - $TORRENT_PATH/completed:/data/completed
+      # - $TORRENT_PATH/completed:/downloads
+      - $TORRENT_PATH/data/movies_fr:/data/completed
     ports:
       - 7879:7878
     dns:
@@ -668,10 +682,10 @@ services:
     restart: unless-stopped
     labels:
       com.centurylinklabs.watchtower.enable: true
-##########################
+  ##########################
   sonarr:
-    image: linuxserver/sonarr:3.0.10.1567-ls218
-    container_name: sonarr
+    image: linuxserver/sonarr:4.0.14
+    #container_name: sonarr
     environment:
       - PUID=$PUID_USER
       - PGID=$PGID_USER
@@ -681,8 +695,8 @@ services:
     volumes:
       - $DOCKER_CONFIG_PATH/sonarr:/config
       - ${TV_SHOWS_PATH}:/tv
-      - $TORRENT_PATH/shows:/downloads
-      - $TORRENT_PATH/shows:/data/completed
+      # - $TORRENT_PATH/shows:/downloads
+      - $TORRENT_PATH/data/shows:/data/completed
     ports:
       - 8989:8989
     dns:
@@ -694,37 +708,37 @@ services:
     restart: unless-stopped
     labels:
       com.centurylinklabs.watchtower.enable: true
-#####################
-# Handbrake
-  handbrake:
-    image: jlesage/handbrake
-    container_name: handbrake
-    volumes:
-      - $DOCKER_CONFIG_PATH/handbrake:/config:rw
-      - $GUITAR_VIDEOS_PATH:/videos:rw
-      - $SELF_IMPROVEMENT_PATH/sailing:/videos2:rw
-      - $MUSIC_LEARNING_VIDEOS_PATH:/videos3:rw
-    ports:
-      - "5800:5800"
+  #####################
+  # Handbrake
+  # handbrake:
+  #   image: jlesage/handbrake
+  #   #container_name: handbrake
+  #   volumes:
+  #     - $DOCKER_CONFIG_PATH/handbrake:/config:rw
+  #     - $GUITAR_VIDEOS_PATH:/videos:rw
+  #     - $SELF_IMPROVEMENT_PATH/sailing:/videos2:rw
+  #     - $MUSIC_LEARNING_VIDEOS_PATH:/videos3:rw
+  #   ports:
+  #     - "5800:5800"
 
-  tinymediamanager:
-    #image: romancin/tinymediamanager:latest-v4
-    image: romancin/tinymediamanager:latest
-    container_name: tinymediamanager
-    ports:
-      - "5803:5800"
-    environment:
-      - USER_ID=0
-      - GROUP_ID=0
-      - TZ=Europe/Madrid
-      - VNC_PASSWORD=password
-    volumes:
-      - "$DOCKER_CONFIG_PATH/tinymediamanager:/config:rw"
-      - "$GUITAR_VIDEOS_PATH:/media:rw"
-######################
+  # tinymediamanager:
+  #   #image: romancin/tinymediamanager:latest-v4
+  #   image: romancin/tinymediamanager:latest
+  #   #container_name: tinymediamanager
+  #   ports:
+  #     - "5803:5800"
+  #   environment:
+  #     - USER_ID=0
+  #     - GROUP_ID=0
+  #     - TZ=Europe/Madrid
+  #     - VNC_PASSWORD=password
+  #   volumes:
+  #     - "$DOCKER_CONFIG_PATH/tinymediamanager:/config:rw"
+  #     - "$GUITAR_VIDEOS_PATH:/media:rw"
+  # ######################
   jackett:
     image: linuxserver/jackett
-    container_name: jackett
+    #container_name: jackett
     environment:
       - PUID=$PUID_USER
       - PGID=$PGID_USER
@@ -752,7 +766,7 @@ services:
     #image: lscr.io/linuxserver/prowlarr:1.6.3.3608-ls25
   prowlarr:
     image: lscr.io/linuxserver/prowlarr
-    container_name: prowlarr
+    #container_name: prowlarr
     environment:
       - PUID=1000
       - PGID=1000
@@ -772,11 +786,11 @@ services:
     labels:
       com.centurylinklabs.watchtower.enable: true
     restart: unless-stopped
-####################
+  ####################
   flaresolverr:
     # DockerHub mirror flaresolverr/flaresolverr:latest
     image: ghcr.io/flaresolverr/flaresolverr:latest
-    container_name: flaresolverr
+    #container_name: flaresolverr
     environment:
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - LOG_HTML=${LOG_HTML:-false}
@@ -793,43 +807,43 @@ services:
     restart: unless-stopped
     labels:
       com.centurylinklabs.watchtower.enable: true
-###############
-# flexget
- # flexget:
-    #image: wiserain/flexget
-    #container_name: flexget
-    #environment:
-      #- PUID=$PUID_USER
-      #- PGID=$PGID_USER
-      #- TZ=$TZ
-      #- FG_WEBUI_PASSWD=dontstealthepwd
-    #ports:
-      #- 5050:5050
-    #volumes:
-      #- $DOCKER_CONFIG_PATH/flexget:/config
-#################
+  ###############
+  # flexget
+  # flexget:
+  #image: wiserain/flexget
+  #container_name: flexget
+  #environment:
+  #- PUID=$PUID_USER
+  #- PGID=$PGID_USER
+  #- TZ=$TZ
+  #- FG_WEBUI_PASSWD=dontstealthepwd
+  #ports:
+  #- 5050:5050
+  #volumes:
+  #- $DOCKER_CONFIG_PATH/flexget:/config
+  #################
   #syncthing:
-    #image: ghcr.io/linuxserver/syncthing
-    #container_name: syncthing
-    #hostname: syncthing #optional
-    #environment:
-      #- PUID=$PUID_USER
-      #- PGID=$PGID_USER
-      #- TZ=Europe/London
-    #volumes:
-      #- $DOCKER_CONFIG_PATH/syncthing:/config
-      #- /export/share/share:/data1
-    #ports:
-      #- 8384:8384
-      #- 22000:22000/tcp
-      #- 22000:22000/udp
-      #- 21027:21027/udp
-    #restart: unless-stopped
-##
-#
+  #image: ghcr.io/linuxserver/syncthing
+  #container_name: syncthing
+  #hostname: syncthing #optional
+  #environment:
+  #- PUID=$PUID_USER
+  #- PGID=$PGID_USER
+  #- TZ=Europe/London
+  #volumes:
+  #- $DOCKER_CONFIG_PATH/syncthing:/config
+  #- /export/share/share:/data1
+  #ports:
+  #- 8384:8384
+  #- 22000:22000/tcp
+  #- 22000:22000/udp
+  #- 21027:21027/udp
+  #restart: unless-stopped
+  ##
+  #
   pyload:
     image: lscr.io/linuxserver/pyload-ng:latest
-    container_name: pyload
+    #container_name: pyload
     environment:
       - PUID=$PUID_USER
       - PGID=$PGID_USER
@@ -837,97 +851,174 @@ services:
       - WATCHTOWER_CLEANUP=true
     volumes:
       - $DOCKER_CONFIG_PATH/pyload:/config
-      - $TORRENT_PATH/PYLOAD:/downloads
+      - $PYLOAD_PATH/PYLOAD:/downloads
     ports:
       - 8000:8000
       - 7227:7227 #optional
     restart: unless-stopped
     labels:
       com.centurylinklabs.watchtower.enable: true
-#######################
-  transmission:
-   image: haugene/transmission-openvpn
-   container_name: transmission
-   cap_add:
-     - NET_ADMIN
-   devices:
-     - /dev/net/tun
-   ports:
-     - "9091:9091"
-     - "8888:8888"
-   dns:
-     - $PIHOLE_DOCKER_SUB_IP_DNS
-     - 8.8.8.8
-     - 8.8.4.4
-   volumes:
-     - /etc/localtime:/etc/localtime:ro
-     - $TORRENT_PATH:/data
-     - $TORRENT_PATH:/config
-   logging:
-     driver: json-file
-     options:
-       max-size: 10m
-   environment:
-     - CREATE_TUN_DEVICE=true
-     - WEBPROXY_ENABLED=false
-     - TRANSMISSION_WEB_UI=transmission-web-control
-     - TRANSMISSION_INCOMPLETE_DIR=/data/transmission/incomplete
-     - TRANSMISSION_INCOMPLETE_DIR_ENABLED=true
-     - TRANSMISSION_BLOCKLIST_ENABLED=true
-     - TRANSMISSION_BLOCKLIST_URL=$TRANSMISSION_BLOCKLIST_URL
-     - TRANSMISSION_RPC_AUTHENTICATION_REQUIRED=false
-     - DISABLE_PORT_UPDATER=true
-     - OPENVPN_PROVIDER=PIA
-     - OPENVPN_CONFIG=au_sydney
-     - OPENVPN_USERNAME=$PIA_USERNAME
-     - OPENVPN_PASSWORD=$PIA_PASSWORD
-     - OPENVPN_OPTS=--inactive 3600 --ping 10 --ping-exit 60
-     - LOCAL_NETWORK=$LOCAL_NETWORK
-   restart: unless-stopped
-#########
-#  apaxy:
-    #image: apaxy
-    #container_name: apaxy
-    #build:
-      #context: apaxy
-      #args:
-        #apaxyPath: ''
-    #ports:
-        #- '3321:8080'
-    #volumes:
-      #- $SERVER_PATH:/usr/local/apache2/htdocs/share/:ro
-#    restart: unless-stopped
-#############
-# to store icons for organizr help page
+  #######################
+  # transmission:
+  #   image: haugene/transmission-openvpn
+  #   #container_name: transmission
+  #   cap_add:
+  #     - NET_ADMIN
+  #   # devices:
+  #   # - /dev/net/tun
+  #   ports:
+  #     - "9091:9091"
+  #     - "8888:8888"
+  #   dns:
+  #     # - $PIHOLE_DOCKER_SUB_IP_DNS
+  #     - 8.8.8.8
+  #     - 8.8.4.4
+  #   volumes:
+  #     - /etc/localtime:/etc/localtime:ro
+  #     - $TORRENT_PATH:/data
+  #     - $TORRENT_PATH:/config
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: 10m
+  #   environment:
+  #     - CREATE_TUN_DEVICE=true
+  #     - WEBPROXY_ENABLED=false
+  #     - TRANSMISSION_WEB_UI=transmission-web-control
+  #     - TRANSMISSION_INCOMPLETE_DIR=/data/transmission/incomplete
+  #     - TRANSMISSION_INCOMPLETE_DIR_ENABLED=true
+  #     - TRANSMISSION_BLOCKLIST_ENABLED=true
+  #     - TRANSMISSION_BLOCKLIST_URL=$TRANSMISSION_BLOCKLIST_URL
+  #     - TRANSMISSION_RPC_AUTHENTICATION_REQUIRED=false
+  #     - DISABLE_PORT_UPDATER=true
+  #     - OPENVPN_PROVIDER=PIA
+  #     - OPENVPN_CONFIG=au_sydney
+  #     - OPENVPN_USERNAME=$PIA_USERNAME
+  #     - OPENVPN_PASSWORD=$PIA_PASSWORD
+  #     - OPENVPN_OPTS=--inactive 3600 --ping 10 --ping-exit 60
+  #     - LOCAL_NETWORK=$LOCAL_NETWORK
+  #   restart: unless-stopped
+  #
+  gluetun:
+    image: qmcgaw/gluetun
+    container_name: gluetun
+    # container_name: gluetun
+    # line above must be uncommented to allow external containers to connect.
+    # See https://github.com/qdm12/gluetun-wiki/blob/main/setup/connect-a-container-to-gluetun.md#external-container-to-gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - 8888:8888/tcp # HTTP proxy
+      - 8388:8388/tcp # Shadowsocks
+      - 8388:8388/udp # Shadowsocks
+      - 9091:9091
+      - 51413:51413
+      - 29051:29051
+      - 51414:51413/udp
+    volumes:
+      - $DOCKER_CONFIG_PATH/gluetun:/gluetun
+    environment:
+      # See https://github.com/qdm12/gluetun-wiki/tree/main/setup#setup
+      - VPN_SERVICE_PROVIDER=pia
+      - VPN_TYPE=openvpn
+      # OpenVPN:
+      - OPENVPN_USER=$PIA_USERNAME
+      - OPENVPN_PASSWORD=$PIA_PASSWORD
+      - SERVER_REGIONS=Switzerland,Cambodia,Egypt,France,Norway,Singapore,Australia # https://github.com/Lars-/PIA-servers/tree/master/regions
+      # Wireguard:
+      # - WIREGUARD_PRIVATE_KEY=wOEI9rqqbDwnN8/Bpp22sVz48T71vJ4fYmFWujulwUU=
+      # - WIREGUARD_ADDRESSES=10.64.222.21/32
+      # Timezone for accurate log times
+      - TZ=$TZ
+      # Server list updater
+      # See https://github.com/qdm12/gluetun-wiki/blob/main/setup/servers.md#update-the-vpn-servers-list
+      - UPDATER_PERIOD=24h
+  # gluetun-rotator:
+  #   image: docker:20.10-cli
+  #   container_name: gluetun-rotator
+  #   depends_on:
+  #     - gluetun
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   command: >
+  #     sh -c "while true; do
+  #              echo '[Gluetun-Rotator] Restarting Gluetun...';
+  #              docker restart gluetun;
+  #              sleep 10800; # 3 hours
+  #            done"
+  #
+  transmission_new:
+    image: lscr.io/linuxserver/transmission:latest
+    container_name: transmission
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - DOCKER_MODS=linuxserver/mods:transmission-trguing
+      # - TRANSMISSION_WEB_HOME= #optional
+      # - USER= #optional
+      # - PASS= #optional
+      # - WHITELIST= #optional
+      # - PEERPORT= #optional
+      # - HOST_WHITELIST= #optional
+    volumes:
+      - $TORRENT_PATH/downloads:/downloads
+      - $TORRENT_PATH/data:/data
+      - $TORRENT_PATH/config:/config
+      - $TORRENT_PATH/watch:/watch
+    # ports:
+    # - 9091:9091
+    # - 51413:51413
+    # - 29051:29051
+    # - 51413:51413/udp
+    restart: unless-stopped
+  #########
+  #  apaxy:
+  #image: apaxy
+  #container_name: apaxy
+  #build:
+  #context: apaxy
+  #args:
+  #apaxyPath: ''
+  #ports:
+  #- '3321:8080'
+  #volumes:
+  #- $SERVER_PATH:/usr/local/apache2/htdocs/share/:ro
+  #    restart: unless-stopped
+  #############
+  # to store icons for organizr help page
   tecmint-web:
-    container_name: web-server
+    #container_name: web-server
     image: httpd:2.4
     ports:
       - 1021:80
     volumes:
       - $DOCKER_CONFIG_PATH/howto:/usr/local/apache2/htdocs/
     restart: unless-stopped
-#####################
-## tinymediamanager - filebot replacement
- # tinymediamanager:
-    #image: romancin/tinymediamanager:latest
-    #container_name: tinymediamanager
-    #environment:
-      #- PUID=$PUID_USER
-      #- PGID=$PGID_USER
-      #- TZ=$TZ
-    #volumes:
-      #- $DOCKER_CONFIG_PATH/tmm:/config
-      #- $TORRENT_PATH/completed:/media
-    #ports:
-      #- 5700:5800
-      #- 5900:5900
- #   restart: unless-stopped
-################
-####### notes
+  #####################
+  ## tinymediamanager - filebot replacement
+  # tinymediamanager:
+  #image: romancin/tinymediamanager:latest
+  #container_name: tinymediamanager
+  #environment:
+  #- PUID=$PUID_USER
+  #- PGID=$PGID_USER
+  #- TZ=$TZ
+  #volumes:
+  #- $DOCKER_CONFIG_PATH/tmm:/config
+  #- $TORRENT_PATH/completed:/media
+  #ports:
+  #- 5700:5800
+  #- 5900:5900
+  #   restart: unless-stopped
+  ################
+  ####### notes
   hedgedoc:
     image: ghcr.io/linuxserver/hedgedoc:latest
-    container_name: hedgedoc
+    #container_name: hedgedoc
     volumes:
       - $DOCKER_CONFIG_PATH/codimd:/config
     environment:
@@ -952,28 +1043,28 @@ services:
     ports:
       - "3000:3000"
 
-  trilium:
-    image: zadam/trilium
-    container_name: trilium
-    restart: always
-    volumes:
-      - $DOCKER_CONFIG_PATH/trilium:/home/node/trilium-data
-    environment:
-      - USER_UID=$PUID_USER
-      - USER_GID=$PGID_USER
-    ports:
-      - 8080:8080
-    dns:
-      - $PIHOLE_DOCKER_SUB_IP_DNS
-    networks:
-      - frontend
-    depends_on:
-      - pihole
-################
-########## get server ip to duckdns
+  #  trilium:
+  #image: zadam/trilium
+  ##container_name: trilium
+  #restart: always
+  #volumes:
+  #- $DOCKER_CONFIG_PATH/trilium:/home/node/trilium-data
+  #environment:
+  #- USER_UID=$PUID_USER
+  #- USER_GID=$PGID_USER
+  #ports:
+  #- 8080:8080
+  #dns:
+  #- $PIHOLE_DOCKER_SUB_IP_DNS
+  #networks:
+  #- frontend
+  #depends_on:
+  #      - pihole
+  ################
+  ########## get server ip to duckdns
   duckdns:
     image: linuxserver/duckdns
-    container_name: duckdns
+    #container_name: duckdns
     dns: 1.1.1.1
     environment:
       - PUID=$PUID_USER #optional
@@ -985,76 +1076,76 @@ services:
     volumes:
       - $DOCKER_CONFIG_PATH/duckdns:/config #optional
     restart: always
-#####################
-# SWAG from duckdns
-####################
+  #####################
+  # SWAG from duckdns
+  ####################
   swag:
-   image: ghcr.io/linuxserver/swag
-   container_name: swag
-   cap_add:
-     - NET_ADMIN
-   dns:
-     - $PIHOLE_DOCKER_SUB_IP_DNS
-   networks:
-     - frontend
-   environment:
-     - PUID=$PUID_USER
-     - PGID=$PGID_USER
-     - TZ=Europe/Brussels
-     - URL=$DUCKDNS_DOMAIN.duckdns.org
-     - SUBDOMAINS=wildcard
-     - VALIDATION=duckdns
-     #- DNSPLUGIN=cloudflare
-     #- CERTPROVIDER= #optional
-     #- DNSPLUGIN= #optional
-     - DUCKDNSTOKEN=$DUCKDNS_TOKEN
-     #- EMAIL=<e-mail> #optional
-     - ONLY_SUBDOMAINS=false #optional
-     #- DOCKER_MODS=linuxserver/mods:swag-crowdsec
-     #- EXTRA_DOMAINS=brownfunk.lan #optional
-     - STAGING=false #optional
-     - DOCKER_MODS=ghcr.io/linuxserver/mods:swag-crowdsec
-     - CROWDSEC_API_KEY=${CROWDSEC_SWAG_API_KEY}
-     - CROWDSEC_LAPI_URL=http://crowdsec:8080
-   volumes:
-     - $DOCKER_CONFIG_PATH/swag:/config
-   ports:
-     - 443:443
-     - 555:80
-   restart: unless-stopped
-##############
-#  reverse-proxy:
-    ## The official v2 Traefik docker image
-    #image: traefik:latest
-    #container_name: traefik
-    ## Enables the web UI and tells Traefik to listen to docker
-    #hostname: brownfunk
-    #domainname: brownfunk.lan
-    #command:
-      #- "--api.insecure=true"
-      #- "--providers.docker=true"
-      #- "--entrypoints.web.address=:80"
-    #ports:
-      ## The HTTP port
-      #- "81:80"
-      ## The Web UI (enabled by --api.insecure=true)
-      #- "8087:8080"
-    #volumes:
-      ## So that Traefik can listen to the Docker events
-      #- /var/run/docker.sock:/var/run/docker.sock
-    #dns:
-      #- $PIHOLE_DOCKER_SUB_IP_DNS
-    #labels:
-      #- traefik.enable=true
-      #- traefik.docker.network=web
-      #- traefik.http.routers.traefik.rule=Host(`traefik.brownfunk.lan`)
-      #- traefik.http.routers.traefik.entrypoints=http
-      #- traefik.http.services.traefik.loadbalancer.server.port=8087
+    image: ghcr.io/linuxserver/swag
+    #container_name: swag
+    cap_add:
+      - NET_ADMIN
+    dns:
+      - $PIHOLE_DOCKER_SUB_IP_DNS
+    networks:
+      - frontend
+    environment:
+      - PUID=$PUID_USER
+      - PGID=$PGID_USER
+      - TZ=Europe/Brussels
+      - URL=$DUCKDNS_DOMAIN.duckdns.org
+      - SUBDOMAINS=wildcard
+      - VALIDATION=duckdns
+      #- DNSPLUGIN=cloudflare
+      #- CERTPROVIDER= #optional
+      #- DNSPLUGIN= #optional
+      - DUCKDNSTOKEN=$DUCKDNS_TOKEN
+      #- EMAIL=<e-mail> #optional
+      - ONLY_SUBDOMAINS=false #optional
+      #- DOCKER_MODS=linuxserver/mods:swag-crowdsec
+      #- EXTRA_DOMAINS=brownfunk.lan #optional
+      - STAGING=false #optional
+      - DOCKER_MODS=ghcr.io/linuxserver/mods:swag-crowdsec
+      - CROWDSEC_API_KEY=${CROWDSEC_SWAG_API_KEY}
+      - CROWDSEC_LAPI_URL=http://crowdsec:8080
+    volumes:
+      - $DOCKER_CONFIG_PATH/swag:/config
+    ports:
+      - 443:443
+      - 555:80
+    restart: unless-stopped
+  ##############
+  #  reverse-proxy:
+  ## The official v2 Traefik docker image
+  #image: traefik:latest
+  #container_name: traefik
+  ## Enables the web UI and tells Traefik to listen to docker
+  #hostname: brownfunk
+  #domainname: brownfunk.lan
+  #command:
+  #- "--api.insecure=true"
+  #- "--providers.docker=true"
+  #- "--entrypoints.web.address=:80"
+  #ports:
+  ## The HTTP port
+  #- "81:80"
+  ## The Web UI (enabled by --api.insecure=true)
+  #- "8087:8080"
+  #volumes:
+  ## So that Traefik can listen to the Docker events
+  #- /var/run/docker.sock:/var/run/docker.sock
+  #dns:
+  #- $PIHOLE_DOCKER_SUB_IP_DNS
+  #labels:
+  #- traefik.enable=true
+  #- traefik.docker.network=web
+  #- traefik.http.routers.traefik.rule=Host(`traefik.brownfunk.lan`)
+  #- traefik.http.routers.traefik.entrypoints=http
+  #- traefik.http.services.traefik.loadbalancer.server.port=8087
 
-################3
+  ################3
   ldap-auth:
     image: lscr.io/linuxserver/ldap-auth
-    container_name: ldap-auth
+    #container_name: ldap-auth
     environment:
       - TZ=$TZ
       #- F#ERNETKEY= #optional
@@ -1064,11 +1155,11 @@ services:
       - 8899:8888
       - 9900:9000
     restart: unless-stopped
-####################
-### Wallabag
+  ####################
+  ### Wallabag
   wallabag:
     image: wallabag/wallabag
-    container_name: wallabag
+    #container_name: wallabag
     dns:
       - $PIHOLE_DOCKER_SUB_IP_DNS
     networks:
@@ -1095,7 +1186,7 @@ services:
     labels:
       com.centurylinklabs.watchtower.enable: true
   redis:
-    container_name: redis
+    #container_name: redis
     image: redis:alpine
     ports:
       - 6379:6379
@@ -1107,10 +1198,10 @@ services:
       - TZ=$TZ
     labels:
       com.centurylinklabs.watchtower.enable: true
-##########
+  ##########
   portainer:
     image: portainer/portainer-ce
-    container_name: portainer
+    #container_name: portainer
     environment:
       - WATCHTOWER_CLEANUP=true
     ports:
@@ -1123,13 +1214,13 @@ services:
     restart: unless-stopped
     labels:
       com.centurylinklabs.watchtower.enable: true
-###########
+  ###########
   wordpress:
     image: wordpress:5-php7.4-apache
     #image: wordpress:6.2.0-php8.2-apache
-    container_name: wordpress
+    #container_name: wordpress
     ports:
-       - 5555:80
+      - 5555:80
     environment:
       WORDPRESS_DB_HOST: $DB_WP_URL
       WORDPRESS_DB_USER: $DB_WP_USER
@@ -1147,14 +1238,14 @@ services:
       - mariadb
     restart: unless-stopped
     volumes:
-       - $DOCKER_CONFIG_PATH/wordpress:/var/www/html
-###########
+      - $DOCKER_CONFIG_PATH/wordpress:/var/www/html
+  ###########
   wordpress_diary:
     #image: wordpress:latest
     image: wordpress:6.2.0-php8.2-apache
-    container_name: wordpress_diary
+    #container_name: wordpress_diary
     ports:
-       - 5556:80
+      - 5556:80
     depends_on:
       - mariadb
       - pihole
@@ -1170,14 +1261,14 @@ services:
       - frontend
     restart: unless-stopped
     volumes:
-       - $DOCKER_CONFIG_PATH/wordpress_diary:/var/www/html
+      - $DOCKER_CONFIG_PATH/wordpress_diary:/var/www/html
     labels:
       com.centurylinklabs.watchtower.enable: true
-#########################
-### bazarr
+  #########################
+  ### bazarr
   bazarr:
     image: linuxserver/bazarr
-    container_name: bazarr
+    #container_name: bazarr
     environment:
       - PUID=$PUID_USER
       - PGID=$PGID_USER
@@ -1199,28 +1290,28 @@ services:
     networks:
       - frontend
     restart: unless-stopped
-###################
-  searx:
-    image: searx/searx
-    container_name: searx
-    volumes:
-      - $DOCKER_CONFIG_PATH/searx:/etc/searx
-    ports:
-      - 9324:8080
-    environment:
-      - PUID=$PUID_USER
-      - PGID=$PGID_USER
-      - TZ=$TZ
-      - WATCHTOWER_CLEANUP=true
-    restart: unless-stopped
-    labels:
-      com.centurylinklabs.watchtower.enable: true
-###################
+  ###################
+  # searx:
+  #image: searx/searx
+  ##container_name: searx
+  #volumes:
+  #- $DOCKER_CONFIG_PATH/searx:/etc/searx
+  #ports:
+  #- 9324:8080
+  #environment:
+  #- PUID=$PUID_USER
+  #- PGID=$PGID_USER
+  #- TZ=$TZ
+  #- WATCHTOWER_CLEANUP=true
+  #restart: unless-stopped
+  #labels:
+  #com.centurylinklabs.watchtower.enable: true
+  ####################
 
-###############
+  ###############
   komga:
     image: gotson/komga
-    container_name: komga
+    #container_name: komga
     volumes:
       - type: bind
         source: $DOCKER_CONFIG_PATH/komga
@@ -1250,11 +1341,11 @@ services:
       - frontend
     labels:
       com.centurylinklabs.watchtower.enable: true
-#########################
-#### wireguard
+  #########################
+  #### wireguard
   wireguard:
     image: linuxserver/wireguard
-    container_name: wireguard
+    #container_name: wireguard
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
@@ -1274,12 +1365,12 @@ services:
     ports:
       - 51820:51820/udp
     #sysctls:
-      #- net.ipv4.conf.all.src_valid_mark=1
+    #- net.ipv4.conf.all.src_valid_mark=1
     restart: always
-#### wireguard
+  #### wireguard
   wireguard2:
     image: linuxserver/wireguard
-    container_name: wireguard2
+    #container_name: wireguard2
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
@@ -1303,30 +1394,31 @@ services:
     networks:
       - frontend
     #sysctls:
-      #- net.ipv4.conf.all.src_valid_mark=1
+    #- net.ipv4.conf.all.src_valid_mark=1
     restart: always
-############################
-# doc on https://github.com/kylemanna/docker-openvpn/blob/master/docs/docker-compose.md
+  ############################
+  # doc on https://github.com/kylemanna/docker-openvpn/blob/master/docs/docker-compose.md
   openvpn:
     cap_add:
-     - NET_ADMIN
+      - NET_ADMIN
     image: kylemanna/openvpn
-    container_name: openvpn
+    #container_name: openvpn
     ports:
-     - "1194:1194/udp"
+      - "1194:1194/udp"
     restart: always
     volumes:
-     - $DOCKER_CONFIG_PATH/openvpn-data/conf:/etc/openvpn
-######################
-# rsync server
+      - $DOCKER_CONFIG_PATH/openvpn-data/conf:/etc/openvpn
+  ######################
+  # rsync server
   rsync-server:
     image: quentintin/rsync-server
-    container_name: rsync-server
+    #container_name: rsync-server
     volumes:
       - $HOME/.ssh/id_rsa.pub:/root/.ssh/authorized_keys
       - $EBOOKS_AUDIOBOOKS_PATH:/data/ebooks_audiobooks:ro
       - $EBOOKS_FR_PATH:/data/ebooks_fr:ro
       - $GAMES_PATH:/data/games:ro
+      - $PS4_PATH:/data/PS4:ro
       - $MOVIES_PATH:/data/movies:ro
       - $MOVIES_FR_PATH:/data/Movies(French):ro
       - $MOVIES_SPORT_PATH:/data/Sport:ro
@@ -1345,15 +1437,17 @@ services:
       #- PASSWORD=nopass
       PUID: $PUID_USER
       PGID: $PGID_USER
+    networks:
+      frontend:
     ports:
       #- "873:873" #uncomment if want to use rsyncd
-      - "9000:22"
+      - "9000:22" #  for tailscale+LAN
     restart: always
-#######################
-# Samba
+  #######################
+  # Samba
   samba:
     image: dperson/samba
-    container_name: samba
+    #container_name: samba
     environment:
       TZ: $TZ
       PUID: $PUID_USER
@@ -1377,10 +1471,12 @@ services:
       - $TORRENT_PATH:/share7:ro
       - $SELF_IMPROVEMENT_PATH:/share8:ro
       - $PODCASTS_PATH:/share9:ro
+      - $TV_SHOWS_PATH:/share10:ro
     command: |
       -s "Ebooks;/share1;yes;yes;yes;all;none;$USER;ebooks share ro"
       -s "Games;/share2;yes;yes;yes;all;none;$USER;games share ro"
       -s "Movies;/share3;yes;yes;yes;all;none;$USER;movies share ro"
+      -s "Shows;/share10;yes;yes;yes;all;none;$USER;shows share ro"
       -s "Music;/share4;yes;yes;yes;all;none;$USER;music share ro"
       -s "Pictures;/share5;yes;no;no;$USER;$USER;$USER;pictures ro except user"
       -s "Shared;/share6;yes;no;yes;guest,$USER;guest,$USER;guest,$USER;shared rw"
@@ -1391,10 +1487,10 @@ services:
       -u "guest;guest"
       -g "map to guest = Bad User"
       -g "guest account = nobody"
-#######################
+  #######################
   filebrowser:
     image: filebrowser/filebrowser:s6
-    container_name: filebrowser
+    #container_name: filebrowser
     environment:
       - PUID=$PUID_USER
       - PGID=$PGID_USER
@@ -1411,6 +1507,7 @@ services:
       - $EBOOKS_AUDIOBOOKS_PATH:/srv/ebooks_audiobooks:ro
       - $MUSIC_PATH:/srv/music:ro
       - $MOVIES_PATH:/srv/movies:ro
+      - $TV_SHOWS_PATH:/srv/tv_shows:ro
       - $TORRENT_PATH:/srv/torrent:ro
       - $SELF_IMPROVEMENT_PATH:/srv/self_improvement:ro
       - $GAMES_PATH:/srv/games:ro
@@ -1418,41 +1515,41 @@ services:
     restart: unless-stopped
     labels:
       com.centurylinklabs.watchtower.enable: true
-###################3
-#  h5ai:
-    #image: awesometic/h5ai
-    #container_name: h5ai
-    #volumes:
-      #- $SELF_IMPROVEMENT_PATH:/h5ai:ro
-      #- $DOCKER_CONFIG_PATH/h5ai:/config
-    #environment:
-      #- TZ=$TZ
-    #ports:
-      #- 9296:80
-#    restart: unless-stopped
-#####################
-#  diun:
-    #image: crazymax/diun:latest
-    #container_name: diun
-    #volumes:
-      #- $DOCKER_CONFIG_PATH/diun/data:/data
-      #- "/var/run/docker.sock:/var/run/docker.sock"
-    #environment:
-      #- TZ=$TZ
-      #- "LOG_LEVEL=info"
-      #- "LOG_JSON=false"
-      #- "DIUN_WATCH_WORKERS=20"
-      #- "DIUN_WATCH_SCHEDULE=0 */6 * * *"
-      #- "DIUN_PROVIDERS_DOCKER=true"
-      #- "DIUN_PROVIDERS_DOCKER_WATCHSTOPPED=true"
-    #labels:
-      #- "diun.enable=true"
-      #- "diun.watch_repo=true"
-#    restart: always
-#######################
+  ###################3
+  #  h5ai:
+  #image: awesometic/h5ai
+  #container_name: h5ai
+  #volumes:
+  #- $SELF_IMPROVEMENT_PATH:/h5ai:ro
+  #- $DOCKER_CONFIG_PATH/h5ai:/config
+  #environment:
+  #- TZ=$TZ
+  #ports:
+  #- 9296:80
+  #    restart: unless-stopped
+  #####################
+  #  diun:
+  #image: crazymax/diun:latest
+  #container_name: diun
+  #volumes:
+  #- $DOCKER_CONFIG_PATH/diun/data:/data
+  #- "/var/run/docker.sock:/var/run/docker.sock"
+  #environment:
+  #- TZ=$TZ
+  #- "LOG_LEVEL=info"
+  #- "LOG_JSON=false"
+  #- "DIUN_WATCH_WORKERS=20"
+  #- "DIUN_WATCH_SCHEDULE=0 */6 * * *"
+  #- "DIUN_PROVIDERS_DOCKER=true"
+  #- "DIUN_PROVIDERS_DOCKER_WATCHSTOPPED=true"
+  #labels:
+  #- "diun.enable=true"
+  #- "diun.watch_repo=true"
+  #    restart: always
+  #######################
   firefox:
     image: lscr.io/linuxserver/firefox:latest
-    container_name: firefox
+    #container_name: firefox
     security_opt:
       - seccomp:unconfined #optional
     environment:
@@ -1466,28 +1563,41 @@ services:
     shm_size: "1gb"
     restart: unless-stopped
 
-############
-#  sheetable:
-    #container_name: sheetable
-    #restart: unless-stopped
-    #image: vallezw/sheetable
-    #ports:
-      #- 8780:8080
-    #environment:
-      #- CONFIG_PATH=/app/config/
-    #volumes:
-      #- /etc/localtime:/etc/localtime:ro
-      #- $DOCKER_CONFIG_PATH/sheetable:/app/config
-    #networks:
-      #frontend:
-    #dns:
-      #- $PIHOLE_DOCKER_SUB_IP_DNS
-    #labels:
-#      com.centurylinklabs.watchtower.enable: true
+  ############
+  #  sheetable:
+  #container_name: sheetable
+  #restart: unless-stopped
+  #image: vallezw/sheetable
+  #ports:
+  #- 8780:8080
+  #environment:
+  #- CONFIG_PATH=/app/config/
+  #volumes:
+  #- /etc/localtime:/etc/localtime:ro
+  #- $DOCKER_CONFIG_PATH/sheetable:/app/config
+  #networks:
+  #frontend:
+  #dns:
+  #- $PIHOLE_DOCKER_SUB_IP_DNS
+  #labels:
+  #      com.centurylinklabs.watchtower.enable: true
 
-###############
+  ###############
+
+  lingodiary:
+    image: lozzaroo/lingodiary
+    ports:
+      - 8083:8084
+    volumes:
+      - /media/lbesnard/bfunk_10tb_4/lingoDiary/data:/app/.venv # 👈 bind mount replaces named volume
+      - /media/lbesnard/bfunk_10tb_4/lingoDiary/config:/app/.config/lingoDiary # 👈 bind mount replaces named volume
+    environment:
+      # CONFIG_PATH: /app/.config/lingoDiary/config.yaml # Update path to reflect /app location
+      SECRET_KEY: "bceac54fc00cbdfee69e3f10905b73ec550eb9bf6779a9476471171170493962" # python -c "import secrets; print(secrets.token_hex(32))"
+      # CONFIG_ROOT: /app/.config/lingoDiary # Update path to reflect /app location
+
   ownfoil:
-    container_name: ownfoil
+    #container_name: ownfoil
     image: a1ex4/ownfoil
     volumes:
       - $SWITCH_PATH:/games
@@ -1507,50 +1617,50 @@ services:
     labels:
       com.centurylinklabs.watchtower.enable: true
 
-  ownfoilv2:
-    container_name: ownfoilv2
-    image: a1ex4/ownfoil
-    environment:
-      # For write permission in config directory
-      - PUID=1000
-      - PGID=1000
-    volumes:
-      - $SWITCH_PATH:/games
-      - $DOCKER_CONFIG_PATH/ownfoilv2/config:/app/config
-      # Uncomment if you want to edit and persist the app configuration
-      #- $DOCKER_CONFIG_PATH/ownfoil2/app:/app
-      #- $DOCKER_CONFIG_PATH/ownfoil2/nginx:/etc/nginx
-      # - ./app:/app
-      # Uncomment to setup basic auth
-      #- ./nginx:/etc/nginx
-    restart: unless-stopped
-    ports:
-      - "8002:8465"
-    networks:
-      frontend:
-    dns:
-      - $PIHOLE_DOCKER_SUB_IP_DNS
-    labels:
-      com.centurylinklabs.watchtower.enable: true
+  #  ownfoilv2:
+  ##container_name: ownfoilv2
+  #image: a1ex4/ownfoil
+  #environment:
+  ## For write permission in config directory
+  #- PUID=1000
+  #- PGID=1000
+  #volumes:
+  #- $SWITCH_PATH:/games
+  #- $DOCKER_CONFIG_PATH/ownfoilv2/config:/app/config
+  ## Uncomment if you want to edit and persist the app configuration
+  ##- $DOCKER_CONFIG_PATH/ownfoil2/app:/app
+  ##- $DOCKER_CONFIG_PATH/ownfoil2/nginx:/etc/nginx
+  ## - ./app:/app
+  ## Uncomment to setup basic auth
+  ##- ./nginx:/etc/nginx
+  #restart: unless-stopped
+  #ports:
+  #- "8002:8465"
+  #networks:
+  #frontend:
+  #dns:
+  #- $PIHOLE_DOCKER_SUB_IP_DNS
+  #labels:
+  #      com.centurylinklabs.watchtower.enable: true
 
-#######################
-#  webtop:
-    #image: ghcr.io/linuxserver/webtop:alpine-mate
-    #container_name: webtop
-    #environment:
-       #- PUID=$PUID_USER
-       #- PGID=$PGID_USER
-       #- TZ=Asia/India
-    #privileged: true
-    #volumes:
-       #- $DOCKER_CONFIG_PATH/webtop:/config
-    #ports:
-       #- 4000:3000
-    #shm_size: "1gb"
-#    restart: unless-stopped
-#
+  #######################
+  #  webtop:
+  #image: ghcr.io/linuxserver/webtop:alpine-mate
+  #container_name: webtop
+  #environment:
+  #- PUID=$PUID_USER
+  #- PGID=$PGID_USER
+  #- TZ=Asia/India
+  #privileged: true
+  #volumes:
+  #- $DOCKER_CONFIG_PATH/webtop:/config
+  #ports:
+  #- 4000:3000
+  #shm_size: "1gb"
+  #    restart: unless-stopped
+  #
   scrutiny:
-    container_name: scrutiny
+    #container_name: scrutiny
     image: ghcr.io/analogj/scrutiny:master-omnibus
     cap_add:
       - SYS_RAWIO
@@ -1562,11 +1672,10 @@ services:
       - $DOCKER_CONFIG_PATH/scrutiny/config:/opt/scrutiny/config
       - $DOCKER_CONFIG_PATH/scrutiny/influxdb:/opt/scrutiny/influxdb
     devices:
-      - "/dev/sda"
-      - "/dev/sdh"
-      - "/dev/sdg"
-      - "/dev/sdi"
-      - "/dev/sdf"
+      - "/dev/sdc"
+      - "/dev/sdd"
+      - "/dev/sde"
+      - "/dev/sdb"
     environment:
       - COLLECTOR_CRON_SCHEDULE="*/5 * * * *"
       - PUID=$PUID_USER
@@ -1576,39 +1685,37 @@ services:
     labels:
       com.centurylinklabs.watchtower.enable: true
     restart: unless-stopped
-#######################
-#### netdata
-  netdata:
-    image: netdata/netdata
-    container_name: netdata
-    hostname: $SERVER_URL # set to fqdn of host
-    ports:
-      - 19999:19999
-    restart: unless-stopped
-    cap_add:
-      - SYS_PTRACE
-    security_opt:
-      - apparmor:unconfined
-    volumes:
-      - netdatalib:/var/lib/netdata
-      - netdatacache:/var/cache/netdata
-      - /etc/passwd:/host/etc/passwd:ro
-      - /etc/group:/host/etc/group:ro
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /etc/os-release:/host/etc/os-release:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      - PUID=$PUID_USER
-      - PGID=996
-      - TZ=$TZ
-      - WATCHTOWER_CLEANUP=true
-    labels:
-      com.centurylinklabs.watchtower.enable: true
+  #######################
+  #### netdata
+  # netdata:
+  #   image: netdata/netdata
+  #   #container_name: netdata
+  #   hostname: $SERVER_URL # set to fqdn of host
+  #   ports:
+  #     - 19999:19999
+  #   restart: unless-stopped
+  #   cap_add:
+  #     - SYS_PTRACE
+  #   security_opt:
+  #     - apparmor:unconfined
+  #   volumes:
+  #     - netdatalib:/var/lib/netdata
+  #     - netdatacache:/var/cache/netdata
+  #     - /etc/passwd:/host/etc/passwd:ro
+  #     - /etc/group:/host/etc/group:ro
+  #     - /proc:/host/proc:ro
+  #     - /sys:/host/sys:ro
+  #     - /etc/os-release:/host/etc/os-release:ro
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #   environment:
+  #     - PUID=$PUID_USER
+  #     - PGID=996
+  #     - TZ=$TZ
+  #     - WATCHTOWER_CLEANUP=true
+  #   labels:
+  #     com.centurylinklabs.watchtower.enable: true
 volumes:
-  netdatalib:
-  netdatacache:
+  # netdatalib:
+  # netdatacache:
   romm_resources:
   romm_redis_data:
-###################
-

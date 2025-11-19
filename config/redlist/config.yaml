@@ -1,9 +1,9 @@
 # Configuration file at "/home/lbesnard/.config/redlist/config.yaml"
 
-beets_library: /media/lbesnard/bfunk_10tb_3/music/beets_library_redlist.blb
-beets_match_threshold: 0.25   # maximum difference between tracks to match (lower is stricter)
+beets_library: /media/lbesnard/bfunk_12tb_1/music/beets_library_redlist.blb
+beets_match_threshold: 0.25 # maximum difference between tracks to match (lower is stricter)
 torrent_directory: .
-m3u_directory: /media/lbesnard/bfunk_10tb_3/music/beet_library/playlists_navidrome
+m3u_directory: /media/lbesnard/bfunk_12tb_1/music/beet_library/playlists_navidrome
 pinentry: yes
 enable_deluge: no
 restrict_album: no
@@ -11,13 +11,13 @@ overwrite_m3u: yes
 missing_track_playlist:
 
 redacted:
-    disable: yes
-    api_key: REDACTED
-    username: REDACTED
-    password: REDACTED
-    save_cookies: yes
-    use_fl_tokens: no
-    format_preferences:
+  disable: yes
+  api_key: REDACTED
+  username: REDACTED
+  password: REDACTED
+  save_cookies: yes
+  use_fl_tokens: no
+  format_preferences:
     - MP3 V0
     - MP3 320
     - FLAC .*
@@ -25,9 +25,8 @@ redacted:
     - .*
 
 deluge:
-    host: localhost
-    port: 58846
-    username: REDACTED
-    password: REDACTED
-    add_paused: no
-
+  host: localhost
+  port: 58846
+  username: REDACTED
+  password: REDACTED
+  add_paused: no
