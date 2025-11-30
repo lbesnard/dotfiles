@@ -305,3 +305,5 @@ zstyle ':completion:*:(ssh|scp|rsync):*:hosts-ipaddr' ignored-patterns '^(<->.<-
 eval "$(zoxide init zsh --cmd j)"
 unalias jq 2>/dev/null
 
+
+zinit light chitoku-k/fzf-zsh-completions
