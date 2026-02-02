@@ -958,3 +958,172 @@ PY
 }
 
  
+## taskwarrior
+# Short alias for general use
+alias t='task'
+
+# Interactive "Task Done" with Project Label
+td() {
+    local task_id=$(task status:pending export | jq -r '.[] | "\(.id) [\(.project // "no project")] \(.description)"' | \
+        fzf --height 40% --reverse --header "Select task to complete" --preview 'task {1} info' | awk '{print $1}')
+    
+    if [[ -n "$task_id" ]]; then
+        task "$task_id" done
+    fi
+}
+
+# Quick view of today's specific deadlines
+alias tt='task due:today list'
+#
+# Work Tomorrow
+alias twt='task add pro:Work due:tomorrow'
+# Personal Tomorrow
+alias tpt='task add pro:Personal due:tomorrow'
+
+# --- BACKLOG PILLAR (No Due Date) ---
+# Work Backlog
+alias twb='task add pro:Work'
+# Personal Backlog
+alias tpb='task add pro:Personal'
+
+# --- TODAY PILLAR (For consistency) ---
+alias tw='task add pro:Work due:today'
+alias tp='task add pro:Personal due:today'
+
+# Shows everything due in the next 48 hours
+alias tnext='task due.before:today+2d list'
+
+# Triage with Project Labels
+t2t() {
+    local task_ids=$(task status:pending export | jq -r '.[] | "\(.id) [\(.project // "no project")] \(.description)"' | \
+        fzf --multi \
+            --reverse \
+            --header "TAB to select multiple / ENTER to set to Today" \
+            --preview 'task {1} info' \
+            --height 40% | awk '{print $1}')
+
+    if [[ -n "$task_ids" ]]; then
+        echo "$task_ids" | while read -r id; do
+            task "$id" modify due:today
+        done
+        echo "✅ Selected tasks moved to Today."
+        task today
+    else
+        echo "No tasks selected."
+    fi
+}
+tnot() {
+    # 1. Get IDs, Project, and Description for today's pending tasks
+    local selected=$(task due:today status:pending export | \
+        jq -r '.[] | "\(.id) [\(.project // "none")] \(.description)"' | \
+        fzf -m --reverse --header "Remove from Today (Clear Due Date)" --height 40%)
+
+    # 2. Extract the IDs
+    local ids=$(echo "$selected" | awk '{print $1}')
+
+    # 3. If IDs exist, remove the due date
+    if [[ -n "$ids" ]]; then
+        local id_list=$(echo $ids | tr '\n' ' ')
+        # Setting due: with nothing after it removes the date in Taskwarrior
+        task $id_list modify due:
+        echo "\e[38;5;208mTasks moved back to backlog.\e[0m"
+    fi
+}
+
+alias thist='task status:completed end.after:today-1wk list'
+
+# Purge/Delete
+tpurge() {
+    # 1. Fetch data using UUID (column 1) but hide it from view using --with-nth
+    local gen_list='task status:pending export | jq -r ".[] | \"\(.uuid) [\(.project // \"none\")] \(.description) \(if .annotations then \" | NOTES: \" + ([.annotations[] | .description] | join(\" | \")) else \"\" end)\""'
+
+    local selected=$(eval $gen_list | fzf --multi --ansi --reverse \
+        --header "TRASH CAN: TAB to select multiple | ENTER to Delete" \
+        --with-nth=2.. \
+        --preview 'task {1} info' \
+        --height 70%)
+
+    if [[ -n "$selected" ]]; then
+        # Extract UUIDs and delete them all in ONE command to avoid ID-shifting and prompts
+        local uuids=$(echo "$selected" | awk '{print $1}' | tr '\n' ' ')
+        
+        # rc.confirmation=no bypasses the "Are you sure?" prompt
+        task $uuids delete rc.confirmation=no
+        
+        # Optional: Run the actual system purge to clean the database immediately
+        task purge rc.confirmation=no
+        echo "✅ Selected tasks have been permanently deleted."
+    else
+        echo "Nothing deleted."
+    fi
+}
+
+# Select a task and set a due time for today
+ttime() {
+    local task_id=$(task status:pending export | jq -r '.[] | "\(.id) [\(.project)] \(.description)"' | fzf --reverse --header "Set time for today (HH:MM)")
+    if [[ -n "$task_id" ]]; then
+        echo -n "Enter time (e.g., 14:00): "
+        read task_time
+        task ${task_id%% *} modify due:todayT$task_time
+    fi
+}
+#
+#
+# Wait until tomorrow (or a date) to see this task again
+alias twait='task $(task status:pending export | jq -r ".[] | \"\(.id) \(.description)\"" | fzf --reverse --header "Wait until when?") modify wait:tomorrow'
+
+tann() {
+    local task_id=$(task status:pending export | jq -r '.[] | "\(.id) \(.description)"' | fzf --reverse --header "Add note/annotation")
+    if [[ -n "$task_id" ]]; then
+        echo -n "Annotation: "
+        read note
+        task ${task_id%% *} annotate "$note"
+    fi
+}
+
+alias twork='task project:Work list'
+alias tpers='task project:Personal list'
+
+# Interactive "Task Edit" with fzf
+te() {
+    # Select task, then open the full metadata in your $EDITOR (nvim/vim)
+    local task_id=$(task status:pending export | jq -r '.[] | "\(.id) [\(.project // "no project")] \(.description)"' | \
+        fzf --reverse --header "Select task to EDIT" --preview 'task {1} info' | awk '{print $1}')
+    
+    if [[ -n "$task_id" ]]; then
+        task "$task_id" edit
+    fi
+}
+
+# ttt 2.0: Browse Today's tasks with Hotkeys
+ttt() {
+    # This local function helps refresh the list inside fzf after an action
+    local gen_list='task due:today export | jq -r ".[] | \"\(.id) [\(.project // \"no project\")] \(.description)\""'
+
+    eval $gen_list | \
+    fzf --reverse \
+        --header "ENTER: Done | CTRL-E: Edit | CTRL-U: Undo Last | CTRL-P: Postpone" \
+        --preview 'task {1} info' \
+        --preview-window=right:60%:wrap \
+        --bind "enter:execute(task {1} done)+reload($gen_list)" \
+        --bind "ctrl-e:execute(task {1} edit)+reload($gen_list)" \
+        --bind "ctrl-p:execute(task {1} modify due:tomorrow)+reload($gen_list)" \
+        --bind "ctrl-u:execute(task undo)+reload($gen_list)"
+}
+
+
+ttd() {
+    # 1. Get IDs of tasks due today
+    # 2. Use fzf to select (Tab to select multiple)
+    # 3. Extract the ID and mark as done
+    local ids=$(task due:today status:pending export | \
+                jq -r '.[] | "\(.id) \(.description)"' | \
+                fzf -m --header "Select tasks to complete (Tab to multi-select)" --height 40% | \
+                awk '{print $1}')
+
+    if [[ -n "$ids" ]]; then
+        # Convert newline-separated IDs to space-separated
+        local id_list=$(echo $ids | tr '\n' ' ')
+        task $id_list done
+    fi
+}

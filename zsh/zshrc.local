@@ -33,13 +33,19 @@ else
     start_agent;
 fi
 
-# add data-services
-if [ ! -z ${SSH_TTY} ]; then
-    source $DATA_SERVICES_DIR/profile.d/* &>/dev/null;
-    source $DATA_SERVICES_DIR/lib/common/* &>/dev/null;
-    compinit $DATA_SERVICES_DIR/profile.d/*;
-fi
 
+# add data-services
+if [ -n "${SSH_TTY}" ] && [ -d "$DATA_SERVICES_DIR" ]; then
+    # Check if the directories contain files before sourcing/initializing
+    if [ -d "$DATA_SERVICES_DIR/profile.d" ] && [ "$(ls -A "$DATA_SERVICES_DIR/profile.d")" ]; then
+        source $DATA_SERVICES_DIR/profile.d/* &>/dev/null
+        compinit $DATA_SERVICES_DIR/profile.d/* &>/dev/null
+    fi
+
+    if [ -d "$DATA_SERVICES_DIR/lib/common" ] && [ "$(ls -A "$DATA_SERVICES_DIR/lib/common")" ]; then
+        source $DATA_SERVICES_DIR/lib/common/* &>/dev/null
+    fi
+fi
 
 # https://github.com/schollz/croc
 PROG=croc
