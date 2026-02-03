@@ -74,21 +74,4 @@ zinit light-mode for \
 # zprof #debug startup time
 
 if [ -e /home/lbesnard/.nix-profile/etc/profile.d/nix.sh ]; then . /home/lbesnard/.nix-profile/etc/profile.d/nix.sh; fi # added by Nix installer
-# zerobrew
-export ZEROBREW_DIR=/home/lbesnard/.zerobrew
-export ZEROBREW_BIN=/home/lbesnard/.local/bin
-export ZEROBREW_ROOT=/home/lbesnard/.local/share/zerobrew
-export ZEROBREW_PREFIX=/home/lbesnard/.local/share/zerobrew/prefix
-export PKG_CONFIG_PATH="/home/lbesnard/.local/share/zerobrew/prefix/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
-_zb_path_append() {
-    local argpath="$1"
-    case ":${PATH}:" in
-        *:"$argpath":*) ;;
-        *) export PATH="$argpath:$PATH" ;;
-    esac;
-}
-_zb_path_append $ZEROBREW_BIN
-_zb_path_append $ZEROBREW_PREFIX/bin
 
-# zerobrew
-export PATH="/home/lbesnard/.local/share/zerobrew/prefix/bin:$PATH"
