@@ -61,7 +61,7 @@ fi
 
 #unalias  fd >/dev/null 2>/dev/null # in order to use https://github.com/sharkdp/fd
 #
-if ! command -v fd &> /dev/null; then
+if command -v fd &> /dev/null; then
   PYCHARM_BIN_PATH=/home/lbesnard/.local/share/JetBrains/Toolbox/apps/PyCharm-C/ch-0/221.5787.24/bin/pycharm.sh
   [[ ! -f $PYCHARM_BIN_PATH ]] && PYCHARM_BIN_PATH=`fd -aHL --type f pycharm.sh ~/.local/`
   [[ ! -z $PYCHARM_BIN_PATH ]] && PYCHARM_PATH=$(dirname $PYCHARM_BIN_PATH) #&& export PATH="$PYCHARM_PATH:${PATH}"
