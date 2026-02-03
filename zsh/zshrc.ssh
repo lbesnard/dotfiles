@@ -17,3 +17,6 @@ if [[ -n "$SSH_AUTH_SOCK" && -n "$TMUX" ]]; then
     export SSH_AUTH_SOCK=$(tmux show-environment -s SSH_AUTH_SOCK 2>/dev/null | sed 's/^SSH_AUTH_SOCK=//')
 fi
 
+
+# Load docker fzf completion LAST
+source ~/.zsh_complete/docker-fzf-completion.zsh

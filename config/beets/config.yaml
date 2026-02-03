@@ -8,7 +8,7 @@ badfiles:
     #    flac: flac --test --warnings-as-errors --silent
 
 chroma:
-    auto: yes
+    auto: no
 
 convert:
     auto: no
@@ -19,7 +19,7 @@ convert:
       alac:
         command: ffmpeg -i $source -y -vn -aq 2 $dest
         extension: flac
-
+#
 directory: /media/lbesnard/bfunk_12tb_1/music/beet_library/
 
 duplicates:
@@ -51,7 +51,7 @@ import:
     languages: en
     resume: yes
     autotag: yes
-
+#
 item_fields:
     multidisc: 1 if disctotal > 1 else 0
     genre_fix: genre.title()
@@ -62,8 +62,11 @@ lastgenre:
     auto: yes
     fallback: 'unknown'
     source: artist
-    canonical: ~/.config/beets/genres-tree.yaml
-    whitelist: ~/.config/beets/beets_genre
+    extended_debug: yes
+    canonical: /home/lbesnard/.config/beets/genres-tree.yaml
+    whitelist: /home/lbesnard/.config/beets/beets_genre
+    force: yes          # <--- this tells it to overwrite existing genres
+    keep_existing: no   # <--- replace them instead of keeping old tags
     #prefer_specific: true
 
 wlg:
@@ -71,10 +74,11 @@ wlg:
     force: no
     count: 1
     separator: ', '
-    whitelist: ~/.config/beets/beets_genre
+    # whitelist: beets
+    whitelist: /home/lbesnard/.config/beets/beets_genre
 
-library: /media/lbesnard/bfunk_12tb_1/music/beets_library.blb
-
+library: /media/lbesnard/bfunk_12tb_1/music/bfunk_library.blb
+#
 replaygain:
     backend: ffmpeg
 
@@ -122,11 +126,9 @@ discogs:
     data_source_mismatch_penalty: 0.8  # Higher penalty = less preferred
 
 plugins:
-    # - acousticbrainz
-    # - artistcountry
     - badfiles
     - bareasc
-    - chroma
+    # - chroma
     - cmus
     - convert
     - discogs
@@ -137,7 +139,7 @@ plugins:
     - fromfilename
     - ftintitle
     - fuzzy
-    - hook
+    # - hook
     - importadded
     - info
     - inline
@@ -152,7 +154,7 @@ plugins:
     - scrub
     - smartplaylist
     - web
-    # - wlg
+    - wlg
     - xtractor
 
 pluginpath:
@@ -173,8 +175,8 @@ smartplaylist:
 hook:
   hooks:
     # renaming the "relative_to" part of the playlist created in smartplaylist so this can be used in the airsonic docker container automatically
-    - event: cli_exit
-      command: "sh -c 'bash /home/lbesnard/bin/beet_playlist_management.sh'"
+    # - event: cli_exit
+      # command: "sh -c 'bash /home/lbesnard/bin/beet_playlist_management.sh'"
     - event: import
       command: "sh -c 'bash /home/lbesnard/bin/beet_playlist_management.sh'"
 
@@ -239,6 +241,8 @@ match:
     strong_rec_thresh: 0.17      # match 90% or better for auto import
     medium_rec_thresh: 0.25
     rec_gap_thresh: 0.25
+    ignored_media: ['Data CD', 'DVD', 'DVD-Video', 'Blu-ray', 'HD-DVD',
+                    'VCD', 'SVCD', 'UMD', 'VHS']
     max_rec:
         missing_tracks: medium
         unmatched_tracks: medium
