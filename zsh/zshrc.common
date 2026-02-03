@@ -306,9 +306,7 @@ y() {
 }
 
 
-if command -v gh > /dev/null; then
-    gh completion -s zsh > ~/.zsh_alias/_gh && chmod +x ~/.zsh_alias/_gh
-fi
+command -v gh > /dev/null && gh completion -s zsh > ~/.zsh_alias/_gh && chmod +x ~/.zsh_alias/_gh
 
 # ------------------------
 # ssh select-pane 
@@ -324,7 +322,9 @@ zstyle ':completion:*:(ssh|scp|rsync):*:hosts-host' ignored-patterns '*(.|:)*' l
 zstyle ':completion:*:(ssh|scp|rsync):*:hosts-ipaddr' ignored-patterns '^(<->.<->.<->.<->|(|::)([[:xdigit:].]##:(#c,2))##(|%*))' '127.0.0.<->' '255.255.255.255' '::1' 'fe80::*'
 
 # zoxide init (lazy)
-eval "$(zoxide init zsh --cmd j)"
+#
+command -v zoxide > /dev/null && eval "$(zoxide init zsh --cmd j)"
+
 unalias jq 2>/dev/null
 
 zinit light chitoku-k/fzf-zsh-completions
