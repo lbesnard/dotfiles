@@ -137,7 +137,7 @@ services:
       - DOCKER_MODS=linuxserver/mods:jellyfin-opencl-intel
       - WATCHTOWER_CLEANUP=true
     volumes:
-      - $DOCKER_CONFIG_PATH/jellyfin:/config
+      - $JELLYFIN_DATA_PATH/:/config
       - ${TV_SHOWS_PATH}:/data/tvshows:ro
       - $TV_SHOWS_PATH/tubesync-downloads/video:/data/youtube:ro
       - $MOVIES_PATH:/data/movies:ro
@@ -190,6 +190,36 @@ services:
       - frontend
     labels:
       com.centurylinklabs.watchtower.enable: true
+
+  beets:
+    image: lscr.io/linuxserver/beets:latest
+    container_name: beets
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=$TZ
+
+      # linuxserver mods
+      - DOCKER_MODS=linuxserver/mods:universal-package-install
+
+      # system deps
+      - INSTALL_PACKAGES=ffmpeg|git
+
+      # python deps
+      - INSTALL_PIP_PACKAGES=beets[complete]|beets-autogenre|essentia
+
+    volumes:
+      - $HOME/.config/beets:/config
+      - $MUSIC_PATH/:/music
+      # - /TO_BE_DEFINED/import:/downloads
+
+      # Essentia models (SVMs)
+      # - /media/lbesnard/bfunk_12tb_1/essentia-models:/var/lib/essentia:ro
+
+    ports:
+      - 8337:8337
+
+    restart: unless-stopped
   ##################
   # Audiobooks
   audiobookshelf:
@@ -921,12 +951,18 @@ services:
       - $DOCKER_CONFIG_PATH/gluetun:/gluetun
     environment:
       # See https://github.com/qdm12/gluetun-wiki/tree/main/setup#setup
+      - VPN_PORT_FORWARDING=true
+      - VPN_PORT_FORWARDING_PROVIDER="private internet access"
       - VPN_SERVICE_PROVIDER=pia
       - VPN_TYPE=openvpn
       # OpenVPN:
       - OPENVPN_USER=$PIA_USERNAME
       - OPENVPN_PASSWORD=$PIA_PASSWORD
-      - SERVER_REGIONS=Switzerland,Cambodia,Egypt,France,Norway,Singapore,Australia # https://github.com/Lars-/PIA-servers/tree/master/regions
+      # - SERVER_REGIONS=Switzerland,Cambodia,Egypt,France,Norway,Singapore, # https://github.com/Lars-/PIA-servers/tree/master/regions
+      # AU Adelaide, AU Brisbane, AU Melbourne, AU Perth, AU Sydney, Albania, Algeria, Andorra, Argentina, Armenia, Australia Streaming Optimized, Austria, Bahamas, Bangladesh, Belgium, Bolivia, Bosnia and Herzegovina, Brazil, Bulgaria, CA Montreal, CA Ontario, CA Ontario Streaming Optimized, CA Toronto, CA Vancouver, Cambodia, Chile, China, Colombia, Costa Rica, Croatia, Cyprus, Czech Republic, DE Berlin, DE Frankfurt, DE Germany Streaming Optimized, DK Copenhagen, DK Streaming Optimized, ES Madrid, ES Valencia, Ecuador, Egypt, Estonia, FI Helsinki, FI Streaming Optimized, France, Georgia, Greece, Greenland, Guatemala, Hong Kong, Hungary, IT Milano, IT Streaming Optimized, Iceland, India, Indonesia, Ireland, Isle of Man, Israel, JP Streaming Optimized, JP Tokyo, Kazakhstan, Latvia, Liechtenstein, Lithuania, Luxembourg, Macao, Malaysia, Malta, Mexico, Moldova, Monaco, Mongolia, Montenegro, Morocco, NL Netherlands Streaming Optimized, Nepal, Netherlands, New Zealand, Nigeria, North Macedonia, Norway, Panama, Peru, Philippines, Poland, Portugal, Qatar, Romania, SE Stockholm, SE Streaming Optimized, Saudi Arabia, Serbia, Singapore, Slovakia, Slovenia, South Africa, South Korea, Sri Lanka, Switzerland, Taiwan, Turkey, UK London, UK Manchester, UK Southampton, UK Streaming Optimized, US Alabama, US Alaska, US Arkansas, US Atlanta, US Baltimore, US California, US Chicago, US Connecticut, US Denver, US East, US East Streaming Optimized, US Florida, US Honolulu, US Houston, US Idaho, US Indiana, US Iowa, US Kansas, US Kentucky, US Las Vegas, US Louisiana, US Maine, US Massachusetts, US Michigan, US Minnesota, US Mississippi, US Missouri, US Montana, US Nebraska, US New Hampshire, US New Mexico, US New York, US North Carolina, US North Dakota, US Ohio, US Oklahoma, US Oregon, US Pennsylvania, US Rhode Island, US Salt Lake City, US Seattle, US Silicon Valley, US South Carolina, US South Dakota, US Tennessee, US Texas, US Vermont, US Virginia, US Washington DC, US West, US West Streaming Optimized, US West Virginia, US Wilmington, US Wisconsin, US Wyoming, Ukraine, United Arab Emirates, Uruguay, Venezuela, Vietnam
+      # - SERVER_REGIONS=India # https://github.com/Lars-/PIA-servers/tree/master/regions
+      - SERVER_REGIONS=Netherlands # https://github.com/Lars-/PIA-servers/tree/master/regions
+      - VPN_PORT_FORWARDING_UP_COMMAND=/bin/sh -c "/gluetun/set-transmission-port.sh {{PORT}}"
       # Wireguard:
       # - WIREGUARD_PRIVATE_KEY=wOEI9rqqbDwnN8/Bpp22sVz48T71vJ4fYmFWujulwUU=
       # - WIREGUARD_ADDRESSES=10.64.222.21/32
@@ -1432,6 +1468,7 @@ services:
       - $PODCASTS_PATH:/data/podcasts:ro
       - $DOCKER_CONFIG_PATH:/data/docker:ro
       - $NEXTCLOUD_DATA_PATH:/data/nextcloud:ro
+      - $TORRENT_PATH/data/games:/data/games_torrent:ro
     environment:
       #- USERNAME=nouser
       #- PASSWORD=nopass
@@ -1616,6 +1653,17 @@ services:
       - $PIHOLE_DOCKER_SUB_IP_DNS
     labels:
       com.centurylinklabs.watchtower.enable: true
+
+  taskchampion:
+    image: ghcr.io/gothenburgbitfactory/taskchampion-sync-server:0.7.1
+    container_name: taskchampion
+    restart: always
+    environment:
+      - LISTEN=0.0.0.0:9000
+    ports:
+      - "9008:9000"
+    volumes:
+      - $DOCKER_CONFIG_PATH/taskchampion:/var/lib/taskchampion-sync-server
 
   #  ownfoilv2:
   ##container_name: ownfoilv2

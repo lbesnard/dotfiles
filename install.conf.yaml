@@ -71,6 +71,7 @@
     ~/.zshrc.ssh: {force: true, path: zsh/zshrc.ssh}
     ~/.zshrc: {force: true, path: zsh/zshrc}
     ~/.zsh_functions: {force: true, path: zsh/functions}
+    ~/.zsh_complete: {force: true, path: zsh/completions}
     ~/bfunk-docker-compose: {force: true, create: true, path: bfunk/docker-compose/}
     ~/bin: {path: bin, create: true, force: true}
     ~/Mobac/mapsources: {path: mobac/mapsources, create: true, force: true}

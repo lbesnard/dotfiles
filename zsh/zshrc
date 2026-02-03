@@ -75,3 +75,6 @@ zinit light-mode for \
 
 if [ -e /home/lbesnard/.nix-profile/etc/profile.d/nix.sh ]; then . /home/lbesnard/.nix-profile/etc/profile.d/nix.sh; fi # added by Nix installer
 
+fpath+=~/.zfunc; autoload -Uz compinit; compinit
+
+zstyle ':completion:*' menu select
