@@ -1,0 +1,299 @@
+# acousticbrainz:
+#     auto: yes
+#
+# badfiles:
+#     commands: {}
+#     #    commands:
+#     #    ogg: myoggchecker --opt1 --opt2
+#     #    flac: flac --test --warnings-as-errors --silent
+#
+# chroma:
+#     auto: yes
+#
+# convert:
+#     auto: no
+#     never_convert_lossy_files: yes
+#     quiet: false
+#     dest: /tmp/convert
+#     formats:
+#       alac:
+#         command: ffmpeg -i $source -y -vn -aq 2 $dest
+#         extension: flac
+#
+directory: /media/lbesnard/bfunk_12tb_1/music/beet_library/
+
+# duplicates:
+#     album: yes
+#     path: yes
+#
+# fetchart:
+#     auto: yes
+#     maxwidth: 1000
+#     cover_names: cover Cover front Front art album portada folder Folder
+#     google-key:
+#     sources:
+#         - filesystem
+#         - coverart: release
+#         - itunes
+#         - covertart: releasegroup
+#         - amazon
+#         - albumart
+#         - google
+#         - '*'
+#
+# ftintitle:
+#     auto: yes
+#
+import:
+    copy: no
+    move: no
+    write: no
+    languages: en
+    resume: yes
+    autotag: no
+#
+# item_fields:
+#     multidisc: 1 if disctotal > 1 else 0
+#     genre_fix: genre.title()
+#     genre_no_space: genre.lower().replace(' ','_')
+#
+# lastgenre:
+#     count: 1
+#     auto: yes
+#     fallback: 'unknown'
+#     source: artist
+#     canonical: ~/.config/beets/genres-tree.yaml
+#     whitelist: ~/.config/beets/beets_genre
+#     #prefer_specific: true
+#
+# wlg:
+#     auto: yes
+#     force: no
+#     count: 1
+#     separator: ', '
+#     whitelist: /home/lbesnard/.config/beets/beets_genre
+#
+library: /media/lbesnard/bfunk_12tb_1/music/bfunk_library.blb
+#
+# replaygain:
+#     backend: ffmpeg
+#
+# sort_item: albumartist+ album+ disc+ track+
+#
+# spotify:
+#     mode: open
+#     region_filter: US
+#     show_failures: on
+#     tiebreak: popularity
+#     regex: [
+#         {
+#             field: "albumartist", # Field in the item object to regex.
+#             search: "Something", # String to look for.
+#             replace: "Replaced" # Replacement value.
+#         },
+#         {
+#             field: "title",
+#             search: "Something Else",
+#             replace: "AlsoReplaced"
+#         }
+#     ]
+#
+#
+# #the:
+#     #the: yes
+#     #a: yes
+#     #format: '{0}, {1}'
+#     #strip: no
+# #    patterns: []
+#
+# threaded: yes
+#
+# paths:
+#     default: '$genre_fix/%title{$albumartist}/$original_year - $album/%if{$multidisc,Disc $disc/}$track $title'
+#     albumtype:soundtrack: Soundtracks/$albumartist - $original_year - $album/%if{$multidisc,Disc $disc/}$track $title
+#     singleton: '$albumartist/$year -  $album/$track $title'
+#     mis:1: '$albumartist/$year - $album/$track $title'
+#
+# per_disc_numbering: true
+#
+# musicbrainz:
+#     data_source_mismatch_penalty: 0.3  # Lower penalty = preferred
+# discogs:
+#     data_source_mismatch_penalty: 0.8  # Higher penalty = less preferred
+#
+# plugins:
+#     - badfiles
+#     - bareasc
+#     - chroma
+#     - cmus
+#     - convert
+#     - discogs
+#     - duplicates
+#     - edit
+#     - fetchart
+#     - fetchartist
+#     - fromfilename
+#     - ftintitle
+#     - fuzzy
+#     # - hook
+#     - importadded
+#     - info
+#     - inline
+#     - lastgenre
+#     - mbsync
+#     - musicbrainz
+#     - parentwork
+#     - play
+#     - random
+#     - replaygain
+#     - rewrite
+#     - scrub
+#     - smartplaylist
+#     - web
+#     - wlg
+#     - xtractor
+#
+# pluginpath:
+#     - ~/.config/beets/plugins/
+#     - ~/.config/beets/plugins/bandcamp/beetsplug
+#     - ~/.config/beets/plugins/airsonic/
+#     - ~/.config/beets/plugins/fetchartist/beetsplug/
+#     - ~/.config/beets/whatlastgenre_org/plugin/beets/beetsplug/
+#
+# # recreated at each run monthly import playlists
+# smartplaylist:
+#     relative_to: /media/lbesnard/bfunk_12tb_1/music/beet_library# as setup on docker container
+#     playlist_dir: /media/lbesnard/bfunk_12tb_1/music/playlists
+#     playlists:
+#         - name: 'New_%time{$added,%Y-%m}_$genre_no_space.m3u'
+#           query: 'added:2018-10..' # first month of using beet. monthly playlists will be created afterwards
+#
+# hook:
+#   hooks:
+#     # renaming the "relative_to" part of the playlist created in smartplaylist so this can be used in the airsonic docker container automatically
+#     # - event: cli_exit
+#       # command: "sh -c 'bash /home/lbesnard/bin/beet_playlist_management.sh'"
+#     - event: import
+#       command: "sh -c 'bash /home/lbesnard/bin/beet_playlist_management.sh'"
+#
+#
+#     #- event: import
+#     #  command: "sh -c 'sh /home/lbesnard/bin/airsonic_update_lib.sh'"
+#
+# edit:
+#     itemfields: track title artist album albumartist genre year
+#     albumfields: album albumartist genre year
+#
+# importadded:
+#     preserve_mtimes: yes
+#     preserve_write_mtimes: yes
+#
+# play:
+#     command: mp3blaster --list
+#
+# replace:
+#     '[\\/]': _
+#     '^\.':
+#     '[\x00-\x1f]': _
+#     '[<>:"\?\*\|]': _
+#     '\.$': _
+#     '\s+$': ''
+#     '^\s+': ''
+#     '[\xe2\x80\x90]': '-'
+#     '[\u2010]': '-'
+#     '‐': '-'
+#     '’': "'"
+#     '’': "'"
+#
+# rewrite:
+#     artist The Jimi Hendrix Experience: Jimi Hendrix
+#     albumartist The Jimi Hendrix Experience: Jimi Hendrix
+#     artist .*Grateful Dead.*: Grateful Dead
+#     albumartist .*Grateful Dead.*: Grateful Dead
+#     artist .*Bill Monroe.*: Bill Monroe
+#     albumartist .*Bill Monroe.*: Bill Monroe
+#     #albumartist Alt-j: "alt-J"
+#     #albumartist Alt-j: "alt-J"
+#
+# path_sep_replace: _
+#
+# scrub:
+#     auto: yes
+#
+# ui:
+#     color: yes
+#     text_success: green
+#     text_warning: yellow
+#     text_error: red
+#     text_highlight: red
+#     text_highlight_minor: lightgray
+#     action_default: turquoise
+#     action: blue
+#
+# # http://akeil.net/listings/beets.config.yaml.html
+# # Auto Tagger ----------------------------------------------------------------
+#
+# match:
+#     strong_rec_thresh: 0.17      # match 90% or better for auto import
+#     medium_rec_thresh: 0.25
+#     rec_gap_thresh: 0.25
+#     max_rec:
+#         missing_tracks: medium
+#         unmatched_tracks: medium
+#     distance_weights:
+#         source: 2.0
+#         artist: 3.0
+#         album: 3.0
+#         media: 1.0
+#         mediums: 1.0
+#         year: 1.0
+#         country: 0.5
+#         label: 0.5
+#         catalognum: 0.5
+#         albumdisambig: 0.5
+#         album_id: 5.0
+#         tracks: 2.0
+#         missing_tracks: 0.9
+#         unmatched_tracks: 0.6
+#         track_title: 3.0
+#         track_artist: 2.0
+#         track_index: 1.0
+#         track_length: 2.0
+#         track_id: 5.0
+#     preferred:
+#         countries: []
+#         media: ['CD', 'Digital Media', 'File', 'Vinyl']
+#         original_year: no
+#     ignored: []
+#     track_length_grace: 10
+#     track_length_max: 30
+#
+# fetchartist:
+#     cover_name: "folder"
+#
+# xtractor:
+#   auto: no
+#   dry-run: no
+#   write: yes
+#   threads: 1
+#   force: no
+#   quiet: no
+#   keep_output: yes
+#   keep_profiles: no
+#   output_path: /media/lbesnard/bfunk_12tb_1/music/xtractor/xtraction_data
+#   essentia_extractor: /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/streaming_extractor_music
+#   extractor_profile:
+#     highlevel:
+#       svm_models:
+#         - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/danceability.history
+#         - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/gender.history
+#         - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/genre_rosamerica.history
+#         - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/mood_acoustic.history
+#         - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/mood_aggressive.history
+#         - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/mood_electronic.history
+#         - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/mood_happy.history
+#         - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/mood_sad.history
+#         - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/mood_party.history
+#         - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/mood_relaxed.history
+#         - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/voice_instrumental.history
+#         - /media/lbesnard/bfunk_12tb_1/music/xtractor/extractors/beta5/svm_models/moods_mirex.history
