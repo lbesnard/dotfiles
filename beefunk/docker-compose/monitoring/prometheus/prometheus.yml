@@ -4,7 +4,7 @@ global:
 scrape_configs:
   - job_name: "node"
     static_configs:
-      - targets: ["node-exporter:9100"] # Node Exporter default port
+      - targets: ["beefunk:9100"] # Node Exporter default port
   - job_name: "cadvisor"
     static_configs:
-      - targets: ["cadvisor:8397"]
+      - targets: ["beefunk:8397"]
