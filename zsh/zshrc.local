@@ -52,3 +52,69 @@ PROG=croc
 _CLI_ZSH_AUTOCOMPLETE_HACK=1
 #source /etc/zsh/zsh_autocomplete_croc
 
+
+# -----------
+# taskwarrior
+# ----------
+if [[ -n "$TMUX" ]]; then
+    LAST_PROMPT_FILE="$HOME/.task_last_prompt"
+    TODAY=$(date +%Y-%m-%d)
+    
+    if [[ "$(< $LAST_PROMPT_FILE 2>/dev/null)" != "$TODAY" ]]; then
+        echo "\e[38;5;81m--- 📋 Taskwarrior Daily Check-in ---\e[0m"
+        task today
+        echo "\n\e[38;5;208mAdd tasks (Empty line to finish):\e[0m"
+        # --- RESTORED HELP TEXT ---
+        echo "\e[38;5;244mSyntax: p::Work due::today+14:30 tag::urgent Description...\e[0m"
+        
+        while true; do
+            echo -n "❯ "
+            read -r input
+            [[ -z "$input" ]] && break
+
+            local project=""
+            local tags=""
+            local due_math="today"
+            local -a desc_words=()
+
+            # Split input into words
+            local words=(${(z)input})
+            
+            for word in "${words[@]}"; do
+                if [[ "$word" == p::* ]]; then
+                    project="${(C)word#p::}"
+                elif [[ "$word" == tag::* ]]; then
+                    tags="${word#tag::}"
+                elif [[ "$word" == due::* ]]; then
+                    local raw_due="${word#due::}"
+                    # --- THE ISO FIX: Ensures time math isn't lost ---
+                    if [[ "$raw_due" =~ "today\+([0-9]{1,2}:[0-9]{2})" ]]; then
+                        due_math="${TODAY}T${match[1]}"
+                    else
+                        due_math="$raw_due"
+                    fi
+                else
+                    desc_words+=("$word")
+                fi
+            done
+
+            local final_desc="${(j: :)desc_words}"
+            local -a task_args=("add")
+            
+            [[ -n "$project" ]] && task_args+=("project:$project")
+            [[ -n "$tags" ]]    && task_args+=("+$tags")
+            task_args+=("due:$due_math")
+            task_args+=("$final_desc")
+
+            task "${task_args[@]}"
+        done
+        
+        echo "$TODAY" > "$LAST_PROMPT_FILE"
+        task sync
+        clear
+    fi
+    
+    echo "\e[38;5;81m📅 TODAY'S PLAN\e[0m"
+    task today
+    echo ""
+fi
