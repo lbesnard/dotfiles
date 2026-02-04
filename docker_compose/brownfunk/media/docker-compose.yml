@@ -733,8 +733,6 @@ services:
       - KOMGA_LIBRARIES_SCAN_CRON=0 0 */4 * * ?
       - WATCHTOWER_CLEANUP=true
     restart: always
-    networks:
-      - frontend
     labels:
       com.centurylinklabs.watchtower.enable: true
   ############################
