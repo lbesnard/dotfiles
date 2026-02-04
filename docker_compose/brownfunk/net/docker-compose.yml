@@ -58,7 +58,7 @@ services:
       - PEERDNS=${PIHOLE_DOCKER_SUB_IP_DNS:-172.20.0.100}
       - INTERNAL_SUBNET=10.13.13.0 #optional
     volumes:
-      - $DOCKER_CONFIG_PATH/wireguard2/config:/config
+      - $DOCKER_CONFIG_PATH/wireguard/config:/config
       - /lib/modules:/lib/modules
       - /usr/src/:/usr/src
     depends_on:
