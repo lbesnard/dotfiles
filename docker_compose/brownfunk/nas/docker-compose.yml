@@ -1,0 +1,79 @@
+services:
+  rsync-server:
+    image: quentintin/rsync-server
+    #container_name: rsync-server
+    volumes:
+      - $HOME/.ssh/id_rsa.pub:/root/.ssh/authorized_keys
+      - $EBOOKS_AUDIOBOOKS_PATH:/data/ebooks_audiobooks:ro
+      - $EBOOKS_FR_PATH:/data/ebooks_fr:ro
+      - $GAMES_PATH:/data/games:ro
+      - $PS4_PATH:/data/PS4:ro
+      - $MOVIES_PATH:/data/movies:ro
+      - $MOVIES_FR_PATH:/data/Movies(French):ro
+      - $MOVIES_SPORT_PATH:/data/Sport:ro
+      - $TV_SHOWS_PATH:/data/TV Shows:ro
+      - $MUSIC_ROOT_PATH:/data/music:ro
+      - $PICTURES_PATH:/data/pictures:ro
+      - $PIWIGO_CONFIG_PATH/piwigo/www/gallery/upload:/data/pictures_piwigo:ro
+      - $SHARE_PATH:/data/share:ro
+      - $TORRENT_PATH:/data/torrent:ro
+      - $SELF_IMPROVEMENT_PATH:/data/self_improvement:ro
+      - $PODCASTS_PATH:/data/podcasts:ro
+      - $DOCKER_CONFIG_PATH:/data/docker:ro
+      - $NEXTCLOUD_DATA_PATH:/data/nextcloud:ro
+      - $TORRENT_PATH/data/games:/data/games_torrent:ro
+    environment:
+      #- USERNAME=nouser
+      #- PASSWORD=nopass
+      PUID: $PUID_USER
+      PGID: $PGID_USER
+    networks:
+      frontend:
+    ports:
+      #- "873:873" #uncomment if want to use rsyncd
+      - "9000:22" #  for tailscale+LAN
+    restart: always
+  #######################
+  # Samba
+  samba:
+    image: dperson/samba
+    #container_name: samba
+    environment:
+      TZ: $TZ
+      PUID: $PUID_USER
+      PGID: $PGID_USER
+    ports:
+      - "139:139/tcp"
+      - "445:445/tcp"
+    read_only: true
+    tmpfs:
+      - /tmp
+    restart: always
+    stdin_open: true
+    tty: true
+    volumes:
+      - $EBOOKS_AUDIOBOOKS_PATH:/share1:ro
+      - $GAMES_PATH:/share2:ro
+      - $MOVIES_PATH:/share3:ro
+      - $MUSIC_PATH:/share4:ro
+      - $PICTURES_PATH:/share5
+      - $SHARE_PATH:/share6
+      - $TORRENT_PATH:/share7:ro
+      - $SELF_IMPROVEMENT_PATH:/share8:ro
+      - $PODCASTS_PATH:/share9:ro
+      - $TV_SHOWS_PATH:/share10:ro
+    command: |
+      -s "Ebooks;/share1;yes;yes;yes;all;none;$USER;ebooks share ro"
+      -s "Games;/share2;yes;yes;yes;all;none;$USER;games share ro"
+      -s "Movies;/share3;yes;yes;yes;all;none;$USER;movies share ro"
+      -s "Shows;/share10;yes;yes;yes;all;none;$USER;shows share ro"
+      -s "Music;/share4;yes;yes;yes;all;none;$USER;music share ro"
+      -s "Pictures;/share5;yes;no;no;$USER;$USER;$USER;pictures ro except user"
+      -s "Shared;/share6;yes;no;yes;guest,$USER;guest,$USER;guest,$USER;shared rw"
+      -s "Torrent;/share7;yes;yes;yes;all;none;$USER;torrent share ro"
+      -s "Self Improvement;/share8;yes;yes;yes;all;none;$USER;Self Improvement share ro"
+      -s "Podcasts;/share9;yes;yes;yes;all;none;$USER;Podcasts share ro"
+      -u "$USER;$SAMBA_PASSWORD"
+      -u "guest;guest"
+      -g "map to guest = Bad User"
+      -g "guest account = nobody"
