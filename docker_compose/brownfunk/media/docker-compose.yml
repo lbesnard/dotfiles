@@ -1,4 +1,47 @@
 services:
+  watchtower:
+    image: containrrr/watchtower
+    environment:
+      WATCHTOWER_LABEL_ENABLE: 1
+      WATCHTOWER_CLEANUP: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    command: --interval 3600
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+
+  mariadb:
+    image: lscr.io/linuxserver/mariadb:11.4.8-r0-ls197 #10.6.13
+    # image: lscr.io/linuxserver/mariadb:10.11.10-r0-ls162 #10.6.13
+    environment:
+      - PUID=$PUID_USER
+      - PGID=$PGID_USER
+      - MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
+      - TZ=$TZ
+      - MYSQL_DATABASE=$DB_PIWIGO_SCHEMA
+      - MYSQL_USER=$DB_PIWIGO_USER
+      - MYSQL_PASSWORD=$DB_PIWIGO_PASS
+    volumes:
+      - $DOCKER_CONFIG_PATH/mariadb:/config
+    ports:
+      - ${DB_PORT}:3306
+    restart: always
+
+  phpmyadmin:
+    image: lscr.io/linuxserver/phpmyadmin:latest
+    environment:
+      - PUID=$PUID_USER
+      - PGID=$PGID_USER
+      - TZ=$TZ
+      - PMA_ARBITRARY=1
+      #- PMA_ABSOLUTE_URI=https://phpmyadmin.example.com #optional
+    volumes:
+      - $DOCKER_CONFIG_PATH/phpmyadmin:/config
+    ports:
+      - 3002:80
+    restart: unless-stopped
+
   jellyfin:
     image: linuxserver/jellyfin
     environment:
