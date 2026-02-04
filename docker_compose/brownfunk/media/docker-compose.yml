@@ -211,8 +211,6 @@ services:
       #traefik.http.routers.home.rule: Host(`home.brownfunk.lan`)
       #traefik.http.routers.home.entrypoints: web
       #traefik.http.services.home.loadbalancer.server.port: 80
-    depends_on:
-      - pihole
   nextcloud:
     #image:  lscr.io/linuxserver/nextcloud:27.0.1-ls259
     image: lscr.io/linuxserver/nextcloud:latest
