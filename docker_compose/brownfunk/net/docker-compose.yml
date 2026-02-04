@@ -1,0 +1,70 @@
+networks:
+  frontend:
+    ipam:
+      config:
+        - subnet: ${DOCKER_SUBNET_1:-172.20.0.0/24}
+services:
+  duckdns:
+    image: linuxserver/duckdns
+    dns: 1.1.1.1
+    environment:
+      - PUID=$PUID_USER
+      - PGID=$PGID_USER
+      - TZ=$TZ
+      - SUBDOMAINS=$DUCKDNS_DOMAIN
+      - TOKEN=$DUCKDNS_TOKEN
+      - LOG_FILE=false
+    volumes:
+      - $DOCKER_CONFIG_PATH/duckdns:/config
+    restart: always
+
+  pihole:
+    image: pihole/pihole:latest
+    hostname: brownfunk
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "67:67/udp"
+      # - "455:80/tcp"
+      - "8081:80/tcp"
+    environment:
+      TZ: $TZ
+      WEBPASSWORD: $PIHOLE_PWD
+      PIHOLE_DNS_: 1.1.1.1;8.8.8.8
+    volumes:
+      - $DOCKER_CONFIG_PATH/pihole/etc/pihole/:/etc/pihole/
+      - $DOCKER_CONFIG_PATH/pihole/etc-dnsmasq.d/:/etc/dnsmasq.d/
+    # Recommended but not required (DHCP needs NET_ADMIN)
+    #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+    cap_add:
+      - NET_ADMIN
+    networks:
+      frontend:
+        ipv4_address: ${PIHOLE_DOCKER_SUB_IP_DNS:-172.20.0.100}
+    restart: always
+
+  wireguard:
+    image: linuxserver/wireguard
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=$PUID_USER
+      - PGID=$PGID_USER
+      - TZ=$TZ
+      - SERVERURL=${DUCKDNS_DOMAIN}.duckdns.org
+      - SERVERPORT=51821 #optional
+      - PEERS=$WG2_PEERS #optional
+      - PEERDNS=${PIHOLE_DOCKER_SUB_IP_DNS:-172.20.0.100}
+      - INTERNAL_SUBNET=10.13.13.0 #optional
+    volumes:
+      - $DOCKER_CONFIG_PATH/wireguard2/config:/config
+      - /lib/modules:/lib/modules
+      - /usr/src/:/usr/src
+    depends_on:
+      - pihole
+    ports:
+      - 51821:51820/udp
+    networks:
+      - frontend
+    restart: always
