@@ -8,91 +8,147 @@ prompt: enabled
 pager: bat --style plain
 # Aliases allow you to create nicknames for gh commands
 aliases:
-    co: '!id="$(gh pr list -L100 | fzf --no-preview --reverse | cut -f1)"; [ -n "$id" ] && gh pr checkout "$id"'
-    _issue_user_repo_view: |-
-        !(
-        # parse the options
-        # ":" -> requires an argument. if no ":" no need for it
-        #echo "$@"
-        tmp_getops=`getopt -o a:r:m:c,s: --long assignee:,repo:,milestone:,comment,state: -- "$@"`
+  co: '!id="$(gh pr list -L100 | fzf --no-preview --reverse | cut -f1)"; [ -n "$id" ] && gh pr checkout "$id"'
+  _issue_user_repo_view: |-
+    !(
+    # parse the options
+    # ":" -> requires an argument. if no ":" no need for it
+    #echo "$@"
+    tmp_getops=`getopt -o a:r:m:c,s: --long assignee:,repo:,milestone:,comment,state: -- "$@"`
+    eval set -- "$tmp_getops"
+
+    while true ; do
+        case "$1" in
+            -a|--assignee) user="-a $2"; shift 2;;
+            -r|--repo) repo="$2"; shift 2;;
+            -m|--milestone) milestone="$2"; shift 2;;
+            -c|--comment) comment=true; shift 1;;
+            -s|--state) state="-s $2"; shift 2;;
+            --) shift; break;;
+            *) ;;
+        esac
+    done
+
+    # option -c to comment an issue or view
+    [ -z "$comment" ] && command=view || command=comment
+
+    # check if iteration is top of po-backlog
+    [ ! -z "$milestone" ] && (echo "$milestone" | grep -q -i top) && milestone="Top of PO Backlog"
+
+    # milestone values specific to AODN organisation
+    if [ -z "$milestone" ]
+    then
+        id="$(gh issue list -L100 $state $user -R $repo | fzf --preview '(gh issue -R '$repo' view $(echo {} | awk '"'"'{print $1;}'"'"') | mdcat)' --reverse --multi=1 | cut -f1)"
+    else
+       re_number="^[0-9]+$"
+       echo "$milestone" | grep -q -E "$re_number"  && \
+                                                  # issue with following command because of git # change, replaced by --search. this will be fixed in the near future https://github.com/cli/cli/issues/4040#issuecomment-887190179
+                                                  #id=$(gh issue list -a $user -R $repo --milestone "Iteration $milestone" | fzf --preview '(gh issue -R '$repo' view $(echo {} | awk '"'"'{print $1;}'"'"') | mdcat)' --reverse --multi=1 | cut -f1) || \
+                                                  id=$(gh issue list -L100 $user -R $repo $state --search "milestone:\"Iteration $milestone\"" | fzf --preview '(gh issue -R '$repo' view $(echo {} | awk '"'"'{print $1;}'"'"') | mdcat)' --reverse --multi=1 | cut -f1) || \
+                                                  # issue with following command because of git # change, replaced by --search. this will be fixed in the near future https://github.com/cli/cli/issues/4040#issuecomment-887190179
+                                                  #id=$(gh issue list -a $user -R $repo --milestone "$milestone" | fzf --preview '(gh issue -R '$repo' view $(echo {} | awk '"'"'{print $1;}'"'"') | mdcat)' --reverse --multi=1 | cut -f1)
+                                                  id=$(gh issue list -L100 $user -R $repo $state --search "milestone:\"$milestone\"" | fzf --preview '(gh issue -R '$repo' view $(echo {} | awk '"'"'{print $1;}'"'"') | mdcat)' --reverse --multi=1 | cut -f1)
+    fi
+
+    # show or comment selected issue
+    [ -n "$id" ] && gh issue -R $repo $command "$id"
+    )
+  issues: |-
+    !(case $1 in
+     content|issues|backlog|po-backlog|data-services|python-aodntools|python-aodncore|python-aodndata)
+
+        organisation=aodn
+        repo="$organisation/$1";
+
+        # re-initiate $ argument "order"
+        tmp_getops=`getopt -o c,a,m: --long comment,all,milestone:,closed -- "$@"`
         eval set -- "$tmp_getops"
 
         while true ; do
             case "$1" in
-                -a|--assignee) user="-a $2"; shift 2;;
-                -r|--repo) repo="$2"; shift 2;;
-                -m|--milestone) milestone="$2"; shift 2;;
-                -c|--comment) comment=true; shift 1;;
-                -s|--state) state="-s $2"; shift 2;;
+                -c|--comment) comment="$1"; shift 1;;
+                -a|--all) all_users=True; shift 1;;
+                -m|--milestone) milestone="-m $2"; shift 2;;
+                --closed) state="-s closed"; shift 1;;
                 --) shift; break;;
                 *) ;;
             esac
         done
 
-        # option -c to comment an issue or view
-        [ -z "$comment" ] && command=view || command=comment
-
-        # check if iteration is top of po-backlog
-        [ ! -z "$milestone" ] && (echo "$milestone" | grep -q -i top) && milestone="Top of PO Backlog"
-
-        # milestone values specific to AODN organisation
-        if [ -z "$milestone" ]
+        if [ -z "$all_users" ]
         then
-            id="$(gh issue list -L100 $state $user -R $repo | fzf --preview '(gh issue -R '$repo' view $(echo {} | awk '"'"'{print $1;}'"'"') | mdcat)' --reverse --multi=1 | cut -f1)"
+            user="$GIT_USER"
+            gh _issue_user_repo_view -a $user -r $repo $comment $milestone $state
         else
-           re_number="^[0-9]+$"
-           echo "$milestone" | grep -q -E "$re_number"  && \
-                                                      # issue with following command because of git # change, replaced by --search. this will be fixed in the near future https://github.com/cli/cli/issues/4040#issuecomment-887190179
-                                                      #id=$(gh issue list -a $user -R $repo --milestone "Iteration $milestone" | fzf --preview '(gh issue -R '$repo' view $(echo {} | awk '"'"'{print $1;}'"'"') | mdcat)' --reverse --multi=1 | cut -f1) || \
-                                                      id=$(gh issue list -L100 $user -R $repo $state --search "milestone:\"Iteration $milestone\"" | fzf --preview '(gh issue -R '$repo' view $(echo {} | awk '"'"'{print $1;}'"'"') | mdcat)' --reverse --multi=1 | cut -f1) || \
-                                                      # issue with following command because of git # change, replaced by --search. this will be fixed in the near future https://github.com/cli/cli/issues/4040#issuecomment-887190179
-                                                      #id=$(gh issue list -a $user -R $repo --milestone "$milestone" | fzf --preview '(gh issue -R '$repo' view $(echo {} | awk '"'"'{print $1;}'"'"') | mdcat)' --reverse --multi=1 | cut -f1)
-                                                      id=$(gh issue list -L100 $user -R $repo $state --search "milestone:\"$milestone\"" | fzf --preview '(gh issue -R '$repo' view $(echo {} | awk '"'"'{print $1;}'"'"') | mdcat)' --reverse --multi=1 | cut -f1)
+            gh _issue_user_repo_view -r $repo $comment $milestone $state
         fi
 
-        # show or comment selected issue
-        [ -n "$id" ] && gh issue -R $repo $command "$id"
-        )
-    issues: |-
-        !(case $1 in
-         content|issues|backlog|po-backlog|data-services|python-aodntools|python-aodncore|python-aodndata)
+        ;;
 
-            organisation=aodn
-            repo="$organisation/$1";
+     *)
 
-            # re-initiate $ argument "order"
-            tmp_getops=`getopt -o c,a,m: --long comment,all,milestone:,closed -- "$@"`
-            eval set -- "$tmp_getops"
+        echo The following commands are supported from '\e[1;31m'gh issues'\e[0m':
+        echo '\t\e[1;32m'content,po-backlog,data-services...'\e[0m' '\t list all issues for user from content repo'
+        echo '\t\e[1;32m'-m [223, Iteration 223, top]'\e[0m' '\t list all issues for specific milestone'
+        echo '\t\e[1;32m'-a --all'\e[0m' '\t list all issues for all users'
+        echo '\t\e[1;32m'--closed'\e[0m' '\t list closed issues'
 
-            while true ; do
-                case "$1" in
-                    -c|--comment) comment="$1"; shift 1;;
-                    -a|--all) all_users=True; shift 1;;
-                    -m|--milestone) milestone="-m $2"; shift 2;;
-                    --closed) state="-s closed"; shift 1;;
-                    --) shift; break;;
-                    *) ;;
-                esac
-            done
+        ;;
+      esac)
+  project-issues: |-
+    !(
+      ORG="aodn"
+      PROJECT_NUMBER=72
 
-            if [ -z "$all_users" ]
-            then
-                user="$GIT_USER"
-                gh _issue_user_repo_view -a $user -r $repo $comment $milestone $state
-            else
-                gh _issue_user_repo_view -r $repo $comment $milestone $state
-            fi
+      # Fetch and filter
+      selected_item=$(gh project item-list $PROJECT_NUMBER --owner "$ORG" --format json --limit 100 | \
+        jq -r '.items[] | 
+          select(.assignees // [] | try contains(["'"$GIT_USER"'"]) catch false) | 
+          "\(.content.number // "DRAFT")\t\(.content.title)\t\(.content.repository // "none")"' | \
+        fzf --reverse \
+            --header "Project 72 Issues for $GIT_USER" \
+            --delimiter '\t' \
+            --with-nth 1,2 \
+            --preview 'num=$(echo {1} | tr -d "[:space:]"); repo=$(echo {3} | tr -d "[:space:]"); [ "$repo" != "none" ] && gh issue view "$num" -R "$repo" || echo "Draft: {2}"')
 
-            ;;
+      [ -z "$selected_item" ] && exit 0
 
-         *)
+      # Extract fields using tab as delimiter
+      ISSUE_NUM=$(echo "$selected_item" | cut -f1)
+      REPO_PATH=$(echo "$selected_item" | cut -f3)
 
-            echo The following commands are supported from '\e[1;31m'gh issues'\e[0m':
-            echo '\t\e[1;32m'content,po-backlog,data-services...'\e[0m' '\t list all issues for user from content repo'
-            echo '\t\e[1;32m'-m [223, Iteration 223, top]'\e[0m' '\t list all issues for specific milestone'
-            echo '\t\e[1;32m'-a --all'\e[0m' '\t list all issues for all users'
-            echo '\t\e[1;32m'--closed'\e[0m' '\t list closed issues'
+      if [ "$REPO_PATH" != "none" ]; then
+        gh issue view "$ISSUE_NUM" -R "$REPO_PATH"
+      else
+        echo "Selection is a draft: $(echo "$selected_item" | cut -f2)"
+      fi
+    )
 
-            ;;
-          esac)
+  project-sprint: |-
+    !(
+      ORG="aodn"
+      PROJECT_NUMBER=72
+
+      # Fetch items and specifically extract the Iteration from fieldValues
+      selected_item=$(gh project item-list $PROJECT_NUMBER --owner "$ORG" --format json -L 200 | \
+        tr -d '[:cntrl:]' | \
+        jq -r '.items[] | 
+          select(.assignees // [] | try contains(["'"$GIT_USER"'"]) catch false) |
+          # Dig into fieldValues to find the one where .field == "Iteration"
+          ((.fieldValues[]? | select(.field? == "Iteration") | .title) // "No-Iteration") as $iter |
+          "\($iter)\t\(.content.number // "DRAFT")\t\(.content.title)\t\(.content.repository // "none")"' | \
+        sort -rV | \
+        fzf --reverse \
+            --header "Project 72: Iteration Sort" \
+            --delimiter '\t' \
+            --with-nth 1,2,3 \
+            --preview 'num=$(echo {2} | tr -d "[:space:]"); repo=$(echo {4} | tr -d "[:space:]"); [ "$repo" != "none" ] && gh issue view "$num" -R "$repo" || echo "Draft: {3}"')
+
+      [ -z "$selected_item" ] && exit 0
+
+      ISSUE_NUM=$(echo "$selected_item" | cut -f2)
+      REPO_PATH=$(echo "$selected_item" | cut -f4)
+
+      [ "$REPO_PATH" != "none" ] && gh issue view "$ISSUE_NUM" -R "$REPO_PATH"
+    )
 version: "1"
