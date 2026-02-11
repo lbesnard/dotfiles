@@ -1163,3 +1163,7 @@ ttl() {
         --bind "ctrl-e:execute(task {1} edit)+reload($gen_list)" \
         --bind "enter:execute(task {1} info | less -R)"
 }
+
+
+# Hugo server
+alias hugo_server_start='hugo server -D'
