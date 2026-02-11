@@ -1095,22 +1095,22 @@ te() {
     fi
 }
 
-# ttt 2.0: Browse Today's tasks with Hotkeys
-ttt() {
-    # This local function helps refresh the list inside fzf after an action
-    local gen_list='task due:today export | jq -r ".[] | \"\(.id) [\(.project // \"no project\")] \(.description)\""'
-
-    eval $gen_list | \
-    fzf --reverse \
-        --header "ENTER: Done | CTRL-E: Edit | CTRL-U: Undo Last | CTRL-P: Postpone" \
-        --preview 'task {1} info' \
-        --preview-window=right:60%:wrap \
-        --bind "enter:execute(task {1} done)+reload($gen_list)" \
-        --bind "ctrl-e:execute(task {1} edit)+reload($gen_list)" \
-        --bind "ctrl-p:execute(task {1} modify due:tomorrow)+reload($gen_list)" \
-        --bind "ctrl-u:execute(task undo)+reload($gen_list)"
-}
-
+# # ttt 2.0: Browse Today's tasks with Hotkeys
+# ttt() {
+#     # This local function helps refresh the list inside fzf after an action
+#     local gen_list='task due:today export | jq -r ".[] | \"\(.id) [\(.project // \"no project\")] \(.description)\""'
+#
+#     eval $gen_list | \
+#     fzf --reverse \
+#         --header "ENTER: Done | CTRL-E: Edit | CTRL-U: Undo Last | CTRL-P: Postpone" \
+#         --preview 'task {1} info' \
+#         --preview-window=right:60%:wrap \
+#         --bind "enter:execute(task {1} done)+reload($gen_list)" \
+#         --bind "ctrl-e:execute(task {1} edit)+reload($gen_list)" \
+#         --bind "ctrl-p:execute(task {1} modify due:tomorrow)+reload($gen_list)" \
+#         --bind "ctrl-u:execute(task undo)+reload($gen_list)"
+# }
+#
 
 ttd() {
     # 1. Get IDs of tasks due today
@@ -1126,4 +1126,40 @@ ttd() {
         local id_list=$(echo $ids | tr '\n' ' ')
         task $id_list done
     fi
+}
+
+# # Today List: Interactive browser for today's tasks
+# ttl() {
+#     # 1. Generate the list of today's pending tasks
+#     # We include project and description in the main view
+#     local gen_list='task due:today status:pending export | jq -r ".[] | \"\(.id) [\(.project // \"none\")] \(.description)\""'
+#
+#     # 2. Open FZF
+#     # We use a large preview window to see the full 'task info' (notes, links, etc.)
+#     eval $gen_list | fzf \
+#         --reverse \
+#         --height 80% \
+#         --header "ENTER: Info (Sticky) | TAB: Multi-Select | CTRL-D: Mark Done" \
+#         --preview 'task {1} info' \
+#         --preview-window=right:65%:wrap \
+#         --bind "ctrl-d:execute(task {1} done)+reload($gen_list)" \
+#         --bind "enter:execute(task {1} info | less)"
+# }
+#
+# Today List: The definitive interactive browser for today's tasks
+ttl() {
+    # 1. Filter strictly for pending tasks due today
+    local gen_list='task due:today status:pending export | jq -r ".[] | \"\(.id) [\(.project // \"none\")] \(.description)\""'
+
+    # 2. Open FZF with full management capabilities
+    eval $gen_list | fzf \
+        --reverse --multi \
+        --height 80% \
+        --header "TAB: Select | ENTER: Info | CTRL-D: Done | CTRL-P: Postpone | CTRL-E: Edit" \
+        --preview 'task {1} info' \
+        --preview-window=right:65%:wrap \
+        --bind "ctrl-d:execute(task {1} done)+reload($gen_list)" \
+        --bind "ctrl-p:execute(task {1} modify due:tomorrow)+reload($gen_list)" \
+        --bind "ctrl-e:execute(task {1} edit)+reload($gen_list)" \
+        --bind "enter:execute(task {1} info | less -R)"
 }
