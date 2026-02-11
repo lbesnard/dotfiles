@@ -95,60 +95,55 @@ aliases:
 
         ;;
       esac)
-  project-issues: |-
-    !(
+  project-sprint: "!(\n  ORG=\"aodn\"\n  PROJECT_NUMBER=72\n\n  # Use the built-in --jq flag for cleaner local processing\n  selected_item=$(gh project item-list $PROJECT_NUMBER --owner \"$ORG\" -L 500 --format json --jq '\n    .items[] | \n    select(.assignees // [] | contains([\"'\"$GIT_USER\"'\"])) | \n    select(.status != \"Done\" and .status != \"Closed\") | \n    ((.iteration.title // .milestone.title) // \"No-Iteration\") as $iter | \n    select($iter != \"No-Iteration\") |\n    \"\\($iter)\\t\\(.content.number // \"DRAFT\")\\t\\(.content.title)\\t\\(.content.repository // \"none\")\"\n  ' | \\\n    sort -rV | \\\n    fzf --reverse \\\n        --header \"Project 72: Active Iterations\" \\\n        --delimiter '\\t' \\\n        --with-nth 1,2,3 \\\n        --preview 'echo \"Iteration: {1}\\nNumber:    {2}\\nTitle:     {3}\\nRepo:      {4}\"')\n\n  [ -z \"$selected_item\" ] && exit 0\n\n  ISSUE_NUM=$(echo \"$selected_item\" | cut -f2)\n  REPO_PATH=$(echo \"$selected_item\" | cut -f4)\n\n  [ \"$REPO_PATH\" != \"none\" ] && gh issue view \"$ISSUE_NUM\" -R \"$REPO_PATH\" --json url --jq .url\n)"
+  project-sprint-taskwarrior: |-
+    ! (
       ORG="aodn"
       PROJECT_NUMBER=72
 
-      # Fetch and filter
-      selected_item=$(gh project item-list $PROJECT_NUMBER --owner "$ORG" --format json --limit 100 | \
-        jq -r '.items[] | 
-          select(.assignees // [] | try contains(["'"$GIT_USER"'"]) catch false) | 
-          "\(.content.number // "DRAFT")\t\(.content.title)\t\(.content.repository // "none")"' | \
-        fzf --reverse \
-            --header "Project 72 Issues for $GIT_USER" \
-            --delimiter '\t' \
-            --with-nth 1,2 \
-            --preview 'num=$(echo {1} | tr -d "[:space:]"); repo=$(echo {3} | tr -d "[:space:]"); [ "$repo" != "none" ] && gh issue view "$num" -R "$repo" || echo "Draft: {2}"')
-
-      [ -z "$selected_item" ] && exit 0
-
-      # Extract fields using tab as delimiter
-      ISSUE_NUM=$(echo "$selected_item" | cut -f1)
-      REPO_PATH=$(echo "$selected_item" | cut -f3)
-
-      if [ "$REPO_PATH" != "none" ]; then
-        gh issue view "$ISSUE_NUM" -R "$REPO_PATH"
-      else
-        echo "Selection is a draft: $(echo "$selected_item" | cut -f2)"
-      fi
-    )
-
-  project-sprint: |-
-    !(
-      ORG="aodn"
-      PROJECT_NUMBER=72
-
-      # Fetch items and specifically extract the Iteration from fieldValues
-      selected_item=$(gh project item-list $PROJECT_NUMBER --owner "$ORG" --format json -L 200 | \
-        tr -d '[:cntrl:]' | \
-        jq -r '.items[] | 
-          select(.assignees // [] | try contains(["'"$GIT_USER"'"]) catch false) |
-          # Dig into fieldValues to find the one where .field == "Iteration"
-          ((.fieldValues[]? | select(.field? == "Iteration") | .title) // "No-Iteration") as $iter |
-          "\($iter)\t\(.content.number // "DRAFT")\t\(.content.title)\t\(.content.repository // "none")"' | \
+      # 1. Fetch data - using your exact JQ logic
+      # We use '...' for the jq string so your $GIT_USER is injected correctly
+      output=$(gh project item-list $PROJECT_NUMBER --owner "$ORG" -L 1000 --format json --jq '
+        .items[] | 
+        select(.assignees // [] | contains(["'"$GIT_USER"'"])) | 
+        select(.status != "Done" and .status != "Closed") | 
+        ((.iteration.title // .milestone.title) // "No-Iteration") as $iter | 
+        select($iter != "No-Iteration") |
+        "\($iter)\t\(.content.number // "DRAFT")\t\(.content.title)\t\(.content.repository // "none")"' | \
         sort -rV | \
-        fzf --reverse \
-            --header "Project 72: Iteration Sort" \
+        fzf --reverse --multi \
+            --header "TAB: Select Multiple | ENTER: Open | CTRL-T: Add to Taskwarrior" \
+            --expect=ctrl-t \
             --delimiter '\t' \
-            --with-nth 1,2,3 \
-            --preview 'num=$(echo {2} | tr -d "[:space:]"); repo=$(echo {4} | tr -d "[:space:]"); [ "$repo" != "none" ] && gh issue view "$num" -R "$repo" || echo "Draft: {3}"')
+            --with-nth 1,2,3)
 
-      [ -z "$selected_item" ] && exit 0
+      [ -z "$output" ] && exit 0
 
-      ISSUE_NUM=$(echo "$selected_item" | cut -f2)
-      REPO_PATH=$(echo "$selected_item" | cut -f4)
+      # 2. Extract the key (the very first line from fzf output)
+      key=$(echo "$output" | head -n 1)
+      
+      # 3. Loop through the actual data lines (all lines after the first)
+      echo "$output" | tail -n +2 | while IFS= read -r line; do
+        [ -z "$line" ] && continue
 
-      [ "$REPO_PATH" != "none" ] && gh issue view "$ISSUE_NUM" -R "$REPO_PATH"
+        # Use cut to strictly extract fields by tab
+        num=$(echo "$line" | cut -f2)
+        title=$(echo "$line" | cut -f3)
+        repo=$(echo "$line" | cut -f4)
+
+        [ "$repo" = "none" ] && continue
+
+        if [ "$key" = "ctrl-t" ]; then
+          echo "📥 Importing #$num..."
+          # Fetch URL
+          url=$(gh issue view "$num" -R "$repo" --json url --jq .url)
+          
+          # Add to Taskwarrior: Pure Title + URL
+          task add "$title ($url)" project:Work due:today +today +github
+        else
+          # Open in browser
+          gh issue view "$num" -R "$repo" --web
+        fi
+      done
     )
 version: "1"
