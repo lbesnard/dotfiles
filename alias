@@ -1164,6 +1164,28 @@ ttl() {
         --bind "enter:execute(task {1} info | less -R)"
 }
 
+# List of tasks worked on
+tlog() {
+    # Today
+    echo -e "\n## Today ($(date +%Y-%m-%d))"
+    task project:Work modified.after:today all rc.verbose=nothing rc.report.all.columns=description rc.report.all.labels= | perl -pe 's/^([^\s\-])/* $1/'
+
+    # Yesterday
+    echo -e "\n## Yesterday ($(date -d "yesterday" +%Y-%m-%d))"
+    task project:Work modified.after:today-1d modified.before:today all rc.verbose=nothing rc.report.all.columns=description rc.report.all.labels= | perl -pe 's/^([^\s\-])/* $1/'
+
+    # 2nd Day Ago
+    echo -e "\n## $(date -d "2 days ago" +%A) ($(date -d "2 days ago" +%Y-%m-%d))"
+    task project:Work modified.after:today-2d modified.before:today-1d all rc.verbose=nothing rc.report.all.columns=description rc.report.all.labels= | perl -pe 's/^([^\s\-])/* $1/'
+
+    # 3rd Day Ago
+    echo -e "\n## $(date -d "3 days ago" +%A) ($(date -d "3 days ago" +%Y-%m-%d))"
+    task project:Work modified.after:today-3d modified.before:today-2d all rc.verbose=nothing rc.report.all.columns=description rc.report.all.labels= | perl -pe 's/^([^\s\-])/* $1/'
+
+    # 4th Day Ago
+    echo -e "\n## $(date -d "4 days ago" +%A) ($(date -d "4 days ago" +%Y-%m-%d))"
+    task project:Work modified.after:today-4d modified.before:today-3d all rc.verbose=nothing rc.report.all.columns=description rc.report.all.labels= | perl -pe 's/^([^\s\-])/* $1/'
+}
 
 # Hugo server
 alias hugo_server_start='hugo server -D'
