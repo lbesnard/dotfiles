@@ -61,6 +61,9 @@ if command -v task > /dev/null && [[ -n "$TMUX" ]]; then
     TODAY=$(date +%Y-%m-%d)
 
     if [[ "$(< $LAST_PROMPT_FILE 2>/dev/null)" != "$TODAY" ]]; then
+
+        echo -e "\e[38;5;214m--- 🗓️  Reminder: Fill yesterday's timesheet! ---\e[0m"
+
         echo "\e[38;5;81m--- 🔍 Reviewing Overdue & Today's Tasks ---\e[0m"
         
         # Define the refresh command to keep FZF synced after actions
