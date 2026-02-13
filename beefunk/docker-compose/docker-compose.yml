@@ -16,11 +16,14 @@ services:
       - --entrypoints.web.address=:80
       - --providers.docker.exposedbydefault=false
       - --entrypoints.websecure.address=:443
+      - --providers.file.filename=/etc/traefik/dynamic_tls.yml
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ~/traefik/certs:/certs:ro  # mount cert folder
+      - ~/traefik/dynamic_tls.yml:/etc/traefik/dynamic_tls.yml:ro
     networks:
       - proxy
       
@@ -115,16 +118,36 @@ services:
     networks:
       - proxy
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-            # enable Traefik routing
       - "traefik.enable=true"
-      # route requests based on hostname
-      - "traefik.http.routers.homer.rule=Host(`home.beefunk.lan`)"
-      - "traefik.http.routers.homer.entrypoints=web"
-      # internal port Homer listens on
-      - "traefik.http.services.homer.loadbalancer.server.port=8080"
-      # optionally add TLS if you set up HTTPS entrypoint
-      # - "traefik.http.routers.homer.tls=true"
+
+      # HTTP routers
+      - "traefik.http.routers.homer-http1.rule=Host(`home.beefunk.lan`)"
+      - "traefik.http.routers.homer-http1.entrypoints=web"
+      - "traefik.http.routers.homer-http1.tls=false"
+
+      - "traefik.http.routers.homer-http2.rule=Host(`beefunk.home`)"
+      - "traefik.http.routers.homer-http2.entrypoints=web"
+      - "traefik.http.routers.homer-http2.tls=false"
+
+      - "traefik.http.routers.homer-http3.rule=Host(`beefunk.local`)"
+      - "traefik.http.routers.homer-http3.entrypoints=web"
+      - "traefik.http.routers.homer-http3.tls=false"
+
+      # HTTPS routers
+      - "traefik.http.routers.homer-https1.rule=Host(`home.beefunk.lan`)"
+      - "traefik.http.routers.homer-https1.entrypoints=websecure"
+      - "traefik.http.routers.homer-https1.tls=true"
+
+      - "traefik.http.routers.homer-https2.rule=Host(`beefunk.home`)"
+      - "traefik.http.routers.homer-https2.entrypoints=websecure"
+      - "traefik.http.routers.homer-https2.tls=true"
+
+      - "traefik.http.routers.homer-https3.rule=Host(`beefunk.local`)"
+      - "traefik.http.routers.homer-https3.entrypoints=websecure"
+      - "traefik.http.routers.homer-https3.tls=true"
+
+      # Watchtower
+      - "com.centurylinklabs.watchtower.enable=true"
     depends_on:
       - pihole
       - traefik
@@ -332,8 +355,34 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mealie.rule=Host(`mealie.beefunk.lan`)"
-      - "traefik.http.routers.mealie.entrypoints=web"
+
+      # HTTP routers
+      - "traefik.http.routers.mealie-http1.rule=Host(`mealie.beefunk.lan`)"
+      - "traefik.http.routers.mealie-http1.entrypoints=web"
+      - "traefik.http.routers.mealie-http1.tls=false"
+
+      - "traefik.http.routers.mealie-http2.rule=Host(`mealie.home`)"
+      - "traefik.http.routers.mealie-http2.entrypoints=web"
+      - "traefik.http.routers.mealie-http2.tls=false"
+
+      - "traefik.http.routers.mealie-http3.rule=Host(`mealie.local`)"
+      - "traefik.http.routers.mealie-http3.entrypoints=web"
+      - "traefik.http.routers.mealie-http3.tls=false"
+
+      # HTTPS routers
+      - "traefik.http.routers.mealie-https1.rule=Host(`mealie.beefunk.lan`)"
+      - "traefik.http.routers.mealie-https1.entrypoints=websecure"
+      - "traefik.http.routers.mealie-https1.tls=true"
+
+      - "traefik.http.routers.mealie-https2.rule=Host(`mealie.home`)"
+      - "traefik.http.routers.mealie-https2.entrypoints=websecure"
+      - "traefik.http.routers.mealie-https2.tls=true"
+
+      - "traefik.http.routers.mealie-https3.rule=Host(`mealie.local`)"
+      - "traefik.http.routers.mealie-https3.entrypoints=websecure"
+      - "traefik.http.routers.mealie-https3.tls=true"
+
+      # Same backend service
       - "traefik.http.services.mealie.loadbalancer.server.port=9000"
     deploy:
       resources:
@@ -347,7 +396,8 @@ services:
       PUID: 1000
       PGID: 1000
       TZ: $TZ
-      BASE_URL: $SERVER_URL:9925 # https://mealie.f.com
+      # BASE_URL: $SERVER_URL:9925 # https://mealie.f.com
+      BASE_URL: "http://mealie.beefunk.lan" # https://mealie.f.com
 
   audiobookshelf:
     image: ghcr.io/advplyr/audiobookshelf:latest
