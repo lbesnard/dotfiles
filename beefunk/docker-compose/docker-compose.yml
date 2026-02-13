@@ -588,11 +588,33 @@ services:
     volumes:
       - $PIWIGO_CONFIG_PATH/piwigo/config:/config
       - $PIWIGO_CONFIG_PATH/piwigo/gallery:/gallery
-    ports:
-      - 8282:80
+#    ports:
+#      - 8282:80
     restart: unless-stopped
+    networks:
+      - proxy
     labels:
-      com.centurylinklabs.watchtower.enable: true
+      - "traefik.enable=true"
+      - "traefik.http.routers.piwigo-http1.rule=Host(`piwigo.beefunk.lan`)"
+      - "traefik.http.routers.piwigo-http1.entrypoints=web"
+      - "traefik.http.routers.piwigo-http1.tls=false"
+      - "traefik.http.routers.piwigo-http2.rule=Host(`piwigo.home`)"
+      - "traefik.http.routers.piwigo-http2.entrypoints=web"
+      - "traefik.http.routers.piwigo-http2.tls=false"
+      - "traefik.http.routers.piwigo-http3.rule=Host(`piwigo.local`)"
+      - "traefik.http.routers.piwigo-http3.entrypoints=web"
+      - "traefik.http.routers.piwigo-http3.tls=false"
+      - "traefik.http.routers.piwigo-https1.rule=Host(`piwigo.beefunk.lan`)"
+      - "traefik.http.routers.piwigo-https1.entrypoints=websecure"
+      - "traefik.http.routers.piwigo-https1.tls=true"
+      - "traefik.http.routers.piwigo-https2.rule=Host(`piwigo.home`)"
+      - "traefik.http.routers.piwigo-https2.entrypoints=websecure"
+      - "traefik.http.routers.piwigo-https2.tls=true"
+      - "traefik.http.routers.piwigo-https3.rule=Host(`piwigo.local`)"
+      - "traefik.http.routers.piwigo-https3.entrypoints=websecure"
+      - "traefik.http.routers.piwigo-https3.tls=true"
+      - "traefik.http.services.piwigo.loadbalancer.server.port=80"
+      - "com.centurylinklabs.watchtower.enable=true"
   ####################
   photoprism:
     image: photoprism/photoprism:latest
@@ -1072,8 +1094,31 @@ services:
       - USER_ADMIN_PASSWORD=$OWNFOIL_PASSWORD
       - SAVE_ENABLED=true
     restart: unless-stopped
-    ports:
-      - "8465:8465"
+#    ports:
+#      - "8465:8465"
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ownfoil-http1.rule=Host(`ownfoil.beefunk.lan`)"
+      - "traefik.http.routers.ownfoil-http1.entrypoints=web"
+      - "traefik.http.routers.ownfoil-http1.tls=false"
+      - "traefik.http.routers.ownfoil-http2.rule=Host(`ownfoil.home`)"
+      - "traefik.http.routers.ownfoil-http2.entrypoints=web"
+      - "traefik.http.routers.ownfoil-http2.tls=false"
+      - "traefik.http.routers.ownfoil-http3.rule=Host(`ownfoil.local`)"
+      - "traefik.http.routers.ownfoil-http3.entrypoints=web"
+      - "traefik.http.routers.ownfoil-http3.tls=false"
+      - "traefik.http.routers.ownfoil-https1.rule=Host(`ownfoil.beefunk.lan`)"
+      - "traefik.http.routers.ownfoil-https1.entrypoints=websecure"
+      - "traefik.http.routers.ownfoil-https1.tls=true"
+      - "traefik.http.routers.ownfoil-https2.rule=Host(`ownfoil.home`)"
+      - "traefik.http.routers.ownfoil-https2.entrypoints=websecure"
+      - "traefik.http.routers.ownfoil-https2.tls=true"
+      - "traefik.http.routers.ownfoil-https3.rule=Host(`ownfoil.local`)"
+      - "traefik.http.routers.ownfoil-https3.entrypoints=websecure"
+      - "traefik.http.routers.ownfoil-https3.tls=true"
+      - "traefik.http.services.ownfoil.loadbalancer.server.port=8465"
   ownfoil_v1:
     container_name: ownfoil_v1
     image: a1ex4/ownfoil:v1
@@ -1084,9 +1129,32 @@ services:
     volumes:
       - $SWITCH_PATH:/games
       - $DOCKER_CONFIG_PATH/ownfoil_v1:/app/config
-    ports:
-      - "8000:80"
+#    ports:
+#      - "8000:80"
     restart: unless-stopped
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ownfoil_v1-http1.rule=Host(`ownfoil_v1.beefunk.lan`)"
+      - "traefik.http.routers.ownfoil_v1-http1.entrypoints=web"
+      - "traefik.http.routers.ownfoil_v1-http1.tls=false"
+      - "traefik.http.routers.ownfoil_v1-http2.rule=Host(`ownfoil_v1.home`)"
+      - "traefik.http.routers.ownfoil_v1-http2.entrypoints=web"
+      - "traefik.http.routers.ownfoil_v1-http2.tls=false"
+      - "traefik.http.routers.ownfoil_v1-http3.rule=Host(`ownfoil_v1.local`)"
+      - "traefik.http.routers.ownfoil_v1-http3.entrypoints=web"
+      - "traefik.http.routers.ownfoil_v1-http3.tls=false"
+      - "traefik.http.routers.ownfoil_v1-https1.rule=Host(`ownfoil_v1.beefunk.lan`)"
+      - "traefik.http.routers.ownfoil_v1-https1.entrypoints=websecure"
+      - "traefik.http.routers.ownfoil_v1-https1.tls=true"
+      - "traefik.http.routers.ownfoil_v1-https2.rule=Host(`ownfoil_v1.home`)"
+      - "traefik.http.routers.ownfoil_v1-https2.entrypoints=websecure"
+      - "traefik.http.routers.ownfoil_v1-https2.tls=true"
+      - "traefik.http.routers.ownfoil_v1-https3.rule=Host(`ownfoil_v1.local`)"
+      - "traefik.http.routers.ownfoil_v1-https3.entrypoints=websecure"
+      - "traefik.http.routers.ownfoil_v1-https3.tls=true"
+      - "traefik.http.services.ownfoil_v1.loadbalancer.server.port=80"
 
   playerr:
     image: maikboarder/playerr:latest
