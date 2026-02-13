@@ -15,9 +15,10 @@ services:
       - --providers.docker=true
       - --entrypoints.web.address=:80
       - --providers.docker.exposedbydefault=false
-      # - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.address=:443
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
