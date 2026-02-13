@@ -326,8 +326,15 @@ services:
     image: ghcr.io/mealie-recipes/mealie:v3.6.1 #
     container_name: mealie
     restart: always
-    ports:
-      - "9925:9000" #
+#    ports:
+#      - "9925:9000" #
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mealie.rule=Host(`mealie.beefunk.lan`)"
+      - "traefik.http.routers.mealie.entrypoints=web"
+      - "traefik.http.services.mealie.loadbalancer.server.port=9000"
     deploy:
       resources:
         limits:
