@@ -244,9 +244,45 @@ services:
     image: deluan/navidrome
     container_name: navidrome
     user: $PUID_USER:$PGID_USER # should be owner of volumes
-    ports:
-      - "8080:4533"
+#    ports:
+#      - "8080:4533"
     restart: unless-stopped
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+
+      # HTTP routers
+      - "traefik.http.routers.navidrome-http1.rule=Host(`navidrome.beefunk.lan`)"
+      - "traefik.http.routers.navidrome-http1.entrypoints=web"
+      - "traefik.http.routers.navidrome-http1.tls=false"
+
+      - "traefik.http.routers.navidrome-http2.rule=Host(`navidrome.home`)"
+      - "traefik.http.routers.navidrome-http2.entrypoints=web"
+      - "traefik.http.routers.navidrome-http2.tls=false"
+
+      - "traefik.http.routers.navidrome-http3.rule=Host(`navidrome.local`)"
+      - "traefik.http.routers.navidrome-http3.entrypoints=web"
+      - "traefik.http.routers.navidrome-http3.tls=false"
+
+      # HTTPS routers
+      - "traefik.http.routers.navidrome-https1.rule=Host(`navidrome.beefunk.lan`)"
+      - "traefik.http.routers.navidrome-https1.entrypoints=websecure"
+      - "traefik.http.routers.navidrome-https1.tls=true"
+
+      - "traefik.http.routers.navidrome-https2.rule=Host(`navidrome.home`)"
+      - "traefik.http.routers.navidrome-https2.entrypoints=websecure"
+      - "traefik.http.routers.navidrome-https2.tls=true"
+
+      - "traefik.http.routers.navidrome-https3.rule=Host(`navidrome.local`)"
+      - "traefik.http.routers.navidrome-https3.entrypoints=websecure"
+      - "traefik.http.routers.navidrome-https3.tls=true"
+
+      # Backend service port
+      - "traefik.http.services.navidrome.loadbalancer.server.port=4533"
+
+      # Existing watchtower label
+      - "com.centurylinklabs.watchtower.enable=true"
     environment:
       # Optional: put your config options customization here. Examples:
       ND_SCANINTERVAL: 1h
@@ -261,14 +297,10 @@ services:
       ND_LASTFM_SECRET: $LASTFM_SECRET
       ND_SPOTIFY_ID: $SPOTIFY_ID
       ND_SPOTIFY_SECRET: $SPOTIFY_SECRET
-      ND_ENABLETRANSCODINGCONFIG: "true"
-      ND_ENABLEGRAVATAR: "true"
       WATCHTOWER_CLEANUP: "true"
     volumes:
       - $DOCKER_CONFIG_PATH/navidrome:/data
       - $MUSIC_PATH:/music:ro
-    labels:
-      com.centurylinklabs.watchtower.enable: true
 
   sshfs-moode-mpd:
     image: pschmitt/sshfs
