@@ -26,6 +26,7 @@ services:
       - ~/traefik/dynamic_tls.yml:/etc/traefik/dynamic_tls.yml:ro
     networks:
       - proxy
+      - frontend
       
   pihole:
     container_name: pihole
@@ -35,9 +36,9 @@ services:
       - "53:53/tcp"
       - "53:53/udp"
       # Default HTTP Port
-      - "8002:80/tcp"
+      # - "8002:80/tcp"
       # Default HTTPs Port. FTL will generate a self-signed certificate
-      - "455:443/tcp"
+      # - "455:443/tcp"
       # Uncomment the line below if you are using Pi-hole as your DHCP server
       # - "67:67/udp"
       # Uncomment the line below if you are using Pi-hole as your NTP server
@@ -66,7 +67,23 @@ services:
       # - SYS_TIME
       # Optional, if Pi-hole should get some more processing time
       - SYS_NICE
+    labels:
+      - "traefik.enable=true"
+        # HTTPS router
+      - "traefik.http.routers.pihole-https.rule=Host(`pihole.beefunk.local`)"
+      - "traefik.http.routers.pihole-https.entrypoints=websecure"
+      - "traefik.http.routers.pihole-https.tls=true"
+      - "traefik.http.services.pihole.loadbalancer.server.port=80"  # <--- internal port
+
+      # HTTP router → redirect to HTTPS
+      - "traefik.http.routers.pihole-http.rule=Host(`pihole.beefunk.local`)"
+      - "traefik.http.routers.pihole-http.entrypoints=web"
+      - "traefik.http.routers.pihole-http.middlewares=redirect-to-https"
+
+      # Middleware
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
     networks:
+      proxy: {}
       frontend:
         ipv4_address: $PIHOLE_DOCKER_SUB_IP_DNS
     restart: always
@@ -85,7 +102,8 @@ services:
       - SERVERURL=$GLDDNS_URL}
       - SERVERPORT=51820 #optional
       - PEERS=$WG2_PEERS #optional
-      - PEERDNS=$PIHOLE_DOCKER_SUB_IP_DNS #using pihole docker, default port is 53, which is dsn by default # docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' pihole
+      # - PEERDNS=$PIHOLE_DOCKER_SUB_IP_DNS #using pihole docker, default port is 53, which is dsn by default # docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' pihole
+      - PEERDNS=192.168.8.214
       - INTERNAL_SUBNET=10.13.13.0 #optional
     volumes:
       - $DOCKER_CONFIG_PATH/wireguard2/config:/config
@@ -125,11 +143,11 @@ services:
       - "traefik.http.routers.homer-http1.entrypoints=web"
       - "traefik.http.routers.homer-http1.tls=false"
 
-      - "traefik.http.routers.homer-http2.rule=Host(`beefunk.home`)"
+      - "traefik.http.routers.homer-http2.rule=Host(`home.beefunk.home`)"
       - "traefik.http.routers.homer-http2.entrypoints=web"
       - "traefik.http.routers.homer-http2.tls=false"
 
-      - "traefik.http.routers.homer-http3.rule=Host(`beefunk.local`)"
+      - "traefik.http.routers.homer-http3.rule=Host(`home.beefunk.local`)"
       - "traefik.http.routers.homer-http3.entrypoints=web"
       - "traefik.http.routers.homer-http3.tls=false"
 
@@ -138,11 +156,11 @@ services:
       - "traefik.http.routers.homer-https1.entrypoints=websecure"
       - "traefik.http.routers.homer-https1.tls=true"
 
-      - "traefik.http.routers.homer-https2.rule=Host(`beefunk.home`)"
+      - "traefik.http.routers.homer-https2.rule=Host(`home.beefunk.home`)"
       - "traefik.http.routers.homer-https2.entrypoints=websecure"
       - "traefik.http.routers.homer-https2.tls=true"
 
-      - "traefik.http.routers.homer-https3.rule=Host(`beefunk.local`)"
+      - "traefik.http.routers.homer-https3.rule=Host(`home.beefunk.local`)"
       - "traefik.http.routers.homer-https3.entrypoints=websecure"
       - "traefik.http.routers.homer-https3.tls=true"
 
@@ -223,11 +241,11 @@ services:
       - $YOGA_GLO_PATH:/data/yoga_glo:ro
       - $GUITAR_VIDEOS_PATH:/data/guitar:ro
       - /dev/dri:/dev/dri #optional
-#    ports:
-#      - 8096:8096 #http
-#      - 8920:8920 #https
-#      - 7359:7359/udp #optional
-#      - 1900:1900/udp #optional
+    # ports:
+    #   - 8096:8096 #http
+    #   - 8920:8920 #https
+    #   - 7359:7359/udp #optional
+    #   - 1900:1900/udp #optional
     restart: unless-stopped
     networks:
       - proxy
@@ -237,32 +255,24 @@ services:
       - "traefik.http.routers.jellyfin-http1.rule=Host(`jellyfin.beefunk.lan`)"
       - "traefik.http.routers.jellyfin-http1.entrypoints=web"
       - "traefik.http.routers.jellyfin-http1.tls=false"
-      - "traefik.http.routers.jellyfin-http2.rule=Host(`jellyfin.home`)"
+      - "traefik.http.routers.jellyfin-http2.rule=Host(`jellyfin.beefunk.home`)"
       - "traefik.http.routers.jellyfin-http2.entrypoints=web"
       - "traefik.http.routers.jellyfin-http2.tls=false"
-      - "traefik.http.routers.jellyfin-http3.rule=Host(`jellyfin.local`)"
+      - "traefik.http.routers.jellyfin-http3.rule=Host(`jellyfin.beefunk.local`)"
       - "traefik.http.routers.jellyfin-http3.entrypoints=web"
       - "traefik.http.routers.jellyfin-http3.tls=false"
       # HTTPS routers
       - "traefik.http.routers.jellyfin-https1.rule=Host(`jellyfin.beefunk.lan`)"
       - "traefik.http.routers.jellyfin-https1.entrypoints=websecure"
       - "traefik.http.routers.jellyfin-https1.tls=true"
-      - "traefik.http.routers.jellyfin-https2.rule=Host(`jellyfin.home`)"
+      - "traefik.http.routers.jellyfin-https2.rule=Host(`jellyfin.beefunk.home`)"
       - "traefik.http.routers.jellyfin-https2.entrypoints=websecure"
       - "traefik.http.routers.jellyfin-https2.tls=true"
-      - "traefik.http.routers.jellyfin-https3.rule=Host(`jellyfin.local`)"
+      - "traefik.http.routers.jellyfin-https3.rule=Host(`jellyfin.beefunk.local`)"
       - "traefik.http.routers.jellyfin-https3.entrypoints=websecure"
       - "traefik.http.routers.jellyfin-https3.tls=true"
       # Backend
       - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
-    #  networks:
-    #    - proxy
-    # labels:
-    #   com.centurylinklabs.watchtower.enable: true
-    #   traefik.enable: true
-    #   traefik.http.routers.whoami.rule: Host(`whoami.myhost.local`)
-    #   traefik.http.routers.whoami.tls: true
-    #   traefik.http.routers.whoami.entrypoints: websecure
   ###########################
   navidrome:
     image: deluan/navidrome
@@ -281,11 +291,11 @@ services:
       - "traefik.http.routers.navidrome-http1.entrypoints=web"
       - "traefik.http.routers.navidrome-http1.tls=false"
 
-      - "traefik.http.routers.navidrome-http2.rule=Host(`navidrome.home`)"
+      - "traefik.http.routers.navidrome-http2.rule=Host(`navidrome.beefunk.home`)"
       - "traefik.http.routers.navidrome-http2.entrypoints=web"
       - "traefik.http.routers.navidrome-http2.tls=false"
 
-      - "traefik.http.routers.navidrome-http3.rule=Host(`navidrome.local`)"
+      - "traefik.http.routers.navidrome-http3.rule=Host(`navidrome.beefunk.local`)"
       - "traefik.http.routers.navidrome-http3.entrypoints=web"
       - "traefik.http.routers.navidrome-http3.tls=false"
 
@@ -294,11 +304,11 @@ services:
       - "traefik.http.routers.navidrome-https1.entrypoints=websecure"
       - "traefik.http.routers.navidrome-https1.tls=true"
 
-      - "traefik.http.routers.navidrome-https2.rule=Host(`navidrome.home`)"
+      - "traefik.http.routers.navidrome-https2.rule=Host(`navidrome.beefunk.home`)"
       - "traefik.http.routers.navidrome-https2.entrypoints=websecure"
       - "traefik.http.routers.navidrome-https2.tls=true"
 
-      - "traefik.http.routers.navidrome-https3.rule=Host(`navidrome.local`)"
+      - "traefik.http.routers.navidrome-https3.rule=Host(`navidrome.beefunk.local`)"
       - "traefik.http.routers.navidrome-https3.entrypoints=websecure"
       - "traefik.http.routers.navidrome-https3.tls=true"
 
@@ -367,14 +377,15 @@ services:
   mympd:
     image: ghcr.io/jcorporation/mympd/mympd
     container_name: mympd
-    ports:
-      - 8097:8080
-      - 8443:8443
+    # ports:
+      # - 8097:8080
+      # - 8443:8443
     user: 1000:1000
     environment:
       TZ: $TZ
       MYMPD_SSL_SAN: "DNS:beefunk,IP:192.168.8.x"
-      MYMPD_MYMPD_URI: http://beefunk:8097
+      MYMPD_MYMPD_URI: https://mympd.beefunk.local
+      # MYMPD_MYMPD_URI: http://beefunk:8097
       MYMPD_LOGLEVEL: 7
     depends_on:
       - sshfs-moode-mpd
@@ -399,6 +410,40 @@ services:
     memswap_limit: 812m
     cpuset: "0"
     pids_limit: 256
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+
+      # HTTP routers
+      - "traefik.http.routers.mympd-http1.rule=Host(`mympd.beefunk.lan`)"
+      - "traefik.http.routers.mympd-http1.entrypoints=web"
+      - "traefik.http.routers.mympd-http1.tls=false"
+
+      - "traefik.http.routers.mympd-http2.rule=Host(`mympd.beefunk.home`)"
+      - "traefik.http.routers.mympd-http2.entrypoints=web"
+      - "traefik.http.routers.mympd-http2.tls=false"
+
+      - "traefik.http.routers.mympd-http3.rule=Host(`mympd.beefunk.local`)"
+      - "traefik.http.routers.mympd-http3.entrypoints=web"
+      - "traefik.http.routers.mympd-http3.tls=false"
+
+      # HTTPS routers
+      - "traefik.http.routers.mympd-https1.rule=Host(`mympd.beefunk.lan`)"
+      - "traefik.http.routers.mympd-https1.entrypoints=websecure"
+      - "traefik.http.routers.mympd-https1.tls=true"
+
+      - "traefik.http.routers.mympd-https2.rule=Host(`mympd.beefunk.home`)"
+      - "traefik.http.routers.mympd-https2.entrypoints=websecure"
+      - "traefik.http.routers.mympd-https2.tls=true"
+
+      - "traefik.http.routers.mympd-https3.rule=Host(`mympd.beefunk.local`)"
+      - "traefik.http.routers.mympd-https3.entrypoints=websecure"
+      - "traefik.http.routers.mympd-https3.tls=true"
+
+      # Same backend service
+      - "traefik.http.services.mympd.loadbalancer.server.port=8080"
+
     restart: unless-stopped
   ##################
   mealie:
@@ -417,11 +462,11 @@ services:
       - "traefik.http.routers.mealie-http1.entrypoints=web"
       - "traefik.http.routers.mealie-http1.tls=false"
 
-      - "traefik.http.routers.mealie-http2.rule=Host(`mealie.home`)"
+      - "traefik.http.routers.mealie-http2.rule=Host(`mealie.beefunk.home`)"
       - "traefik.http.routers.mealie-http2.entrypoints=web"
       - "traefik.http.routers.mealie-http2.tls=false"
 
-      - "traefik.http.routers.mealie-http3.rule=Host(`mealie.local`)"
+      - "traefik.http.routers.mealie-http3.rule=Host(`mealie.beefunk.local`)"
       - "traefik.http.routers.mealie-http3.entrypoints=web"
       - "traefik.http.routers.mealie-http3.tls=false"
 
@@ -430,11 +475,11 @@ services:
       - "traefik.http.routers.mealie-https1.entrypoints=websecure"
       - "traefik.http.routers.mealie-https1.tls=true"
 
-      - "traefik.http.routers.mealie-https2.rule=Host(`mealie.home`)"
+      - "traefik.http.routers.mealie-https2.rule=Host(`mealie.beefunk.home`)"
       - "traefik.http.routers.mealie-https2.entrypoints=websecure"
       - "traefik.http.routers.mealie-https2.tls=true"
 
-      - "traefik.http.routers.mealie-https3.rule=Host(`mealie.local`)"
+      - "traefik.http.routers.mealie-https3.rule=Host(`mealie.beefunk.local`)"
       - "traefik.http.routers.mealie-https3.entrypoints=websecure"
       - "traefik.http.routers.mealie-https3.tls=true"
 
@@ -464,8 +509,6 @@ services:
       - $PODCASTS_PATH:/podcasts
       - $DOCKER_CONFIG_PATH/audiobookshelf:/config
       - $DOCKER_CONFIG_PATH/audiobookshelf_metadata>:/metadata
-    labels:
-      com.centurylinklabs.watchtower.enable: true
     networks:
       - proxy
     labels:
@@ -473,19 +516,19 @@ services:
       - "traefik.http.routers.audiobookshelf-http1.rule=Host(`audiobookshelf.beefunk.lan`)"
       - "traefik.http.routers.audiobookshelf-http1.entrypoints=web"
       - "traefik.http.routers.audiobookshelf-http1.tls=false"
-      - "traefik.http.routers.audiobookshelf-http2.rule=Host(`audiobookshelf.home`)"
+      - "traefik.http.routers.audiobookshelf-http2.rule=Host(`audiobookshelf.beefunk.home`)"
       - "traefik.http.routers.audiobookshelf-http2.entrypoints=web"
       - "traefik.http.routers.audiobookshelf-http2.tls=false"
-      - "traefik.http.routers.audiobookshelf-http3.rule=Host(`audiobookshelf.local`)"
+      - "traefik.http.routers.audiobookshelf-http3.rule=Host(`audiobookshelf.beefunk.local`)"
       - "traefik.http.routers.audiobookshelf-http3.entrypoints=web"
       - "traefik.http.routers.audiobookshelf-http3.tls=false"
       - "traefik.http.routers.audiobookshelf-https1.rule=Host(`audiobookshelf.beefunk.lan`)"
       - "traefik.http.routers.audiobookshelf-https1.entrypoints=websecure"
       - "traefik.http.routers.audiobookshelf-https1.tls=true"
-      - "traefik.http.routers.audiobookshelf-https2.rule=Host(`audiobookshelf.home`)"
+      - "traefik.http.routers.audiobookshelf-https2.rule=Host(`audiobookshelf.beefunk.home`)"
       - "traefik.http.routers.audiobookshelf-https2.entrypoints=websecure"
       - "traefik.http.routers.audiobookshelf-https2.tls=true"
-      - "traefik.http.routers.audiobookshelf-https3.rule=Host(`audiobookshelf.local`)"
+      - "traefik.http.routers.audiobookshelf-https3.rule=Host(`audiobookshelf.beefunk.local`)"
       - "traefik.http.routers.audiobookshelf-https3.entrypoints=websecure"
       - "traefik.http.routers.audiobookshelf-https3.tls=true"
       - "traefik.http.services.audiobookshelf.loadbalancer.server.port=80"
@@ -535,19 +578,19 @@ services:
       - "traefik.http.routers.calibre-web-http1.rule=Host(`calibre-web.beefunk.lan`)"
       - "traefik.http.routers.calibre-web-http1.entrypoints=web"
       - "traefik.http.routers.calibre-web-http1.tls=false"
-      - "traefik.http.routers.calibre-web-http2.rule=Host(`calibre-web.home`)"
+      - "traefik.http.routers.calibre-web-http2.rule=Host(`calibre-web.beefunk.home`)"
       - "traefik.http.routers.calibre-web-http2.entrypoints=web"
       - "traefik.http.routers.calibre-web-http2.tls=false"
-      - "traefik.http.routers.calibre-web-http3.rule=Host(`calibre-web.local`)"
+      - "traefik.http.routers.calibre-web-http3.rule=Host(`calibre-web.beefunk.local`)"
       - "traefik.http.routers.calibre-web-http3.entrypoints=web"
       - "traefik.http.routers.calibre-web-http3.tls=false"
-      - "traefik.http.routers.calibre-web-https1.rule=Host(`calibre-web.beefunk.lan`)"
+      - "traefik.http.routers.calibre-web-https1.rule=Host(`calibre-web.beefunk.beefunk.lan`)"
       - "traefik.http.routers.calibre-web-https1.entrypoints=websecure"
       - "traefik.http.routers.calibre-web-https1.tls=true"
-      - "traefik.http.routers.calibre-web-https2.rule=Host(`calibre-web.home`)"
+      - "traefik.http.routers.calibre-web-https2.rule=Host(`calibre-web.beefunk.home`)"
       - "traefik.http.routers.calibre-web-https2.entrypoints=websecure"
       - "traefik.http.routers.calibre-web-https2.tls=true"
-      - "traefik.http.routers.calibre-web-https3.rule=Host(`calibre-web.local`)"
+      - "traefik.http.routers.calibre-web-https3.rule=Host(`calibre-web.beefunk.local`)"
       - "traefik.http.routers.calibre-web-https3.entrypoints=websecure"
       - "traefik.http.routers.calibre-web-https3.tls=true"
       - "traefik.http.services.calibre-web.loadbalancer.server.port=8083"
@@ -598,19 +641,19 @@ services:
       - "traefik.http.routers.piwigo-http1.rule=Host(`piwigo.beefunk.lan`)"
       - "traefik.http.routers.piwigo-http1.entrypoints=web"
       - "traefik.http.routers.piwigo-http1.tls=false"
-      - "traefik.http.routers.piwigo-http2.rule=Host(`piwigo.home`)"
+      - "traefik.http.routers.piwigo-http2.rule=Host(`piwigo.beefunk.home`)"
       - "traefik.http.routers.piwigo-http2.entrypoints=web"
       - "traefik.http.routers.piwigo-http2.tls=false"
-      - "traefik.http.routers.piwigo-http3.rule=Host(`piwigo.local`)"
+      - "traefik.http.routers.piwigo-http3.rule=Host(`piwigo.beefunk.local`)"
       - "traefik.http.routers.piwigo-http3.entrypoints=web"
       - "traefik.http.routers.piwigo-http3.tls=false"
       - "traefik.http.routers.piwigo-https1.rule=Host(`piwigo.beefunk.lan`)"
       - "traefik.http.routers.piwigo-https1.entrypoints=websecure"
       - "traefik.http.routers.piwigo-https1.tls=true"
-      - "traefik.http.routers.piwigo-https2.rule=Host(`piwigo.home`)"
+      - "traefik.http.routers.piwigo-https2.rule=Host(`piwigo.beefunk.home`)"
       - "traefik.http.routers.piwigo-https2.entrypoints=websecure"
       - "traefik.http.routers.piwigo-https2.tls=true"
-      - "traefik.http.routers.piwigo-https3.rule=Host(`piwigo.local`)"
+      - "traefik.http.routers.piwigo-https3.rule=Host(`piwigo.beefunk.local`)"
       - "traefik.http.routers.piwigo-https3.entrypoints=websecure"
       - "traefik.http.routers.piwigo-https3.tls=true"
       - "traefik.http.services.piwigo.loadbalancer.server.port=80"
@@ -779,19 +822,19 @@ services:
       - "traefik.http.routers.portainer-http1.rule=Host(`portainer.beefunk.lan`)"
       - "traefik.http.routers.portainer-http1.entrypoints=web"
       - "traefik.http.routers.portainer-http1.tls=false"
-      - "traefik.http.routers.portainer-http2.rule=Host(`portainer.home`)"
+      - "traefik.http.routers.portainer-http2.rule=Host(`portainer.beefunk.home`)"
       - "traefik.http.routers.portainer-http2.entrypoints=web"
       - "traefik.http.routers.portainer-http2.tls=false"
-      - "traefik.http.routers.portainer-http3.rule=Host(`portainer.local`)"
+      - "traefik.http.routers.portainer-http3.rule=Host(`portainer.beefunk.local`)"
       - "traefik.http.routers.portainer-http3.entrypoints=web"
       - "traefik.http.routers.portainer-http3.tls=false"
       - "traefik.http.routers.portainer-https1.rule=Host(`portainer.beefunk.lan`)"
       - "traefik.http.routers.portainer-https1.entrypoints=websecure"
       - "traefik.http.routers.portainer-https1.tls=true"
-      - "traefik.http.routers.portainer-https2.rule=Host(`portainer.home`)"
+      - "traefik.http.routers.portainer-https2.rule=Host(`portainer.beefunk.home`)"
       - "traefik.http.routers.portainer-https2.entrypoints=websecure"
       - "traefik.http.routers.portainer-https2.tls=true"
-      - "traefik.http.routers.portainer-https3.rule=Host(`portainer.local`)"
+      - "traefik.http.routers.portainer-https3.rule=Host(`portainer.beefunk.local`)"
       - "traefik.http.routers.portainer-https3.entrypoints=websecure"
       - "traefik.http.routers.portainer-https3.tls=true"
       - "traefik.http.services.portainer.loadbalancer.server.port=9000"
@@ -820,8 +863,8 @@ services:
         source: /etc/timezone
         target: /etc/timezone
         read_only: true
-#    ports:
-#      - 9980:25600
+    # ports:
+      # - 9980:25600
     user: "$PUID_USER:$PGID_USER"
     environment:
       - JAVA_TOOL_OPTIONS=-Xmx4g
@@ -836,19 +879,19 @@ services:
       - "traefik.http.routers.komga-http1.rule=Host(`komga.beefunk.lan`)"
       - "traefik.http.routers.komga-http1.entrypoints=web"
       - "traefik.http.routers.komga-http1.tls=false"
-      - "traefik.http.routers.komga-http2.rule=Host(`komga.home`)"
+      - "traefik.http.routers.komga-http2.rule=Host(`komga.beefunk.home`)"
       - "traefik.http.routers.komga-http2.entrypoints=web"
       - "traefik.http.routers.komga-http2.tls=false"
-      - "traefik.http.routers.komga-http3.rule=Host(`komga.local`)"
+      - "traefik.http.routers.komga-http3.rule=Host(`komga.beefunk.local`)"
       - "traefik.http.routers.komga-http3.entrypoints=web"
       - "traefik.http.routers.komga-http3.tls=false"
       - "traefik.http.routers.komga-https1.rule=Host(`komga.beefunk.lan`)"
       - "traefik.http.routers.komga-https1.entrypoints=websecure"
       - "traefik.http.routers.komga-https1.tls=true"
-      - "traefik.http.routers.komga-https2.rule=Host(`komga.home`)"
+      - "traefik.http.routers.komga-https2.rule=Host(`komga.beefunk.home`)"
       - "traefik.http.routers.komga-https2.entrypoints=websecure"
       - "traefik.http.routers.komga-https2.tls=true"
-      - "traefik.http.routers.komga-https3.rule=Host(`komga.local`)"
+      - "traefik.http.routers.komga-https3.rule=Host(`komga.beefunk.local`)"
       - "traefik.http.routers.komga-https3.entrypoints=websecure"
       - "traefik.http.routers.komga-https3.tls=true"
       - "traefik.http.services.komga.loadbalancer.server.port=25600"
@@ -946,19 +989,19 @@ services:
       - "traefik.http.routers.bentopdf-http1.rule=Host(`bentopdf.beefunk.lan`)"
       - "traefik.http.routers.bentopdf-http1.entrypoints=web"
       - "traefik.http.routers.bentopdf-http1.tls=false"
-      - "traefik.http.routers.bentopdf-http2.rule=Host(`bentopdf.home`)"
+      - "traefik.http.routers.bentopdf-http2.rule=Host(`bentopdf.beefunk.home`)"
       - "traefik.http.routers.bentopdf-http2.entrypoints=web"
       - "traefik.http.routers.bentopdf-http2.tls=false"
-      - "traefik.http.routers.bentopdf-http3.rule=Host(`bentopdf.local`)"
+      - "traefik.http.routers.bentopdf-http3.rule=Host(`bentopdf.beefunk.local`)"
       - "traefik.http.routers.bentopdf-http3.entrypoints=web"
       - "traefik.http.routers.bentopdf-http3.tls=false"
-      - "traefik.http.routers.bentopdf-https1.rule=Host(`bentopdf.beefunk.lan`)"
+      - "traefik.http.routers.bentopdf-https1.rule=Host(`bentopdf.beefunk.beefunk.lan`)"
       - "traefik.http.routers.bentopdf-https1.entrypoints=websecure"
       - "traefik.http.routers.bentopdf-https1.tls=true"
-      - "traefik.http.routers.bentopdf-https2.rule=Host(`bentopdf.home`)"
+      - "traefik.http.routers.bentopdf-https2.rule=Host(`bentopdf.beefunk.home`)"
       - "traefik.http.routers.bentopdf-https2.entrypoints=websecure"
       - "traefik.http.routers.bentopdf-https2.tls=true"
-      - "traefik.http.routers.bentopdf-https3.rule=Host(`bentopdf.local`)"
+      - "traefik.http.routers.bentopdf-https3.rule=Host(`bentopdf.beefunk.local`)"
       - "traefik.http.routers.bentopdf-https3.entrypoints=websecure"
       - "traefik.http.routers.bentopdf-https3.tls=true"
       - "traefik.http.services.bentopdf.loadbalancer.server.port=8080"
@@ -1016,19 +1059,19 @@ services:
       - "traefik.http.routers.filebrowser-http1.rule=Host(`filebrowser.beefunk.lan`)"
       - "traefik.http.routers.filebrowser-http1.entrypoints=web"
       - "traefik.http.routers.filebrowser-http1.tls=false"
-      - "traefik.http.routers.filebrowser-http2.rule=Host(`filebrowser.home`)"
+      - "traefik.http.routers.filebrowser-http2.rule=Host(`filebrowser.beefunk.home`)"
       - "traefik.http.routers.filebrowser-http2.entrypoints=web"
       - "traefik.http.routers.filebrowser-http2.tls=false"
-      - "traefik.http.routers.filebrowser-http3.rule=Host(`filebrowser.local`)"
+      - "traefik.http.routers.filebrowser-http3.rule=Host(`filebrowser.beefunk.local`)"
       - "traefik.http.routers.filebrowser-http3.entrypoints=web"
       - "traefik.http.routers.filebrowser-http3.tls=false"
       - "traefik.http.routers.filebrowser-https1.rule=Host(`filebrowser.beefunk.lan`)"
       - "traefik.http.routers.filebrowser-https1.entrypoints=websecure"
       - "traefik.http.routers.filebrowser-https1.tls=true"
-      - "traefik.http.routers.filebrowser-https2.rule=Host(`filebrowser.home`)"
+      - "traefik.http.routers.filebrowser-https2.rule=Host(`filebrowser.beefunk.home`)"
       - "traefik.http.routers.filebrowser-https2.entrypoints=websecure"
       - "traefik.http.routers.filebrowser-https2.tls=true"
-      - "traefik.http.routers.filebrowser-https3.rule=Host(`filebrowser.local`)"
+      - "traefik.http.routers.filebrowser-https3.rule=Host(`filebrowser.beefunk.local`)"
       - "traefik.http.routers.filebrowser-https3.entrypoints=websecure"
       - "traefik.http.routers.filebrowser-https3.tls=true"
       - "traefik.http.services.filebrowser.loadbalancer.server.port=80"
@@ -1060,19 +1103,19 @@ services:
       - "traefik.http.routers.peanut-http1.rule=Host(`peanut.beefunk.lan`)"
       - "traefik.http.routers.peanut-http1.entrypoints=web"
       - "traefik.http.routers.peanut-http1.tls=false"
-      - "traefik.http.routers.peanut-http2.rule=Host(`peanut.home`)"
+      - "traefik.http.routers.peanut-http2.rule=Host(`peanut.beefunk.home`)"
       - "traefik.http.routers.peanut-http2.entrypoints=web"
       - "traefik.http.routers.peanut-http2.tls=false"
-      - "traefik.http.routers.peanut-http3.rule=Host(`peanut.local`)"
+      - "traefik.http.routers.peanut-http3.rule=Host(`peanut.beefunk.local`)"
       - "traefik.http.routers.peanut-http3.entrypoints=web"
       - "traefik.http.routers.peanut-http3.tls=false"
       - "traefik.http.routers.peanut-https1.rule=Host(`peanut.beefunk.lan`)"
       - "traefik.http.routers.peanut-https1.entrypoints=websecure"
       - "traefik.http.routers.peanut-https1.tls=true"
-      - "traefik.http.routers.peanut-https2.rule=Host(`peanut.home`)"
+      - "traefik.http.routers.peanut-https2.rule=Host(`peanut.beefunk.home`)"
       - "traefik.http.routers.peanut-https2.entrypoints=websecure"
       - "traefik.http.routers.peanut-https2.tls=true"
-      - "traefik.http.routers.peanut-https3.rule=Host(`peanut.local`)"
+      - "traefik.http.routers.peanut-https3.rule=Host(`peanut.beefunk.local`)"
       - "traefik.http.routers.peanut-https3.entrypoints=websecure"
       - "traefik.http.routers.peanut-https3.tls=true"
       - "traefik.http.services.peanut.loadbalancer.server.port=8080"
@@ -1080,6 +1123,9 @@ services:
   ownfoil:
     container_name: ownfoil
     image: a1ex4/ownfoil
+    dns:
+      - 192.168.8.214
+      - 8.8.8.8
     volumes:
       - $SWITCH_PATH:/games
       - ./config:/app/config
@@ -1103,19 +1149,19 @@ services:
       - "traefik.http.routers.ownfoil-http1.rule=Host(`ownfoil.beefunk.lan`)"
       - "traefik.http.routers.ownfoil-http1.entrypoints=web"
       - "traefik.http.routers.ownfoil-http1.tls=false"
-      - "traefik.http.routers.ownfoil-http2.rule=Host(`ownfoil.home`)"
+      - "traefik.http.routers.ownfoil-http2.rule=Host(`ownfoil.beefunk.home`)"
       - "traefik.http.routers.ownfoil-http2.entrypoints=web"
       - "traefik.http.routers.ownfoil-http2.tls=false"
-      - "traefik.http.routers.ownfoil-http3.rule=Host(`ownfoil.local`)"
+      - "traefik.http.routers.ownfoil-http3.rule=Host(`ownfoil.beefunk.local`)"
       - "traefik.http.routers.ownfoil-http3.entrypoints=web"
       - "traefik.http.routers.ownfoil-http3.tls=false"
       - "traefik.http.routers.ownfoil-https1.rule=Host(`ownfoil.beefunk.lan`)"
       - "traefik.http.routers.ownfoil-https1.entrypoints=websecure"
       - "traefik.http.routers.ownfoil-https1.tls=true"
-      - "traefik.http.routers.ownfoil-https2.rule=Host(`ownfoil.home`)"
+      - "traefik.http.routers.ownfoil-https2.rule=Host(`ownfoil.beefunk.home`)"
       - "traefik.http.routers.ownfoil-https2.entrypoints=websecure"
       - "traefik.http.routers.ownfoil-https2.tls=true"
-      - "traefik.http.routers.ownfoil-https3.rule=Host(`ownfoil.local`)"
+      - "traefik.http.routers.ownfoil-https3.rule=Host(`ownfoil.beefunk.local`)"
       - "traefik.http.routers.ownfoil-https3.entrypoints=websecure"
       - "traefik.http.routers.ownfoil-https3.tls=true"
       - "traefik.http.services.ownfoil.loadbalancer.server.port=8465"
@@ -1139,19 +1185,19 @@ services:
       - "traefik.http.routers.ownfoil_v1-http1.rule=Host(`ownfoil_v1.beefunk.lan`)"
       - "traefik.http.routers.ownfoil_v1-http1.entrypoints=web"
       - "traefik.http.routers.ownfoil_v1-http1.tls=false"
-      - "traefik.http.routers.ownfoil_v1-http2.rule=Host(`ownfoil_v1.home`)"
+      - "traefik.http.routers.ownfoil_v1-http2.rule=Host(`ownfoil_v1.beefunk.home`)"
       - "traefik.http.routers.ownfoil_v1-http2.entrypoints=web"
       - "traefik.http.routers.ownfoil_v1-http2.tls=false"
-      - "traefik.http.routers.ownfoil_v1-http3.rule=Host(`ownfoil_v1.local`)"
+      - "traefik.http.routers.ownfoil_v1-http3.rule=Host(`ownfoil_v1.beefunk.local`)"
       - "traefik.http.routers.ownfoil_v1-http3.entrypoints=web"
       - "traefik.http.routers.ownfoil_v1-http3.tls=false"
-      - "traefik.http.routers.ownfoil_v1-https1.rule=Host(`ownfoil_v1.beefunk.lan`)"
+      - "traefik.http.routers.ownfoil_v1-https1.rule=Host(`ownfoil_v1.beefunk.beefunk.lan`)"
       - "traefik.http.routers.ownfoil_v1-https1.entrypoints=websecure"
       - "traefik.http.routers.ownfoil_v1-https1.tls=true"
-      - "traefik.http.routers.ownfoil_v1-https2.rule=Host(`ownfoil_v1.home`)"
+      - "traefik.http.routers.ownfoil_v1-https2.rule=Host(`ownfoil_v1.beefunk.home`)"
       - "traefik.http.routers.ownfoil_v1-https2.entrypoints=websecure"
       - "traefik.http.routers.ownfoil_v1-https2.tls=true"
-      - "traefik.http.routers.ownfoil_v1-https3.rule=Host(`ownfoil_v1.local`)"
+      - "traefik.http.routers.ownfoil_v1-https3.rule=Host(`ownfoil_v1.beefunk.local`)"
       - "traefik.http.routers.ownfoil_v1-https3.entrypoints=websecure"
       - "traefik.http.routers.ownfoil_v1-https3.tls=true"
       - "traefik.http.services.ownfoil_v1.loadbalancer.server.port=80"
@@ -1172,19 +1218,19 @@ services:
       - "traefik.http.routers.playerr-http1.rule=Host(`playerr.beefunk.lan`)"
       - "traefik.http.routers.playerr-http1.entrypoints=web"
       - "traefik.http.routers.playerr-http1.tls=false"
-      - "traefik.http.routers.playerr-http2.rule=Host(`playerr.home`)"
+      - "traefik.http.routers.playerr-http2.rule=Host(`playerr.beefunk.home`)"
       - "traefik.http.routers.playerr-http2.entrypoints=web"
       - "traefik.http.routers.playerr-http2.tls=false"
-      - "traefik.http.routers.playerr-http3.rule=Host(`playerr.local`)"
+      - "traefik.http.routers.playerr-http3.rule=Host(`playerr.beefunk.local`)"
       - "traefik.http.routers.playerr-http3.entrypoints=web"
       - "traefik.http.routers.playerr-http3.tls=false"
       - "traefik.http.routers.playerr-https1.rule=Host(`playerr.beefunk.lan`)"
       - "traefik.http.routers.playerr-https1.entrypoints=websecure"
       - "traefik.http.routers.playerr-https1.tls=true"
-      - "traefik.http.routers.playerr-https2.rule=Host(`playerr.home`)"
+      - "traefik.http.routers.playerr-https2.rule=Host(`playerr.beefunk.home`)"
       - "traefik.http.routers.playerr-https2.entrypoints=websecure"
       - "traefik.http.routers.playerr-https2.tls=true"
-      - "traefik.http.routers.playerr-https3.rule=Host(`playerr.local`)"
+      - "traefik.http.routers.playerr-https3.rule=Host(`playerr.beefunk.local`)"
       - "traefik.http.routers.playerr-https3.entrypoints=websecure"
       - "traefik.http.routers.playerr-https3.tls=true"
       - "traefik.http.services.playerr.loadbalancer.server.port=2727"
@@ -1240,9 +1286,9 @@ services:
     image: ghcr.io/analogj/scrutiny:master-omnibus
     cap_add:
       - SYS_RAWIO
-#    ports:
-#      - "8033:8080" # webapp
-#      - "8086:8086" # influxDB admin
+    ports:
+      - "8033:8080" # webapp
+      - "8086:8086" # influxDB admin
     volumes:
       - /run/udev:/run/udev:ro
       - $DOCKER_CONFIG_PATH/scrutiny/config:/opt/scrutiny/config
@@ -1261,27 +1307,27 @@ services:
     networks:
       - proxy
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.scrutiny-http1.rule=Host(`scrutiny.beefunk.lan`)"
-      - "traefik.http.routers.scrutiny-http1.entrypoints=web"
-      - "traefik.http.routers.scrutiny-http1.tls=false"
-      - "traefik.http.routers.scrutiny-http2.rule=Host(`scrutiny.home`)"
-      - "traefik.http.routers.scrutiny-http2.entrypoints=web"
-      - "traefik.http.routers.scrutiny-http2.tls=false"
-      - "traefik.http.routers.scrutiny-http3.rule=Host(`scrutiny.local`)"
-      - "traefik.http.routers.scrutiny-http3.entrypoints=web"
-      - "traefik.http.routers.scrutiny-http3.tls=false"
-      - "traefik.http.routers.scrutiny-https1.rule=Host(`scrutiny.beefunk.lan`)"
-      - "traefik.http.routers.scrutiny-https1.entrypoints=websecure"
-      - "traefik.http.routers.scrutiny-https1.tls=true"
-      - "traefik.http.routers.scrutiny-https2.rule=Host(`scrutiny.home`)"
-      - "traefik.http.routers.scrutiny-https2.entrypoints=websecure"
-      - "traefik.http.routers.scrutiny-https2.tls=true"
-      - "traefik.http.routers.scrutiny-https3.rule=Host(`scrutiny.local`)"
-      - "traefik.http.routers.scrutiny-https3.entrypoints=websecure"
-      - "traefik.http.routers.scrutiny-https3.tls=true"
-      - "traefik.http.services.scrutiny-webapp.loadbalancer.server.port=8080"
-      - "traefik.http.services.scrutiny-influx.loadbalancer.server.port=8086"
+      # - "traefik.enable=true"
+      # - "traefik.http.routers.scrutiny-http1.rule=Host(`scrutiny.beefunk.lan`)"
+      # - "traefik.http.routers.scrutiny-http1.entrypoints=web"
+      # - "traefik.http.routers.scrutiny-http1.tls=false"
+      # - "traefik.http.routers.scrutiny-http2.rule=Host(`scrutiny.home`)"
+      # - "traefik.http.routers.scrutiny-http2.entrypoints=web"
+      # - "traefik.http.routers.scrutiny-http2.tls=false"
+      # - "traefik.http.routers.scrutiny-http3.rule=Host(`scrutiny.local`)"
+      # - "traefik.http.routers.scrutiny-http3.entrypoints=web"
+      # - "traefik.http.routers.scrutiny-http3.tls=false"
+      # - "traefik.http.routers.scrutiny-https1.rule=Host(`scrutiny.beefunk.lan`)"
+      # - "traefik.http.routers.scrutiny-https1.entrypoints=websecure"
+      # - "traefik.http.routers.scrutiny-https1.tls=true"
+      # - "traefik.http.routers.scrutiny-https2.rule=Host(`scrutiny.home`)"
+      # - "traefik.http.routers.scrutiny-https2.entrypoints=websecure"
+      # - "traefik.http.routers.scrutiny-https2.tls=true"
+      # - "traefik.http.routers.scrutiny-https3.rule=Host(`scrutiny.local`)"
+      # - "traefik.http.routers.scrutiny-https3.entrypoints=websecure"
+      # - "traefik.http.routers.scrutiny-https3.tls=true"
+      # - "traefik.http.services.scrutiny-webapp.loadbalancer.server.port=8080"
+      # - "traefik.http.services.scrutiny-influx.loadbalancer.server.port=8086"
       - "com.centurylinklabs.watchtower.enable=true"
 
   duckdns:
@@ -1318,19 +1364,19 @@ services:
       - "traefik.http.routers.immich-http1.rule=Host(`immich.beefunk.lan`)"
       - "traefik.http.routers.immich-http1.entrypoints=web"
       - "traefik.http.routers.immich-http1.tls=false"
-      - "traefik.http.routers.immich-http2.rule=Host(`immich.home`)"
+      - "traefik.http.routers.immich-http2.rule=Host(`immich.beefunk.home`)"
       - "traefik.http.routers.immich-http2.entrypoints=web"
       - "traefik.http.routers.immich-http2.tls=false"
-      - "traefik.http.routers.immich-http3.rule=Host(`immich.local`)"
+      - "traefik.http.routers.immich-http3.rule=Host(`immich.beefunk.local`)"
       - "traefik.http.routers.immich-http3.entrypoints=web"
       - "traefik.http.routers.immich-http3.tls=false"
       - "traefik.http.routers.immich-https1.rule=Host(`immich.beefunk.lan`)"
       - "traefik.http.routers.immich-https1.entrypoints=websecure"
       - "traefik.http.routers.immich-https1.tls=true"
-      - "traefik.http.routers.immich-https2.rule=Host(`immich.home`)"
+      - "traefik.http.routers.immich-https2.rule=Host(`immich.beefunk.home`)"
       - "traefik.http.routers.immich-https2.entrypoints=websecure"
       - "traefik.http.routers.immich-https2.tls=true"
-      - "traefik.http.routers.immich-https3.rule=Host(`immich.local`)"
+      - "traefik.http.routers.immich-https3.rule=Host(`immich.beefunk.local`)"
       - "traefik.http.routers.immich-https3.entrypoints=websecure"
       - "traefik.http.routers.immich-https3.tls=true"
       - "traefik.http.services.immich.loadbalancer.server.port=80"
@@ -1354,19 +1400,19 @@ services:
       - "traefik.http.routers.lingodiary-http1.rule=Host(`lingodiary.beefunk.lan`)"
       - "traefik.http.routers.lingodiary-http1.entrypoints=web"
       - "traefik.http.routers.lingodiary-http1.tls=false"
-      - "traefik.http.routers.lingodiary-http2.rule=Host(`lingodiary.home`)"
+      - "traefik.http.routers.lingodiary-http2.rule=Host(`lingodiary.beefunk.home`)"
       - "traefik.http.routers.lingodiary-http2.entrypoints=web"
       - "traefik.http.routers.lingodiary-http2.tls=false"
-      - "traefik.http.routers.lingodiary-http3.rule=Host(`lingodiary.local`)"
+      - "traefik.http.routers.lingodiary-http3.rule=Host(`lingodiary.beefunk.local`)"
       - "traefik.http.routers.lingodiary-http3.entrypoints=web"
       - "traefik.http.routers.lingodiary-http3.tls=false"
       - "traefik.http.routers.lingodiary-https1.rule=Host(`lingodiary.beefunk.lan`)"
       - "traefik.http.routers.lingodiary-https1.entrypoints=websecure"
       - "traefik.http.routers.lingodiary-https1.tls=true"
-      - "traefik.http.routers.lingodiary-https2.rule=Host(`lingodiary.home`)"
+      - "traefik.http.routers.lingodiary-https2.rule=Host(`lingodiary.beefunk.home`)"
       - "traefik.http.routers.lingodiary-https2.entrypoints=websecure"
       - "traefik.http.routers.lingodiary-https2.tls=true"
-      - "traefik.http.routers.lingodiary-https3.rule=Host(`lingodiary.local`)"
+      - "traefik.http.routers.lingodiary-https3.rule=Host(`lingodiary.beefunk.local`)"
       - "traefik.http.routers.lingodiary-https3.entrypoints=websecure"
       - "traefik.http.routers.lingodiary-https3.tls=true"
       - "traefik.http.services.lingodiary.loadbalancer.server.port=80"
@@ -1390,19 +1436,19 @@ services:
       - "traefik.http.routers.sonarr-http1.rule=Host(`sonarr.beefunk.lan`)"
       - "traefik.http.routers.sonarr-http1.entrypoints=web"
       - "traefik.http.routers.sonarr-http1.tls=false"
-      - "traefik.http.routers.sonarr-http2.rule=Host(`sonarr.home`)"
+      - "traefik.http.routers.sonarr-http2.rule=Host(`sonarr.beefunk.home`)"
       - "traefik.http.routers.sonarr-http2.entrypoints=web"
       - "traefik.http.routers.sonarr-http2.tls=false"
-      - "traefik.http.routers.sonarr-http3.rule=Host(`sonarr.local`)"
+      - "traefik.http.routers.sonarr-http3.rule=Host(`sonarr.beefunk.local`)"
       - "traefik.http.routers.sonarr-http3.entrypoints=web"
       - "traefik.http.routers.sonarr-http3.tls=false"
       - "traefik.http.routers.sonarr-https1.rule=Host(`sonarr.beefunk.lan`)"
       - "traefik.http.routers.sonarr-https1.entrypoints=websecure"
       - "traefik.http.routers.sonarr-https1.tls=true"
-      - "traefik.http.routers.sonarr-https2.rule=Host(`sonarr.home`)"
+      - "traefik.http.routers.sonarr-https2.rule=Host(`sonarr.beefunk.home`)"
       - "traefik.http.routers.sonarr-https2.entrypoints=websecure"
       - "traefik.http.routers.sonarr-https2.tls=true"
-      - "traefik.http.routers.sonarr-https3.rule=Host(`sonarr.local`)"
+      - "traefik.http.routers.sonarr-https3.rule=Host(`sonarr.beefunk.local`)"
       - "traefik.http.routers.sonarr-https3.entrypoints=websecure"
       - "traefik.http.routers.sonarr-https3.tls=true"
       - "traefik.http.services.sonarr.loadbalancer.server.port=80"
@@ -1426,19 +1472,19 @@ services:
       - "traefik.http.routers.radarr-http1.rule=Host(`radarr.beefunk.lan`)"
       - "traefik.http.routers.radarr-http1.entrypoints=web"
       - "traefik.http.routers.radarr-http1.tls=false"
-      - "traefik.http.routers.radarr-http2.rule=Host(`radarr.home`)"
+      - "traefik.http.routers.radarr-http2.rule=Host(`radarr.beefunk.home`)"
       - "traefik.http.routers.radarr-http2.entrypoints=web"
       - "traefik.http.routers.radarr-http2.tls=false"
-      - "traefik.http.routers.radarr-http3.rule=Host(`radarr.local`)"
+      - "traefik.http.routers.radarr-http3.rule=Host(`radarr.beefunk.local`)"
       - "traefik.http.routers.radarr-http3.entrypoints=web"
       - "traefik.http.routers.radarr-http3.tls=false"
       - "traefik.http.routers.radarr-https1.rule=Host(`radarr.beefunk.lan`)"
       - "traefik.http.routers.radarr-https1.entrypoints=websecure"
       - "traefik.http.routers.radarr-https1.tls=true"
-      - "traefik.http.routers.radarr-https2.rule=Host(`radarr.home`)"
+      - "traefik.http.routers.radarr-https2.rule=Host(`radarr.beefunk.home`)"
       - "traefik.http.routers.radarr-https2.entrypoints=websecure"
       - "traefik.http.routers.radarr-https2.tls=true"
-      - "traefik.http.routers.radarr-https3.rule=Host(`radarr.local`)"
+      - "traefik.http.routers.radarr-https3.rule=Host(`radarr.beefunk.local`)"
       - "traefik.http.routers.radarr-https3.entrypoints=websecure"
       - "traefik.http.routers.radarr-https3.tls=true"
       - "traefik.http.services.radarr.loadbalancer.server.port=80"
@@ -1462,19 +1508,19 @@ services:
       - "traefik.http.routers.transmission-http1.rule=Host(`transmission.beefunk.lan`)"
       - "traefik.http.routers.transmission-http1.entrypoints=web"
       - "traefik.http.routers.transmission-http1.tls=false"
-      - "traefik.http.routers.transmission-http2.rule=Host(`transmission.home`)"
+      - "traefik.http.routers.transmission-http2.rule=Host(`transmission.beefunk.home`)"
       - "traefik.http.routers.transmission-http2.entrypoints=web"
       - "traefik.http.routers.transmission-http2.tls=false"
-      - "traefik.http.routers.transmission-http3.rule=Host(`transmission.local`)"
+      - "traefik.http.routers.transmission-http3.rule=Host(`transmission.beefunk.local`)"
       - "traefik.http.routers.transmission-http3.entrypoints=web"
       - "traefik.http.routers.transmission-http3.tls=false"
       - "traefik.http.routers.transmission-https1.rule=Host(`transmission.beefunk.lan`)"
       - "traefik.http.routers.transmission-https1.entrypoints=websecure"
       - "traefik.http.routers.transmission-https1.tls=true"
-      - "traefik.http.routers.transmission-https2.rule=Host(`transmission.home`)"
+      - "traefik.http.routers.transmission-https2.rule=Host(`transmission.beefunk.home`)"
       - "traefik.http.routers.transmission-https2.entrypoints=websecure"
       - "traefik.http.routers.transmission-https2.tls=true"
-      - "traefik.http.routers.transmission-https3.rule=Host(`transmission.local`)"
+      - "traefik.http.routers.transmission-https3.rule=Host(`transmission.beefunk.local`)"
       - "traefik.http.routers.transmission-https3.entrypoints=websecure"
       - "traefik.http.routers.transmission-https3.tls=true"
       - "traefik.http.services.transmission.loadbalancer.server.port=80"
@@ -1498,19 +1544,19 @@ services:
       - "traefik.http.routers.jackett-http1.rule=Host(`jackett.beefunk.lan`)"
       - "traefik.http.routers.jackett-http1.entrypoints=web"
       - "traefik.http.routers.jackett-http1.tls=false"
-      - "traefik.http.routers.jackett-http2.rule=Host(`jackett.home`)"
+      - "traefik.http.routers.jackett-http2.rule=Host(`jackett.beefunk.home`)"
       - "traefik.http.routers.jackett-http2.entrypoints=web"
       - "traefik.http.routers.jackett-http2.tls=false"
-      - "traefik.http.routers.jackett-http3.rule=Host(`jackett.local`)"
+      - "traefik.http.routers.jackett-http3.rule=Host(`jackett.beefunk.local`)"
       - "traefik.http.routers.jackett-http3.entrypoints=web"
       - "traefik.http.routers.jackett-http3.tls=false"
       - "traefik.http.routers.jackett-https1.rule=Host(`jackett.beefunk.lan`)"
       - "traefik.http.routers.jackett-https1.entrypoints=websecure"
       - "traefik.http.routers.jackett-https1.tls=true"
-      - "traefik.http.routers.jackett-https2.rule=Host(`jackett.home`)"
+      - "traefik.http.routers.jackett-https2.rule=Host(`jackett.beefunk.home`)"
       - "traefik.http.routers.jackett-https2.entrypoints=websecure"
       - "traefik.http.routers.jackett-https2.tls=true"
-      - "traefik.http.routers.jackett-https3.rule=Host(`jackett.local`)"
+      - "traefik.http.routers.jackett-https3.rule=Host(`jackett.beefunk.local`)"
       - "traefik.http.routers.jackett-https3.entrypoints=websecure"
       - "traefik.http.routers.jackett-https3.tls=true"
       - "traefik.http.services.jackett.loadbalancer.server.port=80"
@@ -1541,19 +1587,19 @@ services:
       - "traefik.http.routers.prowlarr-http1.rule=Host(`prowlarr.beefunk.lan`)"
       - "traefik.http.routers.prowlarr-http1.entrypoints=web"
       - "traefik.http.routers.prowlarr-http1.tls=false"
-      - "traefik.http.routers.prowlarr-http2.rule=Host(`prowlarr.home`)"
+      - "traefik.http.routers.prowlarr-http2.rule=Host(`prowlarr.beefunk.home`)"
       - "traefik.http.routers.prowlarr-http2.entrypoints=web"
       - "traefik.http.routers.prowlarr-http2.tls=false"
-      - "traefik.http.routers.prowlarr-http3.rule=Host(`prowlarr.local`)"
+      - "traefik.http.routers.prowlarr-http3.rule=Host(`prowlarr.beefunk.local`)"
       - "traefik.http.routers.prowlarr-http3.entrypoints=web"
       - "traefik.http.routers.prowlarr-http3.tls=false"
       - "traefik.http.routers.prowlarr-https1.rule=Host(`prowlarr.beefunk.lan`)"
       - "traefik.http.routers.prowlarr-https1.entrypoints=websecure"
       - "traefik.http.routers.prowlarr-https1.tls=true"
-      - "traefik.http.routers.prowlarr-https2.rule=Host(`prowlarr.home`)"
+      - "traefik.http.routers.prowlarr-https2.rule=Host(`prowlarr.beefunk.home`)"
       - "traefik.http.routers.prowlarr-https2.entrypoints=websecure"
       - "traefik.http.routers.prowlarr-https2.tls=true"
-      - "traefik.http.routers.prowlarr-https3.rule=Host(`prowlarr.local`)"
+      - "traefik.http.routers.prowlarr-https3.rule=Host(`prowlarr.beefunk.local`)"
       - "traefik.http.routers.prowlarr-https3.entrypoints=websecure"
       - "traefik.http.routers.prowlarr-https3.tls=true"
       - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
