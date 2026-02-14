@@ -280,6 +280,9 @@ services:
     image: deluan/navidrome
     container_name: navidrome
     user: $PUID_USER:$PGID_USER # should be owner of volumes
+    dns:
+      - 192.168.8.214
+      - 8.8.8.8
 #    ports:
 #      - "8080:4533"
     restart: unless-stopped
