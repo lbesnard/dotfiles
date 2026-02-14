@@ -128,8 +128,10 @@ services:
       - TZ=${TZ}
       - WATCHTOWER_CLEANUP=true
     volumes:
-      - $DOCKER_CONFIG_PATH/homer/config.yml:/www/config.yml
-      - $DOCKER_CONFIG_PATH/homer/local/assets/:/www/assets
+      # - $DOCKER_CONFIG_PATH/homer/config.yml:/www/config.yml
+      # - $DOCKER_CONFIG_PATH/homer/local/assets/:/www/assets
+      - ./homer/config.yml:/www/config.yml
+      - ./homer/local/assets/:/www/assets
     # ports:
       # - 80:8080
     restart: unless-stopped
