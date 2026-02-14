@@ -34,3 +34,6 @@
 [submodule "config/beets/whatlastgenre_org"]
 	path = config/beets/whatlastgenre_org
 	url = https://github.com/YetAnotherNerd/whatlastgenre.git
+[submodule "beefunk/docker-compose/homer/local/assets/icons/homer-icons"]
+	path = beefunk/docker-compose/homer/local/assets/icons/homer-icons
+	url = https://github.com/NX211/homer-icons.git
