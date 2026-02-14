@@ -109,7 +109,7 @@ services:
         url: "http://immich.beefunk.local"
         target: "_.local" # optional html tag target attribute
 
-      - name: "LingoDiaryImmich"
+      - name: "LingoDiary"
         logo: "http://lingodiary.beefunk.local/static/icon_reduced.png"
         subtitle: "LingoDiary - language learning"
         tag: "app"
