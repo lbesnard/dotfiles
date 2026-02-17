@@ -42,33 +42,6 @@ services:
       - 3002:80
     restart: unless-stopped
 
-  jellyfin:
-    image: linuxserver/jellyfin
-    environment:
-      - PUID=$PUID_USER
-      - PGID=$PGID_USER
-      - TZ=${TZ}
-      - UMASK=022 #optional
-      - DOCKER_MODS=linuxserver/mods:jellyfin-opencl-intel
-      - WATCHTOWER_CLEANUP=true
-    volumes:
-      - $JELLYFIN_DATA_PATH/:/config
-      - ${TV_SHOWS_PATH}:/data/tvshows:ro
-      - $TV_SHOWS_PATH/tubesync-downloads/video:/data/youtube:ro
-      - $MOVIES_PATH:/data/movies:ro
-      - $MOVIES_FR_PATH:/data/movies_french:ro
-      - $MOVIES_SPORT_PATH:/data/movies_adventure_sports:ro
-      - $YOGA_GLO_PATH:/data/yoga_glo:ro
-      - $GUITAR_VIDEOS_PATH:/data/guitar:ro
-    ports:
-      - 8096:8096
-      - 7359:7359/udp #optional
-      - 1900:1900/udp #optional
-    # devices:
-    # - /dev/dri:/dev/dri #optional # breaking on proxmox VM
-    restart: unless-stopped
-    labels:
-      com.centurylinklabs.watchtower.enable: true
   ###########################
   navidrome:
     image: deluan/navidrome
