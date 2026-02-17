@@ -56,6 +56,41 @@ _CLI_ZSH_AUTOCOMPLETE_HACK=1
 # -----------
 # Taskwarrior Daily Check-in 2.1 (The "Today" Update)
 # ----------
+task-today() {
+  task rc.verbose=nothing status:pending due:today export | jq -r '
+    # 1. Define Priority Colors
+    def color_prio(p):
+      if p == "H" then "\u001b[31mHigh\u001b[0m"
+      elif p == "M" then "\u001b[33mMed \u001b[0m"
+      elif p == "L" then "\u001b[32mLow \u001b[0m"
+      else "\u001b[90mNone\u001b[0m" end;
+
+    def pad(len): tostring | . + " " * (len - length);
+
+    # 2. Process the items
+    if length == 0 then 
+      "No tasks for today! " 
+    else
+      # Build the Dynamic Project Color Map
+      (map(.project // "none") | unique) as $unique_projects |
+      [36, 35, 34, 96, 95, 94, 33, 32] as $palette |
+      (reduce range(0; $unique_projects | length) as $i ({}; 
+        . + {($unique_projects[$i]): $palette[$i % ($palette | length)]}
+      )) as $color_map |
+
+      # 3. Render the list
+      .[] | 
+      (.id | tostring | pad(3)) as $id |
+      (.priority // " ") as $raw_prio |
+      (.project // "none") as $pjt_raw |
+      ($pjt_raw | pad(12)) as $pjt_pad |
+      ($color_map[$pjt_raw] // 37) as $code |
+      
+      "\u001b[90m\($id)\u001b[0m  \(color_prio($raw_prio))  \u001b[\($code)m\($pjt_pad)\u001b[0m  \(.description)"
+    end
+  '
+}
+
 if command -v task > /dev/null && [[ -n "$TMUX" ]]; then
     LAST_PROMPT_FILE="$HOME/.task_last_prompt"
     TODAY=$(date +%Y-%m-%d)
@@ -136,7 +171,7 @@ if command -v task > /dev/null && [[ -n "$TMUX" ]]; then
     fi
     
     echo "\e[38;5;81m📅 TODAY'S PLAN\e[0m"
-    task today
+    task-today
     echo ""
 fi
 

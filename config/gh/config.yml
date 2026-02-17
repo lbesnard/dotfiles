@@ -95,54 +95,102 @@ aliases:
 
         ;;
       esac)
-  project-sprint: "!(\n  ORG=\"aodn\"\n  PROJECT_NUMBER=72\n\n  # Use the built-in --jq flag for cleaner local processing\n  selected_item=$(gh project item-list $PROJECT_NUMBER --owner \"$ORG\" -L 500 --format json --jq '\n    .items[] | \n    select(.assignees // [] | contains([\"'\"$GIT_USER\"'\"])) | \n    select(.status != \"Done\" and .status != \"Closed\") | \n    ((.iteration.title // .milestone.title) // \"No-Iteration\") as $iter | \n    select($iter != \"No-Iteration\") |\n    \"\\($iter)\\t\\(.content.number // \"DRAFT\")\\t\\(.content.title)\\t\\(.content.repository // \"none\")\"\n  ' | \\\n    sort -rV | \\\n    fzf --reverse \\\n        --header \"Project 72: Active Iterations\" \\\n        --delimiter '\\t' \\\n        --with-nth 1,2,3 \\\n        --preview 'echo \"Iteration: {1}\\nNumber:    {2}\\nTitle:     {3}\\nRepo:      {4}\"')\n\n  [ -z \"$selected_item\" ] && exit 0\n\n  ISSUE_NUM=$(echo \"$selected_item\" | cut -f2)\n  REPO_PATH=$(echo \"$selected_item\" | cut -f4)\n\n  [ \"$REPO_PATH\" != \"none\" ] && gh issue view \"$ISSUE_NUM\" -R \"$REPO_PATH\" --json url --jq .url\n)"
-  project-sprint-taskwarrior: |-
+  project-sprint: |-
     ! (
+      GH_PATH="/home/lbesnard/github_repo/dotfiles/bin/gh"
       ORG="aodn"
       PROJECT_NUMBER=72
 
-      # 1. Fetch data - using your exact JQ logic
-      # We use '...' for the jq string so your $GIT_USER is injected correctly
-      output=$(gh project item-list $PROJECT_NUMBER --owner "$ORG" -L 1000 --format json --jq '
+      $GH_PATH project item-list $PROJECT_NUMBER --owner "$ORG" --format json \
+        --query "assignee:$GIT_USER iteration:@current -status:Done" | \
+      jq -r '
+        # Priority Color Logic (Strict check on raw string)
+        def color_prio(raw; padded):
+          if raw == "High" then "\u001b[31m" + padded + "\u001b[0m"
+          elif raw == "Medium" then "\u001b[33m" + padded + "\u001b[0m"
+          elif raw == "Low" then "\u001b[32m" + padded + "\u001b[0m"
+          else "\u001b[90m" + padded + "\u001b[0m" end;
+
+        def pad(len): tostring | . + " " * (len - length);
+
+        def prio_weight: 
+          if . == "High" then 1 elif . == "Medium" then 2 elif . == "Low" then 3 else 4 end;
+
+        # 1. Collect all unique projects
+        (.items | map(.project // "No-Project") | unique) as $unique_projects |
+        
+        # 2. Assign each a unique color from a 16-color palette (avoiding red/green/yellow)
+        # Palette uses: 34 (Blue), 35 (Magenta), 36 (Cyan), 92 (Light Green), 93 (Light Yellow), 94 (Light Blue), 95 (Light Magenta), 96 (Light Cyan)
+        [34, 35, 36, 94, 95, 96, 37, 90] as $palette |
+        (reduce range(0; $unique_projects | length) as $i ({}; . + {($unique_projects[$i]): $palette[$i % ($palette | length)]})) as $color_map |
+
+        # 3. Sort and Render
+        (.items | sort_by(.priority | prio_weight))[] | 
+        
+        ((.iteration.title // "No-Iter") | pad(15)) as $iter |
+        (.priority // "None") as $raw_prio |
+        ($raw_prio | pad(8)) as $prio_pad |
+        (.project // "No-Project") as $pjt_raw |
+        ($pjt_raw | pad(18)) as $pjt_pad |
+        ((.content.number // "DRAFT") | tostring | pad(6)) as $num |
+        
+        ($color_map[$pjt_raw]) as $code |
+        "\u001b[\($code)m\($pjt_pad)\u001b[0m" as $pjt_colored |
+        
+        "[\($iter)]  \(color_prio($raw_prio; $prio_pad))  \($pjt_colored)  #\($num)  \(.content.title)"
+      '
+    )
+  project-sprint-taskwarrior: |-
+    ! (
+      GH_PATH="/home/lbesnard/github_repo/dotfiles/bin/gh"
+      ORG="aodn"
+      PROJECT_NUMBER=72
+
+      raw_output=$($GH_PATH project item-list $PROJECT_NUMBER --owner "$ORG" --format json \
+        --query "assignee:$GIT_USER iteration:@current -status:Done -status:Closed" | \
+      jq -r '
+        def color_prio(p):
+          if p == "High" then "\u001b[31m" + p + "\u001b[0m"
+          elif p == "Medium" then "\u001b[33m" + p + "\u001b[0m"
+          elif p == "Low" then "\u001b[32m" + p + "\u001b[0m"
+          else "\u001b[90mNone\u001b[0m" end;
         .items[] | 
-        select(.assignees // [] | contains(["'"$GIT_USER"'"])) | 
-        select(.status != "Done" and .status != "Closed") | 
-        ((.iteration.title // .milestone.title) // "No-Iteration") as $iter | 
-        select($iter != "No-Iteration") |
-        "\($iter)\t\(.content.number // "DRAFT")\t\(.content.title)\t\(.content.repository // "none")"' | \
-        sort -rV | \
-        fzf --reverse --multi \
-            --header "TAB: Select Multiple | ENTER: Open | CTRL-T: Add to Taskwarrior" \
-            --expect=ctrl-t \
-            --delimiter '\t' \
-            --with-nth 1,2,3)
+        (.iteration.title // "No-Iteration") as $iter |
+        (.priority // "None") as $prio |
+        (.project // "No-Project") as $pjt |
+        "\($iter)\t\(color_prio($prio))\t\u001b[36m\($pjt)\u001b[0m\t\(.content.number // "DRAFT")\t\(.content.title)\t\(.content.repository // "none")"
+      ' | \
+      sort -rV | \
+      fzf --ansi --reverse --multi \
+          --header "TAB: Select | ENTER: Open | CTRL-T: Taskwarrior" \
+          --expect=ctrl-t \
+          --delimiter '\t' \
+          --with-nth 1,2,3,4,5 \
+          --preview-window 'right:60%:wrap' \
+          --preview "$GH_PATH issue view {4} -R {6}")
 
-      [ -z "$output" ] && exit 0
+      if [ -z "$raw_output" ]; then exit 0; fi
 
-      # 2. Extract the key (the very first line from fzf output)
-      key=$(echo "$output" | head -n 1)
+      key=$(echo "$raw_output" | head -n 1)
       
-      # 3. Loop through the actual data lines (all lines after the first)
-      echo "$output" | tail -n +2 | while IFS= read -r line; do
-        [ -z "$line" ] && continue
-
-        # Use cut to strictly extract fields by tab
-        num=$(echo "$line" | cut -f2)
-        title=$(echo "$line" | cut -f3)
-        repo=$(echo "$line" | cut -f4)
-
-        [ "$repo" = "none" ] && continue
+      echo "$raw_output" | tail -n +2 | perl -pe 's/\e\[[0-9;]*m//g' | while IFS='	' read -r iter prio pjt num title repo; do
+        if [ -z "$num" ] || [ "$num" = "DRAFT" ] || [ "$repo" = "none" ]; then
+          continue
+        fi
 
         if [ "$key" = "ctrl-t" ]; then
-          echo "📥 Importing #$num..."
-          # Fetch URL
-          url=$(gh issue view "$num" -R "$repo" --json url --jq .url)
-          
-          # Add to Taskwarrior: Pure Title + URL
-          task add "$title ($url)" project:Work due:today +today +github
+          tw_prio=$(echo "$prio" | cut -c1 | tr '[:lower:]' '[:upper:]')
+          case "$tw_prio" in
+            H|M|L) ;;
+            *) tw_prio="" ;;
+          esac
+
+          echo "📥 Importing #$num: $title"
+          url=$($GH_PATH issue view "$num" -R "$repo" --json url --jq .url)
+          task add "$title ($url)" project:"$pjt" priority:"$tw_prio" due:today +today +github
         else
-          # Open in browser
-          gh issue view "$num" -R "$repo" --web
+          echo "🌐 Opening #$num in browser..."
+          $GH_PATH issue view "$num" -R "$repo" --web
         fi
       done
     )
