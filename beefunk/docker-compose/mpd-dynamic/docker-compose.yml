@@ -5,6 +5,8 @@ services:
     build: .
     container_name: mpd-dynamic
     restart: unless-stopped
+    dns:
+      - 8.8.8.8
     environment:
       - TZ=Australia/Sydney
     # Mount the NAS config into the container's home directory
