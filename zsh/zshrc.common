@@ -31,28 +31,6 @@ elif [[ -d /home/linuxbrew ]]; then
 fi
 test -d $HOMEBREW_PREFIX && PATH="$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin:$PATH"
 
-# check for zerobrew existence and set PATH
-if [[ -d $HOME/.local/share/zerobrew/prefix/bin ]]; then
-  export PATH="$HOME/.local/share/zerobrew/prefix/bin:$PATH"
-  
-  # zerobrew
-  export ZEROBREW_DIR=$HOME/.zerobrew
-  export ZEROBREW_BIN=$HOME/.local/bin
-  export ZEROBREW_ROOT=$HOME/.local/share/zerobrew
-  export ZEROBREW_PREFIX=$HOME/local/share/zerobrew/prefix
-  export PKG_CONFIG_PATH="$HOME/local/share/zerobrew/prefix/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
-  _zb_path_append() {
-      local argpath="$1"
-      case ":${PATH}:" in
-          *:"$argpath":*) ;;
-          *) export PATH="$argpath:$PATH" ;;
-      esac;
-  }
-  _zb_path_append $ZEROBREW_BIN
-  _zb_path_append $ZEROBREW_PREFIX/bin
-
-fi
-
 # History
 export HISTSIZE=32768
 export HISTFILESIZE=$HISTSIZE

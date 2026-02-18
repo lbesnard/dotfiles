@@ -53,39 +53,25 @@ _CLI_ZSH_AUTOCOMPLETE_HACK=1
 #source /etc/zsh/zsh_autocomplete_croc
 
 
-# -----------
-# Taskwarrior Daily Check-in 2.1 (The "Today" Update)
-# ----------
 task-today() {
   task rc.verbose=nothing status:pending due:today export | jq -r '
-    # 1. Define Priority Colors
     def color_prio(p):
       if p == "H" then "\u001b[31mHigh\u001b[0m"
       elif p == "M" then "\u001b[33mMed \u001b[0m"
       elif p == "L" then "\u001b[32mLow \u001b[0m"
       else "\u001b[90mNone\u001b[0m" end;
-
     def pad(len): tostring | . + " " * (len - length);
-
-    # 2. Process the items
-    if length == 0 then 
-      "No tasks for today! " 
-    else
-      # Build the Dynamic Project Color Map
+    if length == 0 then "No tasks for today! " else
       (map(.project // "none") | unique) as $unique_projects |
       [36, 35, 34, 96, 95, 94, 33, 32] as $palette |
       (reduce range(0; $unique_projects | length) as $i ({}; 
         . + {($unique_projects[$i]): $palette[$i % ($palette | length)]}
       )) as $color_map |
-
-      # 3. Render the list
-      .[] | 
-      (.id | tostring | pad(3)) as $id |
+      .[] | (.id | tostring | pad(3)) as $id |
       (.priority // " ") as $raw_prio |
       (.project // "none") as $pjt_raw |
       ($pjt_raw | pad(12)) as $pjt_pad |
       ($color_map[$pjt_raw] // 37) as $code |
-      
       "\u001b[90m\($id)\u001b[0m  \(color_prio($raw_prio))  \u001b[\($code)m\($pjt_pad)\u001b[0m  \(.description)"
     end
   '
@@ -96,82 +82,20 @@ if command -v task > /dev/null && [[ -n "$TMUX" ]]; then
     TODAY=$(date +%Y-%m-%d)
 
     if [[ "$(< $LAST_PROMPT_FILE 2>/dev/null)" != "$TODAY" ]]; then
+        # echo -e "\e[38;5;81m--- 🔍 Reviewing Overdue & Today's Tasks ---\e[0m"
 
+        export PATH="/home/lbesnard/miniforge3/bin:$PATH"
+        if command -v task-tui > /dev/null; then
+          task-tui
+        else;
+           echo "run python3 -m pip install git+https://github.com/lbesnard/task-tui.git"
+        fi
+        
+        echo \n
         echo -e "\e[38;5;214m--- 🗓️  Reminder: Fill yesterday's timesheet! ---\e[0m"
-
-        echo "\e[38;5;81m--- 🔍 Reviewing Overdue & Today's Tasks ---\e[0m"
-        
-        # Define the refresh command to keep FZF synced after actions
-        # We look for tasks due today, overdue, or without a date that we might want to pull in
-        local REFRESH_CMD="task rc.verbose=nothing status:pending export | jq -r '.[] | \"\(.id) | \(.project // \"none\") | \(.due // \"none\") | \(.description)\"'"
-
-        while true; do
-            local fzf_input=$(eval "$REFRESH_CMD")
-
-            # If no tasks at all, skip to Add phase
-            [[ -z "$fzf_input" ]] && break
-
-            # FZF logic:
-            # alt-x: Done | alt-c: Delete | alt-p: Postpone | alt-t: Set to Today
-            local selected=$(echo "$fzf_input" | fzf \
-                --header "ALT-X: Done | ALT-C: Delete | ALT-P: Postpone | ALT-T: Set Today | ENTER: Finish" \
-                --multi --ansi --no-bold \
-                --bind "alt-x:execute(echo {+1} | xargs -I{} task {} done)+reload($REFRESH_CMD)" \
-                --bind "alt-c:execute(echo {+1} | xargs -I{} task {} delete)+reload($REFRESH_CMD)" \
-                --bind "alt-p:execute(echo {+1} | xargs -I{} task {} modify due:)+reload($REFRESH_CMD)" \
-                --bind "alt-t:execute(echo {+1} | xargs -I{} task {} modify due:$TODAY)+reload($REFRESH_CMD)" \
-                --preview "task {1} info" --preview-window=bottom:3:wrap)
-
-            break
-        done
-
-        # 2. ADD TASKS LOOP
-        echo "\n\e[38;5;208mAdd tasks (Empty line to finish):\e[0m"
-        echo "\e[38;5;244mSyntax: p::Work due::today+14:30 tag::urgent Description...\e[0m"
-        
-        while true; do
-            echo -n "❯ "
-            read -r input
-            [[ -z "$input" ]] && break
-
-            local project="" tags="" due_math="today"
-            local -a desc_words=()
-            local words=(${(z)input})
-            
-            for word in "${words[@]}"; do
-                if [[ "$word" == p::* ]]; then
-                    project="${(C)word#p::}"
-                elif [[ "$word" == tag::* ]]; then
-                    tags="${word#tag::}"
-                elif [[ "$word" == due::* ]]; then
-                    local raw_due="${word#due::}"
-                    if [[ "$raw_due" =~ "today\+([0-9]{1,2}:[0-9]{2})" ]]; then
-                        due_math="${TODAY}T${match[1]}"
-                    else
-                        due_math="$raw_due"
-                    fi
-                else
-                    desc_words+=("$word")
-                fi
-            done
-
-            local final_desc="${(j: :)desc_words}"
-            local -a task_args=("add")
-            [[ -n "$project" ]] && task_args+=("project:$project")
-            [[ -n "$tags" ]]    && task_args+=("+$tags")
-            task_args+=("due:$due_math")
-            task_args+=("$final_desc")
-
-            task "${task_args[@]}"
-        done
-        
-        echo "$TODAY" > "$LAST_PROMPT_FILE"
-        task sync
-        clear
+          echo "$TODAY" > "$LAST_PROMPT_FILE"
     fi
-    
-    echo "\e[38;5;81m📅 TODAY'S PLAN\e[0m"
+    echo -e "\e[38;5;81m📅 TODAY'S PLAN\e[0m"
     task-today
     echo ""
 fi
-
