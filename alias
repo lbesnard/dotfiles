@@ -994,8 +994,27 @@ alias tp='task add pro:Personal due:today'
 alias tnext='task due.before:today+2d list'
 
 # Triage with Project Labels
+# t2t() {
+#     local task_ids=$(task status:pending export | jq -r '.[] | "\(.id) [\(.project // "no project")] \(.description)"' | \
+#         fzf --multi \
+#             --reverse \
+#             --header "TAB to select multiple / ENTER to set to Today" \
+#             --preview 'task {1} info' \
+#             --height 40% | awk '{print $1}')
+#
+#     if [[ -n "$task_ids" ]]; then
+#         echo "$task_ids" | while read -r id; do
+#             task "$id" modify due:today
+#         done
+#         echo "✅ Selected tasks moved to Today."
+#         task today
+#     else
+#         echo "No tasks selected."
+#     fi
+# }
 t2t() {
-    local task_ids=$(task status:pending export | jq -r '.[] | "\(.id) [\(.project // "no project")] \(.description)"' | \
+    # Added 'due.not:today' to the filter
+    local task_ids=$(task status:pending due.not:today export | jq -r '.[] | "\(.id) [\(.project // "no project")] \(.description)"' | \
         fzf --multi \
             --reverse \
             --header "TAB to select multiple / ENTER to set to Today" \
@@ -1009,9 +1028,10 @@ t2t() {
         echo "✅ Selected tasks moved to Today."
         task today
     else
-        echo "No tasks selected."
+        echo "No tasks selected (or all pending tasks are already due today)."
     fi
 }
+
 tnot() {
     # 1. Get IDs, Project, and Description for today's pending tasks
     local selected=$(task due:today status:pending export | \
