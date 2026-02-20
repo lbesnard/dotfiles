@@ -97,14 +97,14 @@ aliases:
       esac)
   project-sprint: |-
     ! (
-      GH_PATH="/home/lbesnard/github_repo/dotfiles/bin/gh"
+      GH_PATH="gh"
       ORG="aodn"
       PROJECT_NUMBER=72
 
       $GH_PATH project item-list $PROJECT_NUMBER --owner "$ORG" --format json \
         --query "assignee:$GIT_USER iteration:@current -status:Done" | \
       jq -r '
-        # Priority Color Logic (Strict check on raw string)
+        # Priority Color Logic
         def color_prio(raw; padded):
           if raw == "High" then "\u001b[31m" + padded + "\u001b[0m"
           elif raw == "Medium" then "\u001b[33m" + padded + "\u001b[0m"
@@ -119,8 +119,7 @@ aliases:
         # 1. Collect all unique projects
         (.items | map(.project // "No-Project") | unique) as $unique_projects |
         
-        # 2. Assign each a unique color from a 16-color palette (avoiding red/green/yellow)
-        # Palette uses: 34 (Blue), 35 (Magenta), 36 (Cyan), 92 (Light Green), 93 (Light Yellow), 94 (Light Blue), 95 (Light Magenta), 96 (Light Cyan)
+        # 2. Assign each a unique color
         [34, 35, 36, 94, 95, 96, 37, 90] as $palette |
         (reduce range(0; $unique_projects | length) as $i ({}; . + {($unique_projects[$i]): $palette[$i % ($palette | length)]})) as $color_map |
 
@@ -133,16 +132,19 @@ aliases:
         (.project // "No-Project") as $pjt_raw |
         ($pjt_raw | pad(18)) as $pjt_pad |
         ((.content.number // "DRAFT") | tostring | pad(6)) as $num |
+        (.content.url // "") as $url |
         
         ($color_map[$pjt_raw]) as $code |
         "\u001b[\($code)m\($pjt_pad)\u001b[0m" as $pjt_colored |
         
-        "[\($iter)]  \(color_prio($raw_prio; $prio_pad))  \($pjt_colored)  #\($num)  \(.content.title)"
+        # Added the $url at the end of the string
+        "[\($iter)]  \(color_prio($raw_prio; $prio_pad))  \($pjt_colored)  #\($num)  \(.content.title)  \u001b[90m\($url)\u001b[0m"
       '
     )
   project-sprint-taskwarrior: |-
     ! (
-      GH_PATH="/home/lbesnard/github_repo/dotfiles/bin/gh"
+      # GH_PATH="/home/lbesnard/github_repo/dotfiles/bin/gh"
+      GH_PATH="gh"
       ORG="aodn"
       PROJECT_NUMBER=72
 
