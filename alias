@@ -1207,5 +1207,8 @@ tlog() {
     task project:Work modified.after:today-4d modified.before:today-3d all rc.verbose=nothing rc.report.all.columns=description rc.report.all.labels= | perl -pe 's/^([^\s\-])/* $1/'
 }
 
+alias tui=task-tui
+
+
 # Hugo server
 alias hugo_server_start='hugo server -D'
