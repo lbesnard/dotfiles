@@ -1,83 +1,55 @@
-# zmodload zsh/zprof
+# Enable profiling: ZSH_PROFILE=1 zsh
+[[ -n $ZSH_PROFILE ]] && zmodload zsh/zprof
+
 source $HOME/.zshrc.common
 
-HOST=$(hostname)
 case "$HOST" in
   *aws*|*nec*)
-    source $HOME/.zshrc.ssh
-    ln -sf ~/.tmux.conf.ssh ~/.tmux.conf.local
+    source $HOME/.zshrc.server
+    [[ "$(readlink ~/.tmux.conf.local 2>/dev/null)" != "$HOME/.tmux.conf.ssh" ]] && ln -sf ~/.tmux.conf.ssh ~/.tmux.conf.local
     ;;
   *funk*|*-X202EP*)
-    source $HOME/.zshrc.bfunk
-    ln -sf ~/.tmux.conf.ssh ~/.tmux.conf.local
+    source $HOME/.zshrc.homeserver
+    [[ "$(readlink ~/.tmux.conf.local 2>/dev/null)" != "$HOME/.tmux.conf.ssh" ]] && ln -sf ~/.tmux.conf.ssh ~/.tmux.conf.local
     ;;
   *)
     if [[ $USER == "ubuntu" ]]; then
-      source $HOME/.zshrc.bfunk
-      ln -sf ~/.tmux.conf.ssh ~/.tmux.conf.local
+      source $HOME/.zshrc.homeserver
+      [[ "$(readlink ~/.tmux.conf.local 2>/dev/null)" != "$HOME/.tmux.conf.ssh" ]] && ln -sf ~/.tmux.conf.ssh ~/.tmux.conf.local
     else
-      source $HOME/.zshrc.local
-      ln -sf ~/.tmux.conf.laptop ~/.tmux.conf.local
+      source $HOME/.zshrc.laptop
+      [[ "$(readlink ~/.tmux.conf.local 2>/dev/null)" != "$HOME/.tmux.conf.laptop" ]] && ln -sf ~/.tmux.conf.laptop ~/.tmux.conf.local
     fi
     ;;
 esac
 
-#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+# ~/.tmux.conf.ssh_laptop (prefix C-s) is available for nested-tmux use cases
+# (e.g. outer tmux on laptop with C-a, inner tmux on server with C-s).
+# To activate: ln -sf ~/.tmux.conf.ssh_laptop ~/.tmux.conf.local
+
+# SDKMAN — only init if installed
 export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/home/lbesnard/miniforge3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/home/lbesnard/miniforge3/etc/profile.d/conda.sh" ]; then
-        . "/home/lbesnard/miniforge3/etc/profile.d/conda.sh"
-    else
-        export PATH="/home/lbesnard/miniforge3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
+# Lazy conda/mamba — subprocess spawned only on first use (~100-200ms saved per startup)
+export PATH="$HOME/miniforge3/bin:$PATH"
+_conda_init() {
+    unfunction conda mamba 2>/dev/null
+    eval "$("${CONDA_EXE:-$HOME/miniforge3/bin/conda}" shell.zsh hook 2>/dev/null)"
+}
+conda() { _conda_init; conda "$@"; }
+mamba() { _conda_init; mamba "$@"; }
 
-# thefuck
-#
+# Lazy thefuck — eval deferred to first invocation
 if command -v thefuck > /dev/null; then
-  eval $(thefuck --alias)
+    fuck() {
+        unfunction fuck 2>/dev/null
+        eval $(thefuck --alias)
+        fuck "$@"
+    }
 fi
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-#[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+# Nix
+[ -e "$HOME/.nix-profile/etc/profile.d/nix.sh" ] && source "$HOME/.nix-profile/etc/profile.d/nix.sh"
 
-
-
-#### Added by Zinit's installer
-if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then
-    print -P "%F{33} %F{220}Installing %F{33}ZDHARMA-CONTINUUM%F{220} Initiative Plugin Manager (%F{33}zdharma-continuum/zinit%F{220})…%f"
-    command mkdir -p "$HOME/.local/share/zinit" && command chmod g-rwX "$HOME/.local/share/zinit"
-    command git clone https://github.com/zdharma-continuum/zinit "$HOME/.local/share/zinit/zinit.git" && \
-        print -P "%F{33} %F{34}Installation successful.%f%b" || \
-        print -P "%F{160} The clone has failed.%f%b"
-fi
-
-source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
-autoload -Uz _zinit
-(( ${+_comps} )) && _comps[zinit]=_zinit
-
-## Load a few important annexes, without Turbo
-## (this is currently required for annexes)
-zinit light-mode for \
-    zdharma-continuum/zinit-annex-as-monitor \
-    zdharma-continuum/zinit-annex-bin-gem-node \
-    zdharma-continuum/zinit-annex-patch-dl \
-    zdharma-continuum/zinit-annex-rust
-
-### End of Zinit's installer chunk
-# zprof #debug startup time
-
-if [ -e /home/lbesnard/.nix-profile/etc/profile.d/nix.sh ]; then . /home/lbesnard/.nix-profile/etc/profile.d/nix.sh; fi # added by Nix installer
-
-fpath+=~/.zfunc; autoload -Uz compinit; compinit
-
-zstyle ':completion:*' menu select
+[[ -n $ZSH_PROFILE ]] && zprof

@@ -1,0 +1,101 @@
+
+zi lucid light-mode wait'2' \
+ atinit'zstyle ":omz:plugins:ssh-agent" lazy yes' for \
+ "OMZ::plugins/ssh-agent/ssh-agent.plugin.zsh"
+
+zi lucid light-mode wait'2' \
+ atinit'zstyle ":omz:plugins:gpg-agent" identities' for \
+ "OMZ::plugins/gpg-agent/gpg-agent.plugin.zsh"
+
+SSH_ENV="$HOME/.ssh/environment"
+
+function start_agent {
+    echo "Initialising new SSH agent..."
+    (umask 066; /usr/bin/ssh-agent > "${SSH_ENV}")
+    . "${SSH_ENV}" > /dev/null
+    /usr/bin/ssh-add;
+}
+
+# rename ssh tmux panel to hostname
+function ssh() {
+    tmux rename-window "$*"
+    command ssh "$@"
+    #exit
+}
+
+# Source SSH settings, if applicable
+if [ -f "${SSH_ENV}" ]; then
+    . "${SSH_ENV}" > /dev/null
+    ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
+        start_agent;
+    }
+else
+    start_agent;
+fi
+
+
+# add data-services
+if [ -n "${SSH_TTY}" ] && [ -d "$DATA_SERVICES_DIR" ]; then
+    # Check if the directories contain files before sourcing/initializing
+    if [ -d "$DATA_SERVICES_DIR/profile.d" ] && [ "$(ls -A "$DATA_SERVICES_DIR/profile.d")" ]; then
+        source $DATA_SERVICES_DIR/profile.d/* &>/dev/null
+        compinit $DATA_SERVICES_DIR/profile.d/* &>/dev/null
+    fi
+
+    if [ -d "$DATA_SERVICES_DIR/lib/common" ] && [ "$(ls -A "$DATA_SERVICES_DIR/lib/common")" ]; then
+        source $DATA_SERVICES_DIR/lib/common/* &>/dev/null
+    fi
+fi
+
+# https://github.com/schollz/croc
+PROG=croc
+_CLI_ZSH_AUTOCOMPLETE_HACK=1
+#source /etc/zsh/zsh_autocomplete_croc
+
+
+task-today() {
+  task rc.verbose=nothing status:pending due:today export | jq -r '
+    def color_prio(p):
+      if p == "H" then "\u001b[31mHigh\u001b[0m"
+      elif p == "M" then "\u001b[33mMed \u001b[0m"
+      elif p == "L" then "\u001b[32mLow \u001b[0m"
+      else "\u001b[90mNone\u001b[0m" end;
+    def pad(len): tostring | . + " " * (len - length);
+    if length == 0 then "No tasks for today! " else
+      (map(.project // "none") | unique) as $unique_projects |
+      [36, 35, 34, 96, 95, 94, 33, 32] as $palette |
+      (reduce range(0; $unique_projects | length) as $i ({}; 
+        . + {($unique_projects[$i]): $palette[$i % ($palette | length)]}
+      )) as $color_map |
+      .[] | (.id | tostring | pad(3)) as $id |
+      (.priority // " ") as $raw_prio |
+      (.project // "none") as $pjt_raw |
+      ($pjt_raw | pad(12)) as $pjt_pad |
+      ($color_map[$pjt_raw] // 37) as $code |
+      "\u001b[90m\($id)\u001b[0m  \(color_prio($raw_prio))  \u001b[\($code)m\($pjt_pad)\u001b[0m  \(.description)"
+    end
+  '
+}
+
+if command -v task > /dev/null && [[ -n "$TMUX" ]]; then
+    LAST_PROMPT_FILE="$HOME/.task_last_prompt"
+    TODAY=$(date +%Y-%m-%d)
+
+    if [[ "$(< $LAST_PROMPT_FILE 2>/dev/null)" != "$TODAY" ]]; then
+        # echo -e "\e[38;5;81m--- 🔍 Reviewing Overdue & Today's Tasks ---\e[0m"
+
+        export PATH="/home/$USER/miniforge3/bin:$PATH"
+        if command -v task-tui > /dev/null; then
+          task-tui
+        else;
+           echo "run python3 -m pip install git+https://github.com/lbesnard/task-tui.git"
+        fi
+        
+        echo \n
+        echo -e "\e[38;5;214m--- 🗓️  Reminder: Fill yesterday's timesheet! ---\e[0m"
+          echo "$TODAY" > "$LAST_PROMPT_FILE"
+    fi
+    echo -e "\e[38;5;81m📅 TODAY'S PLAN\e[0m"
+    task-today
+    echo ""
+fi

@@ -32,8 +32,7 @@ alias Shotcut='shotcut'
 alias ..='cd ..'
 alias ...='cd ../../../'
 alias ....='cd ../../../../'
-alias .....='cd ../../../../'
-alias .4='cd ../../../../'
+alias .....='cd ../../../../../'
 alias .5='cd ../../../../..'
 alias cc='ls -f | wc -l' # ls -f does not stat() and makes it faster
 
@@ -197,8 +196,8 @@ alias glo=forgit::log
 alias grh=forgit::reset::head
 alias grco=forgit::revert::commit  # grco not to conflict with grc
 alias gcp=forgit::cherry::pick
-alias gbl=forgit::blame
 alias gclean=forgit::clean
+alias g='git'
 
 #########################
 ## conda
@@ -237,14 +236,13 @@ alias brightness_chgrp_sys='/usr/bin/ansible-playbook -i hosts $ANSIBLE_PATH/loc
 alias rsrc='source ~/.bashrc'
 alias clear_tmp="find /tmp -mtime +1 -and -not -exec fuser -s {} ';' -and -exec rm -Rf {} ';'"
 alias fzfp="fzf -m --preview 'head -100 {}'"
-alias g='git'
 alias sublime='subl'
 alias grep='grep --color=auto'
 alias trim="sed 's/^ *//;s/ *$//'"
 alias egrep='egrep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias copy='xclip -sel clip'
-alias cc='copy' && alias yy='copy'
+alias yy='copy'
 alias automount='udiskie &'
 alias update_linux='sudo mintupdate-launcher'
 alias linux_version='neofetch'
@@ -258,7 +256,7 @@ fi
 
 alias irssi='screen irssi'
 alias tmux_start="[[ ! $TERM =~ screen ]] && [ -z $TMUX ] && exec tmux -2 attach"
-alias cleanup_cache="brew cleanup && conda clean -a"
+alias cleanup_cache="conda clean -a"
 
 alias vita_dock="mplayer tv:// -tv driver=v4l2:device=/dev/video2:width=960:height=544"
 function vita_update_all_games() { 
@@ -440,12 +438,13 @@ bulk_rename() {
 }
 
 
-list_error_netcdf() {
-    readlink -f * | cut -d '/' -f6 | sed -e 's/\.nc\..*/\.nc/g'
-}
 ##########################
 # NetCDF
 ##########################
+list_error_netcdf() {
+    readlink -f * | cut -d '/' -f6 | sed -e 's/\.nc\..*/\.nc/g'
+}
+
 ncdumph() {
     command ncdump -h "$@" | less;
 }
@@ -578,15 +577,15 @@ alias paragliding_create_osm_map='$GITHUB_DIR/OSM_Tile_Download/osm_ogie3d.py'
 ##############################
 python_venv_init () {
     local venv_name=$1; shift
-    mkdir venv_name && cd venv_name;
-    sourve venv/vin/activate
+    mkdir "$venv_name" && cd "$venv_name"
+    python -m venv venv && source venv/bin/activate
     xargs -a requirements.txt -n 1 pip install
 }
 alias pip_install_requirements='xargs -a requirements.txt -n 1 pip install'
 
 kill_py () {
     local python_script_name=$1; shift
-    kill -9 $(ps aux | grep '[p]ython.*${python_script_name}\.py'| awk '{print $2}')
+    kill -9 $(ps aux | grep "[p]ython.*${python_script_name}\.py" | awk '{print $2}')
 }
 
 
@@ -622,10 +621,7 @@ alias mount_games='mount_point=games;mkdir -p $HOME/bfunk/$mount_point; sudo mou
 #alias filebot_tvshows_rename_dryrun='filebot -rename -r -non-strict . --db TheTVDB --format "/export/torrent/{plex}" --action test'
 #alias filebot_tvshows_rename_move='filebot -rename -r -non-strict . --db TheTVDB --format "/export/torrent/{plex}" --action move'
 
-#AIRSONIC_DATA_DIR=$DOCKER_CONFIG_DIR/airsonic
 NEXCTLOUD_DATA_DIR=/export/nexctloud
-#alias backup_airsonic='sudo service airsonic stop && tar -cvf "/tmp/airsonic_$(date +%F_%R).tar" /var/airsonic && sudo service airsonic restart'
-#alias backup_nextcloud='sudo docker stop nextcloud && tar -cvf "/tmp/nextcloud_$(date +%F_%R).tar" $NEXCTLOUD_DATA_DIR &&; sudo docker start service nextcloud'
 
 # when files are copied manually to nextcloud folder
 alias nextcloud_force_rescan='docker exec nextcloud sudo -u abc php /config/www/nextcloud/occ files:scan --all'
@@ -789,57 +785,9 @@ function funk_rsync_cron() {
 
 
 
-# BFUNK sync to BEEFUNK
-#alias bfunk_bckp_docker="funk_rsync $BFUNK_IP docker /media/$USER/beefunk_data"
-#alias bfunk_bckp_ebooks="funk_rsync $BFUNK_IP ebooks_audiobooks /media/$USER/beefunk_12tb_c --max-delete=100"
-#alias bfunk_bckp_games_1="funk_rsync $BFUNK_IP games /media/$USER/beefunk_data --exclude=Switch/ --exclude=Wii/ --exclude=WiiU/ --exclude=Gamecube/ --max-delete=100"  ## don't backup switch folder
-#alias bfunk_bckp_games_ps4="funk_rsync $BFUNK_IP games/emulation/Playstation/PS4 /media/$USER/beefunk_data/games/emulation/Playstation --max-delete=1"
-#alias bfunk_bckp_games_switch="funk_rsync $BFUNK_IP games/emulation/Nintendo/Switch /media/$USER/beefunk_12tb_b --exclude=JKSV/ --max-delete=100"
-#alias bfunk_bckp_games_wii_u_gc="funk_rsync $BFUNK_IP games/emulation/Nintendo/Gamecube /media/$USER/beefunk_12tb_b --max-delete=100;bfunk_rsync games/emulation/Nintendo/Wii /media/$USER/wii_gc;bfunk_rsync games/emulation/Nintendo/WiiU /media/$USER/wii_gc --max-delete=100;"
-#alias bfunk_bckp_movies="funk_rsync $BFUNK_IP movies /media/$USER/beefunk_12tb_a --exclude='tubesync-downloads' --exclude='UFC*' --filter='P *' --exclude='One Piece*' --exclude='/Sport/' --exclude='Movies(French)' --max-delete=20"                                                                                                                                                                                                                                                                    
-#alias bfunk_bckp_movies_french="funk_rsync $BFUNK_IP Movies\(French\) /media/lbesnard/beefunk_12tb_a/movies --max-delete=20"                                                                                                                                                                                                                                                                                                                                                                              
-#alias bfunk_bckp_movies_sport="funk_rsync $BFUNK_IP Sport /media/lbesnard/beefunk_12tb_a/movies --max-delete=10"
-#alias bfunk_bckp_music="funk_rsync $BFUNK_IP music /media/$USER/beefunk_12tb_c --max-delete=1000"
-#alias bfunk_bckp_music_no_beet="funk_rsync $BFUNK_IP music /media/$USER/beefunk_12tb_c --exclude='*.blb' --max-delete=1000"
-#alias bfunk_bckp_navidrome="docker stop navidrome; funk_rsync $BFUNK_IP docker/navidrome /opt/docker_config; cd ~/dotfiles/beefunk/docker-compose; docker-compose up -d navidrome"
-#alias bfunk_bckp_nextcloud="funk_rsync $BFUNK_IP nextcloud /media/$USER/beefunk_12tb_c/ --exclude=backups/nextcloud-\*"
-#alias bfunk_bckp_pictures="funk_rsync $BFUNK_IP pictures /media/$USER/beefunk_12tb_c --max-delete=1000"
-#alias bfunk_bckp_pictures_piwigo="funk_rsync $BFUNK_IP pictures_piwigo /opt/docker_config/piwigo/piwigo/gallery/upload --max-delete=1000"
-#alias bfunk_bckp_self_improvement="funk_rsync $BFUNK_IP self_improvement /media/$USER/beefunk_12tb_c --max-delete=1000"
-#alias bfunk_bckp_shows="funk_rsync $BFUNK_IP TV\ Shows /media/lbesnard/beefunk_data/movies  --exclude='tubesync-downloads' --exclude='UFC*' --filter='P *' --exclude='One Piece*' --max-delete=20"
-
-## bfunk sync to external hdd
-#alias bfunk_bckp_ebooks_simpl_12tb_1="funk_rsync $BFUNK_IP ebooks_audiobooks /media/$USER/simpl_12tb_1 --max-delete=100"
-#alias bfunk_bckp_nextcloud_simpl_12tb_1="funk_rsync $BFUNK_IP nextcloud /media/$USER/simpl_12tb_1 --exclude=backups/nextcloud-\*"
-#alias bfunk_bckp_self_improvement_simpl_12tb_1="funk_rsync $BFUNK_IP self_improvement /media/$USER/simpl_12tb_1 --max-delete=1000"
-#alias bfunk_bckp_pictures_simpl_12tb_1="funk_rsync $BFUNK_IP pictures /media/$USER/simpl_12tb_1 --max-delete=1000"
-
-
-#alias bfunk2efunk_bckp_games_switch="funk_rsync $BFUNK_IP games/emulation/Nintendo/Switch /media/dfunk_5tb_1 --exclude=backup\* --exclude=SCUMMVM\* --exclude=WRC\* --exclude=JKSV/ --max-delete=100"
-#alias bfunk2efunk_bckp_movies_french="funk_rsync $BFUNK_IP Movies\(French\) /media/efunk_4tb_1/movies --max-delete=20"
-
-## BEEFUNK sync to BROWNFUNK
-#alias beefunk_bckp_docker_komga="funk_rsync $BEEFUNK_TAILSCALE_IP docker/komga $DOCKER_CONFIG_DIR"
-#alias beefunk_bckp_docker_navidrome="funk_rsync $BEEFUNK_TAILSCALE_IP docker/navidrome $DOCKER_CONFIG_DIR"
-#alias beefunk_bckp_docker_jellyfin="funk_rsync $BEEFUNK_TAILSCALE_IP docker/jellyfin $DOCKER_CONFIG_DIR"
-
+# Backup aliases replaced by funk_rsync_config (reads from ~/.funk_rsync_config.json)
 alias bfunk_nextcloud_preview_generation="docker exec -it nextcloud occ preview:generate-all --path="lbesnard/files/Photos" -vvv"
-
-#$BEEFUNK_LOCAL_IP BEEFUNK sync to BFUNK
-#alias beefunk_bckp_pictures_dry_run="rsync -auv -P --delete-after --max-delete=1000 --delete-excluded -e \"ssh -i ~/.ssh/id_rsa -p 9000 -l root\" $BEEFUNK_TAILSCALE_IP:/data/pictures/ $BFUNK_PICTURES_PATH --stats --progress --dry-run"
-#alias beefunk_bckp_pictures="rsync -auv -P --delete-after --max-delete=1000 --delete-excluded -e \"ssh -i ~/.ssh/id_rsa -p 9000 -l root\" $BEEFUNK_TAILSCALE_IP:/data/pictures/ $BFUNK_PICTURES_PATH --stats --progress"
-
-##EFUNK rsync to BEEFUNK
-#alias efunk_bckp_nextcloud="funk_rsync $EFUNK_TAILSCALE_IP nextcloud /media/$USER/beefunk_12tb_b/efunk_backup  --exclude=backups/nextcloud-\*- --max-delete=300"
-#alias efunk_bckp_immich="funk_rsync $EFUNK_TAILSCALE_IP immich /media/$USER/beefunk_12tb_b/efunk_backup --max-delete=100"
-#alias efunk_bckp_pictures="funk_rsync $EFUNK_TAILSCALE_IP pictures /media/$USER/beefunk_12tb_b/efunk_backup --max-delete=100"
-#alias efunk_bckp_ps4="funk_rsync $EFUNK_TAILSCALE_IP torrent_ps4 /media/$USER/beefunk_data/ps4 --max-delete=100"
-
 alias efunk_nextcloud_preview_gen="docker exec -it nextcloud occ preview:generate-all -vvv"
-
-# BEEFUNK sync to BROWNFUNK
-#alias beefunk_bckp_navidrome="docker stop navidrome; funk_rsync $BEEFUNK_TAILSCALE_IP docker/navidrome /opt/docker_config; cd ~/dotfiles/beefunk/docker-compose; docker-compose up -d navidrome"
-#alias beefunk_bckp_navidrome="funk_rsync $BEEFUNK_TAILSCALE_IP navidrome $DOCKER_CONFIG_DIR;"
 
 # crowdsec
 alias cscli="docker exec -t crowdsec cscli"
@@ -851,34 +799,6 @@ alias cscli_bouncer_list="cscli bouncers list"
 # BROWNFUNK load beets with miniforge
 alias beet="[ -f ~/miniforge3/envs/beets/bin/python ] && conda activate beets;beet"
 
-
-
-#dask_tunnel() {
-# if [ "$#" -ne 3 ]; then
-# echo "Usage: dask_tunnel <target_host> <ssh_host> <token>"
-# return 1
-# fi
-#
-# target_host="$1"
-# ssh_host="$2"
-# token="$3"
-#
-#
-# full_url="https://localhost:8080/status?token=$token"
-#
-# echo "Connecting to Dask cluster at: $full_url"
-#
-# /usr/bin/ssh -L 8080:"$target_host":443 "$ssh_host" -N &
-#
-# ssh_pid=$!
-#
-# sleep 2
-#
-# echo "Please open the following URL in your browser: $full_url"
-#
-# echo "SSH tunnel established with PID: $ssh_pid"
-#}
-#
 dask_tunnel() {
   if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     echo "Usage: dask_tunnel <ssh_host> <dask_url> [local_port]"
@@ -1210,5 +1130,7 @@ tlog() {
 alias tui=task-tui
 
 
-# Hugo server
+##########################
+# Hugo
+##########################
 alias hugo_server_start='hugo server -D'
