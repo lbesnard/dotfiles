@@ -182,6 +182,8 @@ services:
       - PGID=1000
       - TZ=$TZ
       - FIREFOX_CLI=https://www.google.com
+    labels:
+        - "traefik.enable=false"
     volumes:
       - $DOCKER_CONFIG_PATH/firefox:/config
     ports:
@@ -452,7 +454,7 @@ services:
     restart: unless-stopped
   ##################
   mealie:
-    image: ghcr.io/mealie-recipes/mealie:v3.6.1 #
+    image: ghcr.io/mealie-recipes/mealie:latest #
     container_name: mealie
     restart: always
 #    ports:
