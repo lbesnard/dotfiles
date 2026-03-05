@@ -787,7 +787,7 @@ function funk_rsync_cron() {
 
 # Backup aliases replaced by funk_rsync_config (reads from ~/.funk_rsync_config.json)
 alias bfunk_nextcloud_preview_generation='docker exec -it $(docker ps -qf "name=nextcloud") occ preview:generate-all --path=lbesnard/files/Photos -vvv'
-alias efunk_nextcloud_preview_generation='docker exec -it $(docker ps -qf "name=nextcloud") occ preview:generate-all  --vvv'
+alias efunk_nextcloud_preview_generation='docker exec -it $(docker ps -qf "name=nextcloud") occ preview:generate-all  -vvv'
 
 # crowdsec
 alias cscli="docker exec -t crowdsec cscli"
