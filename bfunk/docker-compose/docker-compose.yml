@@ -57,7 +57,8 @@ services:
     #metabase, because security is cool, but dashboards are cooler
   ###################
   mariadb:
-    image: lscr.io/linuxserver/mariadb:11.4.8-r0-ls197 #10.6.13
+    image: lscr.io/linuxserver/mariadb:latest #10.6.13
+    # image: lscr.io/linuxserver/mariadb:11.4.8-r0-ls197 #10.6.13
     # image: lscr.io/linuxserver/mariadb:10.11.10-r0-ls162 #10.6.13
     #container_name: mariadb
     environment:
@@ -713,6 +714,25 @@ services:
     labels:
       com.centurylinklabs.watchtower.enable: true
   ##########################
+  decluttarr:
+    image: ghcr.io/manimatter/decluttarr:latest
+    container_name: decluttarr
+    restart: always
+    environment:
+      TZ: $TZ
+      PUID: 1000
+      PGID: 1000
+    volumes:
+      - $DOCKER_CONFIG_PATH/decluttarr/:/app/config/
+      - ${TV_SHOWS_PATH}:/tv
+      - $MOVIES_ENG_PATH:/movies
+    dns:
+      - $PIHOLE_DOCKER_SUB_IP_DNS
+    networks:
+      - frontend
+    depends_on:
+      - pihole
+
   sonarr:
     image: linuxserver/sonarr:4.0.14
     #container_name: sonarr
