@@ -1,0 +1,27 @@
+if [ -d /mnt/ebs/data-services ] ;then
+    source /mnt/ebs/data-services/env &>/dev/null;
+fi
+
+source  /etc/profile.d/*  # specific to PO's vm
+
+if [ ! -z ${SSH_TTY} ] && [ ! -z $DATA_SERVICES_DIR ]; then
+    [ -d $DATA_SERVICES_DIR/profile.d/ ] && source $DATA_SERVICES_DIR/profile.d/* &>/dev/null;
+    [ -d $DATA_SERVICES_DIR/lib/common/ ] && source $DATA_SERVICES_DIR/lib/common/* &>/dev/null &&  compinit $DATA_SERVICES_DIR/profile.d/*;
+    [ -f $HOME/bin/_imos_talend.sh ] && source $HOME/bin/_imos_talend.sh &>/dev/null;
+    alias sudo_project_officer='PATH=$(getconf PATH):/usr/local/bin; sudo -u projectofficer -i'
+fi
+
+# --- Fix SSH agent forwarding inside tmux ---
+if [[ -n "$SSH_AUTH_SOCK" && -n "$TMUX" ]]; then
+    tmux set-environment -g SSH_AUTH_SOCK "$SSH_AUTH_SOCK" 2>/dev/null
+    export SSH_AUTH_SOCK=$(tmux show-environment -s SSH_AUTH_SOCK 2>/dev/null | sed 's/^SSH_AUTH_SOCK=//')
+fi
+
+# Server-specific function files (pipeline/IMOS — not loaded on laptop)
+for _file in "$HOME/.zsh_functions/pipelines.zsh" "$HOME/.zsh_functions/imos_ardc.zsh"; do
+    [[ -r "$_file" ]] && source "$_file"
+done
+unset _file
+
+# Load docker fzf completion LAST
+source ~/.zsh_complete/docker-fzf-completion.zsh

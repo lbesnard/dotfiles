@@ -55,7 +55,7 @@
     ~/.lynx.cfg: { force: true, path: lynx.cfg, create: true }
     ~/.myclirc: { create: true, force: true, path: myclirc }
     ~/.ogierc: { force: true, path: ogierc, create: true }
-    ~/.p10k.zsh: { force: true, path: zsh/p10k.zsh }
+    # ~/.p10k.zsh: { force: true, path: zsh/p10k.zsh }
     ~/.pgpass: { create: true, force: true, path: pgadmin/pgpass }
     ~/.psqlrc: { force: true, path: psqlrc, create: true }
     ~/.screenlayout: { create: true, force: true, path: screenlayout }
@@ -78,10 +78,15 @@
     ~/.xsessionrc: { force: true, path: xsessionrc }
     ~/.zplug/complete/beet/_beet: { create: true, force: true, path: zsh/_beet }
     ~/.zsh_alias: { force: true, path: zsh_alias }
-    ~/.zshrc.bfunk: { force: true, path: zsh/zshrc.bfunk }
+    # Profile files (new descriptive names)
+    ~/.zshrc.laptop: { force: true, path: zsh/zshrc.laptop }
+    ~/.zshrc.server: { force: true, path: zsh/zshrc.server }
+    ~/.zshrc.homeserver: { force: true, path: zsh/zshrc.homeserver }
+    # Legacy symlinks kept for backward compatibility
+    ~/.zshrc.bfunk: { force: true, path: zsh/zshrc.homeserver }
+    ~/.zshrc.local: { force: true, path: zsh/zshrc.laptop }
+    ~/.zshrc.ssh: { force: true, path: zsh/zshrc.server }
     ~/.zshrc.common: { force: true, path: zsh/zshrc.common }
-    ~/.zshrc.local: { force: true, path: zsh/zshrc.local }
-    ~/.zshrc.ssh: { force: true, path: zsh/zshrc.ssh }
     ~/.zshrc: { force: true, path: zsh/zshrc }
     ~/.zsh_functions: { force: true, path: zsh/functions }
     ~/.zsh_complete: { force: true, path: zsh/completions }

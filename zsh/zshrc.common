@@ -18,7 +18,6 @@ autoload -Uz _zinit
 # -----------------------------
 # Basic Environment
 # -----------------------------
-export SHELL="$HOMEBREW_PREFIX/bin/zsh"
 export PATH="$HOME/.local/bin:$PATH"
 export LANGUAGE="en_AU:en"
 export LANG="en_IE.UTF-8"
@@ -29,7 +28,10 @@ if [[ -d $HOME/.linuxbrew ]]; then
 elif [[ -d /home/linuxbrew ]]; then
     export HOMEBREW_PREFIX=/home/linuxbrew/.linuxbrew
 fi
-test -d $HOMEBREW_PREFIX && PATH="$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin:$PATH"
+test -d "$HOMEBREW_PREFIX" && PATH="$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin:$PATH"
+# Set SHELL after prefix is known
+export SHELL="${HOMEBREW_PREFIX:+$HOMEBREW_PREFIX/bin/zsh}"
+[[ -z $SHELL || ! -x $SHELL ]] && export SHELL=$(command -v zsh)
 
 # History
 export HISTSIZE=32768
@@ -45,12 +47,10 @@ PATH="$PYENV_ROOT/bin:$PATH"
 # eval "$(pyenv init --path)"
 
 # -----------------------------
-# Prompt & starship
+# Prompt — Starship (managed via zinit)
 # -----------------------------
-# Starship deferred init for faster startup
 zinit ice as"command" from"gh-r" atclone"./starship init zsh > init.zsh; ./starship completions zsh > _starship" atpull"%atclone" src"init.zsh"
 zinit light starship/starship
-# eval "$(starship init zsh)"
 
 # -----------------------------
 # Colors & terminal settings
@@ -99,16 +99,16 @@ unsetopt complete_aliases
 # zsh functions autoload (lazy)
 # -----------------------------
 fpath=(~/.zsh_functions "${fpath[@]}")
-autoload -Uz history-search-end cani vmc vmi lps kp fp cani bip bup bcp tmuxify utils ll lx
+autoload -Uz history-search-end cani vmc vmi lps kp fp bip bup bcp tmuxify utils ll lx
 typeset -U PATH fpath
 
-files=($HOME/.zsh_functions/*.zsh)
-if (( ${#files[@]} > 0 )); then
-  for file in "${files[@]}"; do
-    zinit ice wait"1" as"program"
-    zinit snippet "$file"
-  done
-fi
+# Source local function files directly (faster than zinit snippet loop)
+# Exclude server-only files (pipelines, imos_ardc) — loaded in zshrc.server
+_server_only=(pipelines.zsh imos_ardc.zsh)
+for _file in $HOME/.zsh_functions/*.zsh; do
+  [[ -r "$_file" && ! "${_server_only[(r)${_file:t}]}" ]] && source "$_file"
+done
+unset _file _server_only
 
 # -----------------------------
 # SSH-agent plugin
@@ -117,40 +117,36 @@ zstyle :omz:plugins:ssh-agent agent-forwarding on
 zstyle :omz:plugins:ssh-agent identities id_rsa
 
 # -----------------------------
-# Zoxide / autojump / navigation
+# Zoxide (smart cd replacement, cmd: j)
 # -----------------------------
-# Lazy load zoxide
 zinit ice as'null' from"gh-r" sbin
 zinit light ajeetdsouza/zoxide
 zinit has'zoxide' wait lucid for z-shell/zsh-zoxide
 
-# Autojump lazy
-zinit lucid light-mode wait'[[ -n ${ZLAST_COMMANDS[(r)j*]} ]]' for OMZP::autojump
-
-# Interactive CD
-zinit lucid light-mode wait"2" for OMZP::zsh-interactive-cd
-
 # -----------------------------
 # Plugins: syntax highlighting, autosuggestions, completions
 # -----------------------------
-zinit wait lucid for atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" \
-    atload"zicompinit; zicdreplay" blockf \
+zinit wait lucid for \
+    atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" blockf \
     light-mode zsh-users/zsh-completions \
     compile'{src/*.zsh,src/strategies/*}' atload"!_zsh_autosuggest_start" \
-    light-mode zsh-users/zsh-autosuggestions
+    light-mode zsh-users/zsh-autosuggestions \
+    zdharma-continuum/fast-syntax-highlighting
 
 # -----------------------------
 # OMZP core plugins (lazy)
 # -----------------------------
 zi lucid light-mode wait'3' for \
-  OMZP::"brew" OMZP::"command-not-found" OMZP::"common-aliases" \
+  OMZP::"command-not-found" OMZP::"common-aliases" \
   OMZP::"docker-compose" OMZP::"extract" OMZP::"nmap" \
   OMZP::"pip" OMZP::"rsync" OMZP::"sudo" OMZP::"systemd" \
   OMZP::"taskwarrior" OMZP::"vagrant" OMZP::"virtualenv" OMZP::"web-search" \
   "zsh-users/zsh-history-substring-search" \
   "rummik/zsh-tailf" \
   OMZP::"cp" # cp with rsync -> call cpv
-  # "zsh-users/zsh-syntax-highlighting" \
+
+# brew only on systems where it is available
+command -v brew > /dev/null && zinit lucid light-mode wait'3' for OMZP::"brew"
 
 
 # TMUX plugin for non-SSH
@@ -161,6 +157,9 @@ fi
 # -----------------------------
 # Git / Forgit / AWS / Conda / Translate
 # -----------------------------
+# Disable default forgit aliases (conflict with grc); custom aliases in ~/.alias_forgit
+export FORGIT_NO_ALIASES=True
+
 zi lucid light-mode wait'3' for \
   "OMZ::plugins/git-extras/git-extras.plugin.zsh" \
   "wfxr/forgit" \
@@ -169,11 +168,6 @@ zi lucid light-mode wait'3' for \
   "esc/conda-zsh-completion" \
   "soimort/translate-shell"
 
-
-# conflict with https://github.com/garabik/grc/ so removing default forgit aliases
-export FORGIT_NO_ALIASES=True
-zi lucid light-mode wait'[[ $PWD = */github || $PWD = */github_repo/* ]]' for \
-  "wfxr/forgit"
 source ~/.alias_forgit
 
 # -----------------------------
@@ -259,9 +253,9 @@ bindkey -s '^n' 'ncdump -t $(fd -HI -e nc | fzf -m --preview "([[ -f {} ]] && nc
 # -----------------------------
 # Source completions
 # -----------------------------
-autoload -Uz compinit
-compinit
+# (compinit handled by zicompinit in turbo block above)
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' menu select
 
 # -----------------------------
 # Optional utilities
@@ -270,8 +264,14 @@ zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 [ -f ~/bin/tldr ] && compctl -k "($(tldr 2>/dev/null --list))" tldr
 
-# rbenv support
-command -v rbenv >/dev/null && eval "$(rbenv init - zsh)"
+# rbenv — lazy init to avoid startup cost
+if command -v rbenv > /dev/null; then
+    rbenv() {
+        unfunction rbenv 2>/dev/null
+        eval "$(command rbenv init - zsh)"
+        rbenv "$@"
+    }
+fi
 
 # yazi function
 y() {
@@ -284,26 +284,27 @@ y() {
 }
 
 
-command -v gh > /dev/null && gh completion -s zsh > ~/.zsh_alias/_gh && chmod +x ~/.zsh_alias/_gh
+# Cache gh completions — regenerate only when gh binary changes
+if command -v gh > /dev/null; then
+    _gh_comp="$HOME/.zsh_alias/_gh"
+    _gh_bin=$(command -v gh)
+    if [[ ! -f "$_gh_comp" || "$_gh_bin" -nt "$_gh_comp" ]]; then
+        gh completion -s zsh > "$_gh_comp" && chmod +x "$_gh_comp"
+    fi
+    unset _gh_comp _gh_bin
+fi
 
 # ------------------------
-# ssh select-pane 
+# SSH autocomplete
 # ------------------------
-
-# FOR ssh autocomplete
-# Highlight the current autocomplete option
-zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 
 # Better SSH/Rsync/SCP Autocomplete
 zstyle ':completion:*:(scp|rsync):*' tag-order ' hosts:-ipaddr:ip\ address hosts:-host:host files'
 zstyle ':completion:*:(ssh|scp|rsync):*:hosts-host' ignored-patterns '*(.|:)*' loopback ip6-loopback localhost ip6-localhost broadcasthost
 zstyle ':completion:*:(ssh|scp|rsync):*:hosts-ipaddr' ignored-patterns '^(<->.<->.<->.<->|(|::)([[:xdigit:].]##:(#c,2))##(|%*))' '127.0.0.<->' '255.255.255.255' '::1' 'fe80::*'
 
-# zoxide init (lazy)
-#
-command -v zoxide > /dev/null && eval "$(zoxide init zsh --cmd j)"
-
 unalias jq 2>/dev/null
 
 zinit light chitoku-k/fzf-zsh-completions
+zinit light Aloxaf/fzf-tab
 
