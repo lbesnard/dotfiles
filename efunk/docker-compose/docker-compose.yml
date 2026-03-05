@@ -76,46 +76,26 @@ services:
     depends_on:
       - mariadb
     restart: unless-stopped
-
-  ownfoil:
-    container_name: ownfoil
-    image: a1ex4/ownfoil:v1
-    environment:
-      # For write permission in config directory
-      - PUID=1000
-      - PGID=1000
-    volumes:
-      - $SWITCH_PATH:/games
-      - $DOCKER_CONFIG_PATH/ownfoil:/app/config
-    ports:
-      - "8001:80"
-    networks:
-      frontend:
-    dns:
-      - $PIHOLE_DOCKER_SUB_IP_DNS
-    labels:
-      com.centurylinklabs.watchtower.enable: true
-#    # buyld locally because on arm64
-  #ownfoil:
-    #container_name: ownfoil
-    ##image: a1ex4/ownfoil
-    #build: https://github.com/a1ex4/ownfoil.git
-    #environment:
-       #- PUID=911
-       #- PGID=911
-    #volumes:
-      #- $SWITCH_PATH:/games
-      ## Uncomment if you want to edit and persist the app configuration
-      ##- $DOCKER_CONFIG_PATH/ownfoil2/app:/app
-      ##- $DOCKER_CONFIG_PATH/ownfoil2/nginx:/etc/nginx
-      ## - ./app:/app
-      ## Uncomment to setup basic auth
-      ##- ./nginx:/etc/nginx
-    #ports:
-      #- "8001:80"
-    #networks:
-      #- frontend
-
+  #
+  # ownfoil:
+  #   container_name: ownfoil
+  #   image: a1ex4/ownfoil:v1
+  #   environment:
+  #     # For write permission in config directory
+  #     - PUID=1000
+  #     - PGID=1000
+  #   volumes:
+  #     - $SWITCH_PATH:/games
+  #     - $DOCKER_CONFIG_PATH/ownfoil:/app/config
+  #   ports:
+  #     - "8001:80"
+  #   networks:
+  #     frontend:
+  #   dns:
+  #     - $PIHOLE_DOCKER_SUB_IP_DNS
+  #   labels:
+  #     com.centurylinklabs.watchtower.enable: true
+  #
   jellyfin:
     image: linuxserver/jellyfin
     container_name: jellyfin
@@ -141,41 +121,25 @@ services:
     restart: unless-stopped
     labels:
       com.centurylinklabs.watchtower.enable: true
-
-  digikam:
-    image: lscr.io/linuxserver/digikam:latest
-    container_name: digikam
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Paris
-      - KEYBOARD=fr-fr-azerty
-      - DOCKER_MODS=linuxserver/mods:universal-package-install
-      - INSTALL_PACKAGES=language-pack-kde-fr
-    volumes:
-      - $DOCKER_CONFIG_PATH/digikam:/config
-      - $PICTURES_PATH:/pictures
-    #network_mode: host
-    ports:
-      - 3001:3000
-    restart: unless-stopped
-
- # domoticz:
-    #image: lscr.io/linuxserver/domoticz:latest
-    #container_name: domoticz
-    #environment:
-      #- PUID=1000
-      #- PGID=1000
-      #- TZ=Europe/Paris
-      ##- WEBROOT=domoticz #optional
-    #volumes:
-      #- $DOCKER_CONFIG_PATH/domoticz:/config
-    #ports:
-      #- 8080:8080
-      #- 6144:6144
-      #- 1443:1443
-    #restart: unless-stopped
-
+  #
+  # digikam:
+  #   image: lscr.io/linuxserver/digikam:latest
+  #   container_name: digikam
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=Europe/Paris
+  #     - KEYBOARD=fr-fr-azerty
+  #     - DOCKER_MODS=linuxserver/mods:universal-package-install
+  #     - INSTALL_PACKAGES=language-pack-kde-fr
+  #   volumes:
+  #     - $DOCKER_CONFIG_PATH/digikam:/config
+  #     - $PICTURES_PATH:/pictures
+  #   #network_mode: host
+  #   ports:
+  #     - 3001:3000
+  #   restart: unless-stopped
+  #
 
   rsync-server:
     image: quentintin/rsync-server
@@ -189,8 +153,6 @@ services:
       - $TORRENT_PATH/PS4:/data/torrent_ps4:ro
       - /media/efunk_4tb_1/lingodiary/:/data/lingodiary/
     environment:
-      #- USERNAME=nouser
-      #- PASSWORD=nopass
       PUID: $PUID_USER
       PGID: $PGID_USER
     ports:
@@ -382,20 +344,6 @@ services:
       - pihole
     restart: always
 
-#  darktable:
-    #image: lscr.io/linuxserver/darktable:latest
-    #container_name: darktable
-    #environment:
-      #- PUID=1000
-      #- PGID=1000
-      #- TZ=Europe/London
-    #volumes:
-      #- "photoprism-originals:/photo-originals"               # Original media files (DO NOT REMOVE)
-      #- $DOCKER_CONFIG_PATH/darktable:/config
-    #ports:
-      #- 3000:3000
-    #restart: unless-stopped
-
   photoprism:
     ## Use photoprism/photoprism:preview for testing preview builds:
     container_name: photoprism
@@ -516,7 +464,8 @@ services:
       - $DOCKER_CONFIG_PATH/mealie_v1/data/:/app/data
 
   mealie:
-    image: ghcr.io/mealie-recipes/mealie:v2.7.1 # 
+    # image: ghcr.io/mealie-recipes/mealie:v2.7.1 # 
+    image: ghcr.io/mealie-recipes/mealie:latest # 
     container_name: mealie
     restart: always
     ports:
@@ -578,6 +527,20 @@ services:
     networks:
       - frontend
 
+  portforward_navidrome:
+    image: marcnuri/port-forward
+    container_name: portforward_navidrome
+    environment:
+      - REMOTE_HOST=brownfunk.lan
+      - REMOTE_PORT=8082
+      - LOCAL_PORT=80
+    ports:
+      - 8082:80
+    dns:
+      - $PIHOLE_DOCKER_SUB_IP_DNS
+    networks:
+      - frontend
+
 
 
 
@@ -607,66 +570,37 @@ services:
 
 # SWAG from duckdns
 ####################
-  swag:
-   image: ghcr.io/linuxserver/swag
-   container_name: swag
-   cap_add:
-     - NET_ADMIN
-   dns:
-     - $PIHOLE_DOCKER_SUB_IP_DNS
-   networks:
-     - frontend
-   environment:
-     - PUID=$PUID_USER
-     - PGID=$PGID_USER
-     - TZ=Europe/Brussels
-     - URL=$DUCKDNS_DOMAIN.duckdns.org
-     - SUBDOMAINS=wildcard
-     - VALIDATION=duckdns
-     #- DNSPLUGIN=cloudflare
-     #- CERTPROVIDER= #optional
-     #- DNSPLUGIN= #optional
-     - DUCKDNSTOKEN=$DUCKDNS_TOKEN
-     #- EMAIL=<e-mail> #optional
-     - ONLY_SUBDOMAINS=false #optional
-     #- EXTRA_DOMAINS=brownfunk.lan #optional
-     - STAGING=false #optional
-   volumes:
-     - $DOCKER_CONFIG_PATH/swag:/config
-   ports:
-     - 443:443
-     - 555:80
-   restart: unless-stopped
-#
-#### netdata
-#  netdata:
-    #image: netdata/netdata
-    #container_name: netdata
-    #hostname: $SERVER_URL # set to fqdn of host
-    #ports:
-      #- 19999:19999
-    #restart: unless-stopped
-    #cap_add:
-      #- SYS_PTRACE
-    #security_opt:
-      #- apparmor:unconfined
-    #volumes:
-      #- netdatalib:/var/lib/netdata
-      #- netdatacache:/var/cache/netdata
-      #- /etc/passwd:/host/etc/passwd:ro
-      #- /etc/group:/host/etc/group:ro
-      #- /proc:/host/proc:ro
-      #- /sys:/host/sys:ro
-      #- /etc/os-release:/host/etc/os-release:ro
-      #- /var/run/docker.sock:/var/run/docker.sock:ro
-    #environment:
-            ##- PUID=$PUID_USER
-            ## - PGID=996
-      #- TZ=$TZ
-      #- WATCHTOWER_CLEANUP=true
-    #labels:
-      #com.centurylinklabs.watchtower.enable: true
-
+#   swag:
+#    image: ghcr.io/linuxserver/swag
+#    container_name: swag
+#    cap_add:
+#      - NET_ADMIN
+#    dns:
+#      - $PIHOLE_DOCKER_SUB_IP_DNS
+#    networks:
+#      - frontend
+#    environment:
+#      - PUID=$PUID_USER
+#      - PGID=$PGID_USER
+#      - TZ=Europe/Brussels
+#      - URL=$DUCKDNS_DOMAIN.duckdns.org
+#      - SUBDOMAINS=wildcard
+#      - VALIDATION=duckdns
+#      #- DNSPLUGIN=cloudflare
+#      #- CERTPROVIDER= #optional
+#      #- DNSPLUGIN= #optional
+#      - DUCKDNSTOKEN=$DUCKDNS_TOKEN
+#      #- EMAIL=<e-mail> #optional
+#      - ONLY_SUBDOMAINS=false #optional
+#      #- EXTRA_DOMAINS=brownfunk.lan #optional
+#      - STAGING=false #optional
+#    volumes:
+#      - $DOCKER_CONFIG_PATH/swag:/config
+#    ports:
+#      - 443:443
+#      - 555:80
+#    restart: unless-stopped
+# #
   scrutiny:
     container_name: scrutiny
     image: ghcr.io/analogj/scrutiny:master-omnibus
@@ -690,15 +624,28 @@ services:
     labels:
       com.centurylinklabs.watchtower.enable: true
 
-
-  memos:
-    image: neosmemo/memos:latest
-    container_name: memos
-    volumes:
-      - $DOCKER_CONFIG_PATH/memos/:/var/opt/memos
+  #
+  # memos:
+  #   image: neosmemo/memos:latest
+  #   container_name: memos
+  #   volumes:
+  #     - $DOCKER_CONFIG_PATH/memos/:/var/opt/memos
+  #   ports:
+  #     - 5230:5230
+  #
+  immichframe:
+    container_name: immichframe
+    image: ghcr.io/immichframe/immichframe:latest
+    restart: on-failure
+    # volumes:
+      # - $DOCKER_CONFIG_PATH/immichframe:/app/Config
     ports:
-      - 5230:5230
-
+      - "8087:8080"
+    environment:
+      TZ: "$TZ"
+    env_file:
+      - .env
+      
   lingodiary:
     container_name: lingodiary
     image: lozzaroo/lingodiary
@@ -717,17 +664,34 @@ services:
     user: "1000:1000" # Run container as non-root user
     restart: always
 
-  lingodiary_cron:
-    image: alpine
-    container_name: lingodiary_cron
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+  # lingodiary_cron:
+  #   image: alpine
+  #   container_name: lingodiary_cron
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   environment:
+  #     - TZ=UTC
+  #   command: >
+  #     /bin/sh -c "echo '0 22 * * * /usr/bin/docker restart lingodiary' > /etc/crontabs/root && crond -f -L /dev/stdout"
+  #   depends_on:
+  #     - lingodiary
+  #
+  firefox:
+    image: lscr.io/linuxserver/firefox:latest
+    container_name: firefox
+    security_opt:
+      - seccomp:unconfined #optional
     environment:
-      - TZ=UTC
-    command: >
-      /bin/sh -c "echo '0 22 * * * /usr/bin/docker restart lingodiary' > /etc/crontabs/root && crond -f -L /dev/stdout"
-    depends_on:
-      - lingodiary
+      - PUID=1000
+      - PGID=1000
+      - TZ=$TZ
+    volumes:
+      - $DOCKER_CONFIG_PATH/firefox:/config
+    ports:
+      - 3008:3000
+    shm_size: "1gb"
+    restart: unless-stopped
+
 
 
 volumes:
