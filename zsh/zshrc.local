@@ -18,7 +18,9 @@ function start_agent {
 
 # rename ssh tmux panel to hostname
 function ssh() {
+  if [[ -z "$TMUX" && -z "$SSH_TTY" ]]; then
     tmux rename-window "$*"
+  fi
     command ssh "$@"
     #exit
 }

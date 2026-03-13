@@ -16,11 +16,15 @@ function start_agent {
     /usr/bin/ssh-add;
 }
 
-# rename ssh tmux panel to hostname
+# rename ssh tmux pane to hostname (last non-option arg)
 function ssh() {
-    tmux rename-window "$*"
+    if [[ -n "$TMUX" ]]; then
+        # Extract the remote host: last argument that doesn't start with '-'
+        local host
+        for arg in "$@"; do [[ "$arg" != -* ]] && host="$arg"; done
+        [[ -n "$host" ]] && tmux rename-window "$host"
+    fi
     command ssh "$@"
-    #exit
 }
 
 # Source SSH settings, if applicable
