@@ -74,10 +74,18 @@ fi
 # -----------------------------
 # TMUX autostart & pane rename
 # -----------------------------
-# Only autostart tmux when we have a real local terminal (not SSH, and stdin is a TTY).
-# Without the -t check, a plain `ssh host` (no PTY) would also satisfy -z SSH_TTY
-# and cause tmux to fail with "open terminal failed: not a terminal".
+# Only autostart tmux for local terminals (not SSH). Without -t 0, a plain
+# `ssh host` (no PTY) would also satisfy -z SSH_TTY and crash.
 if [[ -z "${SSH_TTY}" && -t 0 ]]; then
+    # Prune any dead/unattachable tmux sessions before autostart to avoid
+    # "open terminal failed: not a terminal" from a corrupted session.
+    if command -v tmux &>/dev/null; then
+        tmux list-sessions 2>/dev/null | while IFS= read -r line; do
+            local sess="${line%%:*}"
+            # Try a no-op command on the session; kill it if tmux reports an error
+            tmux has-session -t "$sess" 2>/dev/null || tmux kill-session -t "$sess" 2>/dev/null
+        done
+    fi
     ZSH_TMUX_AUTOSTART=true
     ZSH_TMUX_AUTOCONNECT=true
     ZSH_TMUX_FIXTERM=true
