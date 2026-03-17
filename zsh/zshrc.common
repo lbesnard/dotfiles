@@ -77,14 +77,15 @@ fi
 # Only autostart tmux for local terminals (not SSH). Without -t 0, a plain
 # `ssh host` (no PTY) would also satisfy -z SSH_TTY and crash.
 if [[ -z "${SSH_TTY}" && -t 0 ]]; then
-    # Prune any dead/unattachable tmux sessions before autostart to avoid
-    # "open terminal failed: not a terminal" from a corrupted session.
-    if command -v tmux &>/dev/null; then
-        tmux list-sessions 2>/dev/null | while IFS= read -r line; do
-            local sess="${line%%:*}"
-            # Try a no-op command on the session; kill it if tmux reports an error
-            tmux has-session -t "$sess" 2>/dev/null || tmux kill-session -t "$sess" 2>/dev/null
-        done
+    # Prune any dead/unattachable tmux sessions before autostart.
+    # Run in background to avoid blocking prompt appearance.
+    if (( $+commands[tmux] )); then
+        (
+          tmux list-sessions 2>/dev/null | while IFS= read -r line; do
+              local sess="${line%%:*}"
+              tmux has-session -t "$sess" 2>/dev/null || tmux kill-session -t "$sess" 2>/dev/null
+          done
+        ) &!
     fi
     ZSH_TMUX_AUTOSTART=true
     ZSH_TMUX_AUTOCONNECT=true
@@ -164,12 +165,12 @@ zi lucid light-mode wait'3' for \
   OMZP::"cp" # cp with rsync -> call cpv
 
 # brew only on systems where it is available
-command -v brew > /dev/null && zinit lucid light-mode wait'3' for OMZP::"brew"
+(( $+commands[brew] )) && zinit lucid light-mode wait'3' for OMZP::"brew"
 
 
 # TMUX plugin for non-SSH local terminals only
 if [[ -z "${SSH_TTY}" && -t 0 ]]; then
-    zinit snippet OMZP::"tmux"
+    zinit wait lucid snippet OMZP::"tmux"
 fi
 
 # -----------------------------
@@ -198,7 +199,7 @@ source ~/.alias_forgit
 # FZF (lazy preview, faster)
 # -----------------------------
 
-if command -v fd > /dev/null; then
+if (( $+commands[fd] )); then
     export FZF_DEFAULT_COMMAND="fd" # CTRL-T's command
     # for more info see fzf/shell/completion.zsh
     _fzf_compgen_path() {
@@ -279,11 +280,33 @@ zstyle ':completion:*' menu select
 # Optional utilities
 # -----------------------------
 [ -f ~/.cheat/fzf.bash ] && source ~/.cheat/fzf.bash
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-[ -f ~/bin/tldr ] && compctl -k "($(tldr 2>/dev/null --list))" tldr
+
+# Cache fzf shell integration — regenerate only when fzf binary changes
+if (( $+commands[fzf] )); then
+    _fzf_cache="$HOME/.cache/zsh/fzf_init.zsh"
+    _fzf_bin="${commands[fzf]}"
+    if [[ ! -f "$_fzf_cache" || "$_fzf_bin" -nt "$_fzf_cache" ]]; then
+        mkdir -p "${_fzf_cache:h}"
+        fzf --zsh >| "$_fzf_cache"
+    fi
+    source "$_fzf_cache"
+    unset _fzf_cache _fzf_bin
+elif [ -f ~/.fzf.zsh ]; then
+    source ~/.fzf.zsh
+fi
+# Cache tldr completions — regenerate only when tldr binary changes (same pattern as gh)
+if [[ -f ~/bin/tldr ]]; then
+    _tldr_comp="$HOME/.cache/zsh/tldr_completions"
+    if [[ ! -f "$_tldr_comp" || ~/bin/tldr -nt "$_tldr_comp" ]]; then
+        mkdir -p "${_tldr_comp:h}"
+        tldr --list 2>/dev/null >| "$_tldr_comp"
+    fi
+    compctl -k "($(< $_tldr_comp))" tldr
+    unset _tldr_comp
+fi
 
 # rbenv — lazy init to avoid startup cost
-if command -v rbenv > /dev/null; then
+if (( $+commands[rbenv] )); then
     rbenv() {
         unfunction rbenv 2>/dev/null
         eval "$(command rbenv init - zsh)"
@@ -303,7 +326,7 @@ y() {
 
 
 # Cache gh completions — regenerate only when gh binary changes
-if command -v gh > /dev/null; then
+if (( $+commands[gh] )); then
     _gh_comp="$HOME/.zsh_alias/_gh"
     _gh_bin=$(command -v gh)
     if [[ ! -f "$_gh_comp" || "$_gh_bin" -nt "$_gh_comp" ]]; then
@@ -323,6 +346,7 @@ zstyle ':completion:*:(ssh|scp|rsync):*:hosts-ipaddr' ignored-patterns '^(<->.<-
 
 unalias jq 2>/dev/null
 
-zinit light chitoku-k/fzf-zsh-completions
-zinit light Aloxaf/fzf-tab
+zinit wait lucid light-mode for \
+    chitoku-k/fzf-zsh-completions \
+    Aloxaf/fzf-tab
 
