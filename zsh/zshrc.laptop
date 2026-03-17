@@ -30,9 +30,7 @@ function ssh() {
 # Source SSH settings, if applicable
 if [ -f "${SSH_ENV}" ]; then
     . "${SSH_ENV}" > /dev/null
-    ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
-        start_agent;
-    }
+    kill -0 "$SSH_AGENT_PID" 2>/dev/null || start_agent
 else
     start_agent;
 fi
@@ -86,20 +84,18 @@ if command -v task > /dev/null && [[ -n "$TMUX" ]]; then
     TODAY=$(date +%Y-%m-%d)
 
     if [[ "$(< $LAST_PROMPT_FILE 2>/dev/null)" != "$TODAY" ]]; then
-        # echo -e "\e[38;5;81m--- 🔍 Reviewing Overdue & Today's Tasks ---\e[0m"
-
         export PATH="/home/$USER/miniforge3/bin:$PATH"
-        if command -v task-tui > /dev/null; then
+        if (( $+commands[task-tui] )); then
           task-tui
-        else;
+        else
            echo "run python3 -m pip install git+https://github.com/lbesnard/task-tui.git"
         fi
         
         echo \n
         echo -e "\e[38;5;214m--- 🗓️  Reminder: Fill yesterday's timesheet! ---\e[0m"
-          echo "$TODAY" > "$LAST_PROMPT_FILE"
+        echo "$TODAY" > "$LAST_PROMPT_FILE"
+        echo -e "\e[38;5;81m📅 TODAY'S PLAN\e[0m"
+        task-today
+        echo ""
     fi
-    echo -e "\e[38;5;81m📅 TODAY'S PLAN\e[0m"
-    task-today
-    echo ""
 fi
