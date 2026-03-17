@@ -2,6 +2,10 @@
 # ZSH Fast Startup Optimized .zshrc
 # ==============================================
 
+# Non-interactive shells (e.g. `ssh host` without -t, scp, sftp) must not run
+# any of the interactive UI setup below — it calls tput/ncurses and will fail.
+[[ $- != *i* ]] && return
+
 # -----------------------------
 # Zinit bootstrap
 # -----------------------------
@@ -58,16 +62,30 @@ zinit light starship/starship
 export CLICOLOR=1
 export BLOCK_SIZE=human-readable # https://www.gnu.org/software/coreutils/manual/html_node/Block-size.html
 
-zinit ice wait"2" lucid
-zinit light "chrissicool/zsh-256color"
-
-# GRC colorisation
-[[ -s "$HOMEBREW_PREFIX/etc/grc.zsh" ]] && source $HOMEBREW_PREFIX/etc/grc.zsh
+# Only load terminal colour plugins when a real TTY is attached.
+# zsh-256color calls tput which requires a real terminal — loading it via zinit's
+# async turbo worker (wait"N") fails because the worker is a background process
+# where isatty(stdin) is false. Load synchronously to keep it in the main shell.
+if [[ -t 1 ]]; then
+    zinit light "chrissicool/zsh-256color"
+    [[ -s "$HOMEBREW_PREFIX/etc/grc.zsh" ]] && source $HOMEBREW_PREFIX/etc/grc.zsh
+fi
 
 # -----------------------------
 # TMUX autostart & pane rename
 # -----------------------------
-if [ -z "${SSH_TTY+1}" ]; then
+# Only autostart tmux for local terminals (not SSH). Without -t 0, a plain
+# `ssh host` (no PTY) would also satisfy -z SSH_TTY and crash.
+if [[ -z "${SSH_TTY}" && -t 0 ]]; then
+    # Prune any dead/unattachable tmux sessions before autostart to avoid
+    # "open terminal failed: not a terminal" from a corrupted session.
+    if command -v tmux &>/dev/null; then
+        tmux list-sessions 2>/dev/null | while IFS= read -r line; do
+            local sess="${line%%:*}"
+            # Try a no-op command on the session; kill it if tmux reports an error
+            tmux has-session -t "$sess" 2>/dev/null || tmux kill-session -t "$sess" 2>/dev/null
+        done
+    fi
     ZSH_TMUX_AUTOSTART=true
     ZSH_TMUX_AUTOCONNECT=true
     ZSH_TMUX_FIXTERM=true
@@ -149,8 +167,8 @@ zi lucid light-mode wait'3' for \
 command -v brew > /dev/null && zinit lucid light-mode wait'3' for OMZP::"brew"
 
 
-# TMUX plugin for non-SSH
-if [ -z "${SSH_TTY+1}" ]; then
+# TMUX plugin for non-SSH local terminals only
+if [[ -z "${SSH_TTY}" && -t 0 ]]; then
     zinit snippet OMZP::"tmux"
 fi
 
