@@ -3,33 +3,50 @@
 
 source $HOME/.zshrc.common
 
+# Load zsh/stat once for fork-free symlink resolution below
+zmodload zsh/stat 2>/dev/null
+
+# _tmux_link_target: resolve symlink target without forking readlink
+_tmux_link_target() { zstat -A REPLY +link "$1" 2>/dev/null }
+
 case "$HOST" in
   *aws*|*nec*)
     source $HOME/.zshrc.server
-    [[ "$(readlink ~/.tmux.conf.local 2>/dev/null)" != "$HOME/.tmux.conf.ssh" ]] && ln -sf ~/.tmux.conf.ssh ~/.tmux.conf.local
+    _tmux_link_target ~/.tmux.conf.local
+    [[ "$REPLY" != "$HOME/.tmux.conf.ssh" ]] && ln -sf ~/.tmux.conf.ssh ~/.tmux.conf.local
     ;;
   *funk*|*-X202EP*)
     source $HOME/.zshrc.homeserver
-    [[ "$(readlink ~/.tmux.conf.local 2>/dev/null)" != "$HOME/.tmux.conf.ssh" ]] && ln -sf ~/.tmux.conf.ssh ~/.tmux.conf.local
+    _tmux_link_target ~/.tmux.conf.local
+    [[ "$REPLY" != "$HOME/.tmux.conf.ssh" ]] && ln -sf ~/.tmux.conf.ssh ~/.tmux.conf.local
     ;;
   *)
     if [[ $USER == "ubuntu" ]]; then
       source $HOME/.zshrc.homeserver
-      [[ "$(readlink ~/.tmux.conf.local 2>/dev/null)" != "$HOME/.tmux.conf.ssh" ]] && ln -sf ~/.tmux.conf.ssh ~/.tmux.conf.local
+      _tmux_link_target ~/.tmux.conf.local
+      [[ "$REPLY" != "$HOME/.tmux.conf.ssh" ]] && ln -sf ~/.tmux.conf.ssh ~/.tmux.conf.local
     else
       source $HOME/.zshrc.laptop
-      [[ "$(readlink ~/.tmux.conf.local 2>/dev/null)" != "$HOME/.tmux.conf.laptop" ]] && ln -sf ~/.tmux.conf.laptop ~/.tmux.conf.local
+      _tmux_link_target ~/.tmux.conf.local
+      [[ "$REPLY" != "$HOME/.tmux.conf.laptop" ]] && ln -sf ~/.tmux.conf.laptop ~/.tmux.conf.local
     fi
     ;;
 esac
+unfunction _tmux_link_target
 
 # ~/.tmux.conf.ssh_laptop (prefix C-s) is available for nested-tmux use cases
 # (e.g. outer tmux on laptop with C-a, inner tmux on server with C-s).
 # To activate: ln -sf ~/.tmux.conf.ssh_laptop ~/.tmux.conf.local
 
-# SDKMAN — only init if installed
+# SDKMAN — lazy init (sdkman-init.sh is ~200-500ms; defer until first use)
 export SDKMAN_DIR="$HOME/.sdkman"
-[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+if [[ -s "$SDKMAN_DIR/bin/sdkman-init.sh" ]]; then
+    sdk() {
+        unfunction sdk 2>/dev/null
+        source "$SDKMAN_DIR/bin/sdkman-init.sh"
+        sdk "$@"
+    }
+fi
 
 # Lazy conda/mamba — subprocess spawned only on first use (~100-200ms saved per startup)
 export PATH="$HOME/miniforge3/bin:$PATH"
@@ -41,7 +58,7 @@ conda() { _conda_init; conda "$@"; }
 mamba() { _conda_init; mamba "$@"; }
 
 # Lazy thefuck — eval deferred to first invocation
-if command -v thefuck > /dev/null; then
+if (( $+commands[thefuck] )); then
     fuck() {
         unfunction fuck 2>/dev/null
         eval $(thefuck --alias)
