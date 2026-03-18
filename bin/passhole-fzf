@@ -41,9 +41,19 @@ if [[ ! -t 0 ]]; then
   fi
 fi
 
-# ph list (no args) lists all entries using the default database from passhole.ini
+# Pre-load the entry list BEFORE launching fzf.
+# If the DB is locked, passhole prompts for the master password here so it gets
+# a clean TTY — input is hidden correctly and there is no conflict with fzf.
+PH_LIST=$("$PH_BIN" list)
+
+if [[ -z "$PH_LIST" ]]; then
+  echo "No entries returned (unlock failed or empty database)."
+  sleep 3
+  exit 1
+fi
+
 ENTRY=$(
-  "$PH_BIN" list 2>/dev/null |
+  echo "$PH_LIST" |
     fzf --layout=reverse --border --prompt="KeePass > " --height=40%
 )
 

@@ -44,7 +44,8 @@ bindsym $mod+i exec firefox
 bindsym $mod+Shift+q kill
 
 # Start rofi program launcher
-bindsym $mod+d exec rofi -show combi -columns 3
+bindsym $mod+d exec --no-startup-id rofi -show combi -columns 3
+# bindsym $mod+d exec sleep 0.2 &&  rofi -show run
 
 # passhole fzf floating terminal
 for_window [title="passhole-fzf"] floating enable, border pixel 2, resize set 600 400
@@ -360,6 +361,7 @@ for_window [class="Yad"] floating enable
 
 exec_always ~/.config/i3/scripts/autoname_workspaces.py &
 #exec_always ~/.config/i3/scripts/autoname_workspaces.py >> ~/.config/i3/scripts/autoname_workspaces.log 2>&1 &
+
 
 # zoom 
 #for_window [class="(.*join\?action\=join.*|.*zoom.*)"] floating enable
