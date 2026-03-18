@@ -170,7 +170,7 @@ zi lucid light-mode wait'3' for \
 
 # TMUX plugin for non-SSH local terminals only
 if [[ -z "${SSH_TTY}" && -t 0 ]]; then
-    zinit wait lucid snippet OMZP::"tmux"
+    zinit wait lucid for OMZP::"tmux"
 fi
 
 # -----------------------------
