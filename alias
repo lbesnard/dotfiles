@@ -751,8 +751,8 @@ function funk_rsync_config() {
 # Translate rsync_options to rclone-compatible equivalents (prints one token per line).
 # Capture output with: while IFS= read -r line; do arr+=("$line"); done < <(_translate_rsync_opts_to_rclone ...)
 # Translations applied:
-#   --filter "protect X"   →  --filter "P X"      (rsync keyword vs rclone single-letter flag)
-#   --exclude='pattern'    →  --exclude=pattern    (strip embedded shell quotes from JSON values)
+#   --filter "protect X"   →  --filter "- X"       (rclone has no protect; exclude prevents deletion too)
+#   --exclude='pattern'    →  --exclude=pattern     (strip embedded shell quotes from JSON values)
 #   --max-delete=N         →  kept as-is
 function _translate_rsync_opts_to_rclone() {
     while (( $# > 0 )); do
@@ -760,9 +760,10 @@ function _translate_rsync_opts_to_rclone() {
         case "$opt" in
             --filter)
                 local filter_val="$1"; shift
-                # rsync "protect <path>" → rclone "P <path>"
+                # rsync "protect <path>" → rclone "- <path>"
+                # rclone has no protect rule; exclude keeps files from being deleted during sync
                 if [[ "$filter_val" == protect\ * ]]; then
-                    printf '%s\n' "--filter" "P ${filter_val#protect }"
+                    printf '%s\n' "--filter" "- ${filter_val#protect }"
                 else
                     printf '%s\n' "--filter" "$filter_val"
                 fi
