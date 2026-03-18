@@ -751,9 +751,9 @@ function funk_rsync_config() {
 # Translate rsync_options to rclone-compatible equivalents (prints one token per line).
 # Capture output with: while IFS= read -r line; do arr+=("$line"); done < <(_translate_rsync_opts_to_rclone ...)
 # Translations applied:
-#   --filter "protect X"   →  --filter "- X"       (rclone has no protect; exclude prevents deletion too)
-#   --exclude='pattern'    →  --exclude=pattern     (strip embedded shell quotes from JSON values)
-#   --max-delete=N         →  kept as-is
+#   --filter "protect X"   →  --filter "- X"    (rclone has no protect; exclude prevents deletion too)
+#   --exclude='pattern'    →  --exclude=pattern  (strip embedded shell quotes from JSON values)
+#   --max-delete=N         →  --max-delete N     (rclone requires space-separated integer)
 function _translate_rsync_opts_to_rclone() {
     while (( $# > 0 )); do
         local opt="$1"; shift
@@ -777,6 +777,13 @@ function _translate_rsync_opts_to_rclone() {
                     val="${val:1:${#val}-2}"
                 fi
                 printf '%s\n' "--exclude=${val}"
+                ;;
+            --max-delete=*)
+                # rclone requires space-separated integer: --max-delete N (not --max-delete=N)
+                printf '%s\n' "--max-delete" "${opt#--max-delete=}"
+                ;;
+            --max-delete)
+                printf '%s\n' "--max-delete" "$1"; shift
                 ;;
             *)
                 printf '%s\n' "$opt"
