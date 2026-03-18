@@ -2,11 +2,37 @@
 
 set -e
 
-CONFIG="install.conf.yaml"
 DOTBOT_DIR="dotbot"
-
 DOTBOT_BIN="bin/dotbot"
 BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Minimum neovim version required for LazyVim
+NVIM_MIN_MAJOR=0
+NVIM_MIN_MINOR=11
+
+nvim_is_new_enough() {
+  if ! command -v nvim &>/dev/null; then
+    return 1
+  fi
+  local version
+  version=$(nvim --version 2>/dev/null | head -1 | grep -oP '\d+\.\d+\.\d+' | head -1)
+  local major minor
+  major=$(echo "$version" | cut -d. -f1)
+  minor=$(echo "$version" | cut -d. -f2)
+  if [[ "$major" -gt "$NVIM_MIN_MAJOR" ]] || \
+     [[ "$major" -eq "$NVIM_MIN_MAJOR" && "$minor" -ge "$NVIM_MIN_MINOR" ]]; then
+    return 0
+  fi
+  return 1
+}
+
+if nvim_is_new_enough; then
+  CONFIG="install.conf.yaml"
+  echo "Neovim >= 0.${NVIM_MIN_MINOR} detected — installing full config (vim + neovim/LazyVim)"
+else
+  CONFIG="install_legacy.conf.yaml"
+  echo "Neovim < 0.${NVIM_MIN_MINOR} or not found — installing legacy config (vim only, no neovim)"
+fi
 
 cd "${BASEDIR}"
 git submodule update --init --recursive "${BASEDIR}"
