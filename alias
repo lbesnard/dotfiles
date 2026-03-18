@@ -657,6 +657,54 @@ function funk_rsync() {
         --exclude=.deleted "$@" || echo "$dest does not exist" # Use "$@" directly
 }
 
+function funk_rclone() {
+    local server_ip="$1"; shift
+    local folder_to_bckp="$1"; shift
+    local src="/data/$folder_to_bckp"
+    local dest_root="$1"; shift
+    local dest="$dest_root/$folder_to_bckp"
+    
+    mkdir -p "$dest"
+
+    local rclone_src=":sftp,host=$server_ip,port=9000,user=root,use_agent_auth=true:$src"
+
+    if [ -d "$dest" ]; then
+        rclone sync "$rclone_src" "$dest" \
+            --progress \
+            --use-mmap \
+            --sftp-ciphers aes128-gcm@openssh.com \
+            --transfers 16 \
+            --checkers 32 \
+            --buffer-size 64M \
+            --delete-after \
+            --exclude ".*lrprev" \
+            --exclude "jellyfin/**" \
+            --exclude "uploaded_piwigo/**" \
+            --exclude "piwigo/**" \
+            --exclude "*.tmp" \
+            --exclude "*.jpg_original*" \
+            --exclude "docker_photoprism/**" \
+            --exclude "photoprism/**" \
+            --exclude "komga/logs/**" \
+            --exclude "komga/lucene/**" \
+            --exclude "komga/artemis/**" \
+            --exclude ".bazarr.log.*" \
+            --exclude "lidarr/logs/**" \
+            --exclude "radarr/logs/**" \
+            --exclude "radarr_fr/logs/**" \
+            --exclude "MediaCover/**" \
+            --exclude "Navidrome/cache/**" \
+            --exclude "*.log" \
+            --exclude "*.log.*.gz" \
+            --exclude "*.page" \
+            --exclude "*.amq" \
+            --exclude ".deleted" \
+            "$@"
+    else
+        echo "Error: $dest could not be created."
+    fi
+}
+
 function funk_rsync_config() {
     # Check if jq is installed
     if ! command -v jq &>/dev/null; then
@@ -698,6 +746,36 @@ function funk_rsync_config() {
 
     # Call funk_rsync with the extracted details and any extra rsync options passed to funk_rsync_config
     funk_rsync "$server_ip" "$folder_to_bckp" "$dest" "${extra_rsync_options[@]}" "$@"
+}
+
+function funk_rclone_config() {
+    if ! command -v jq &>/dev/null || ! command -v fzf &>/dev/null; then
+        echo "Error: 'jq' and 'fzf' are required."
+        return 1
+    fi
+
+    local config_file="$HOME/.funk_rsync_config.json"
+    if [[ ! -f "$config_file" ]]; then
+        echo "Error: Configuration file '$config_file' not found."
+        return 1
+    fi
+
+    local selected_task=$(jq -r '.tasks[] | .name' "$config_file" | fzf --prompt="Select a task: " --height=10 --border)
+
+    [[ -z "$selected_task" ]] && return 1
+
+    local server_ip=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .server' "$config_file")
+    local folder_to_bckp=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .source' "$config_file")
+    local dest=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .destination' "$config_file")
+    
+    # Map your old rsync_options from JSON to rclone compatible ones if necessary, 
+    # though most flags like --dry-run work for both.
+    local extra_options=()
+    while IFS= read -r line; do
+        extra_options+=("$line")
+    done < <(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .rsync_options[]' "$config_file")
+
+    funk_rclone "$server_ip" "$folder_to_bckp" "$dest" "${extra_options[@]}" "$@"
 }
 
 function funk_rsync_cron() {
