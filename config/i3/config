@@ -46,15 +46,20 @@ bindsym $mod+Shift+q kill
 # Start rofi program launcher
 bindsym $mod+d exec rofi -show combi -columns 3
 
+# passhole fzf floating terminal
+for_window [title="passhole-fzf"] floating enable, border pixel 2, resize set 600 400
+
 # keepass rofi wrapper
 #bindsym Ctrl+k exec ~/bin/keepass_rofi_wrapper.sh
 # user + pass
 #bindsym Ctrl+u exec ~/miniforge3/bin/ph type passhole --tabbed --prog "rofi -dmenu"  --xdotool
-bindsym Ctrl+Shift+u exec ~/miniforge3/bin/ph type passhole --tabbed --prog dmenu  --xdotool
+#bindsym Ctrl+Shift+u exec ~/miniforge3/bin/ph type passhole --tabbed --prog dmenu  --xdotool
+bindsym Ctrl+Shift+u exec --no-startup-id ~/bin/passhole-fzf --tabbed
 
 # pass only
-#bindsym Ctrl+k exec ~/miniforge3/bin/ph type passhole --prog "rofi -dmenu" --xdotool 
-bindsym Ctrl+Shift+k exec ~/miniforge3/bin/ph type passhole --prog dmenu 
+#bindsym Ctrl+k exec ~/miniforge3/bin/ph type passhole --prog "rofi -dmenu" --xdotool
+#bindsym Ctrl+Shift+k exec ~/miniforge3/bin/ph type passhole --prog dmenu
+bindsym Ctrl+Shift+k exec --no-startup-id ~/bin/passhole-fzf
 
 # change focus
 bindsym $mod+h focus left

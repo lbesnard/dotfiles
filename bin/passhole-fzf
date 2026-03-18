@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# Wrapper to select a passhole/KeePass entry via fzf in a floating terminal.
+# Usage: passhole-fzf [--tabbed]
+#   --tabbed  type username<TAB>password (default: password only)
+#
+# When called from i3 (no TTY), re-execs itself in the first available terminal.
+# Falls back to dmenu if no supported terminal is found.
+
+TABBED=$1
+PH_BIN="$HOME/miniforge3/bin/ph"
+TITLE="passhole-fzf"
+
+# Launch ourselves inside a terminal that supports setting the window title.
+# The for_window rule in i3 matches on title="passhole-fzf" to make it floating.
+launch_in_terminal() {
+  if command -v ghostty &>/dev/null; then
+    exec ghostty "--title=$TITLE" --confirm-close-surface=false -e "$0" "$@"
+  elif command -v alacritty &>/dev/null; then
+    exec alacritty --title "$TITLE" -e "$0" "$@"
+  elif command -v kitty &>/dev/null; then
+    exec kitty --title "$TITLE" "$0" "$@"
+  elif command -v xterm &>/dev/null; then
+    exec xterm -title "$TITLE" -e "$0" "$@"
+  elif command -v urxvt &>/dev/null; then
+    exec urxvt -title "$TITLE" -e "$0" "$@"
+  else
+    return 1
+  fi
+}
+
+# When launched from i3 exec there is no TTY — open a terminal and re-exec,
+# or fall back to the original dmenu-based approach.
+if [[ ! -t 0 ]]; then
+  if ! launch_in_terminal "$@"; then
+    # dmenu fallback (original behaviour)
+    if [[ -n "$TABBED" ]]; then
+      exec "$PH_BIN" type passhole --tabbed --prog dmenu --xdotool
+    else
+      exec "$PH_BIN" type passhole --prog dmenu
+    fi
+  fi
+fi
+
+# ph list (no args) lists all entries using the default database from passhole.ini
+ENTRY=$(
+  "$PH_BIN" list 2>/dev/null |
+    fzf --layout=reverse --border --prompt="KeePass > " --height=40%
+)
+
+if [[ -z "$ENTRY" ]]; then
+  exit 0
+fi
+
+# Retrieve credentials while the terminal is still open (passhole daemon is accessible).
+# We pass the resolved values to the background process rather than the entry name,
+# so there's no dependency on passhole being reachable after the terminal closes.
+if [[ -n "$TABBED" ]]; then
+  export _CRED_USER
+  export _CRED_PASS
+  _CRED_USER=$("$PH_BIN" show "$ENTRY" --field username 2>/dev/null)
+  _CRED_PASS=$("$PH_BIN" show "$ENTRY" --field password 2>/dev/null)
+else
+  export _CRED_PASS
+  _CRED_PASS=$("$PH_BIN" show "$ENTRY" --field password 2>/dev/null)
+fi
+
+# setsid gives the typing process its own session (survives terminal close).
+# disown removes it from bash's job table so it won't receive SIGHUP on exit.
+# The 0.3s sleep lets i3-msg kill close the window and focus return first.
+if [[ -n "$TABBED" ]]; then
+  setsid bash -c '
+        sleep 0.3
+        xdotool type --clearmodifiers "$_CRED_USER"
+        xdotool key Tab
+        xdotool type --clearmodifiers "$_CRED_PASS"
+    ' &>/dev/null &
+else
+  setsid bash -c '
+        sleep 0.3
+        xdotool type --clearmodifiers "$_CRED_PASS"
+    ' &>/dev/null &
+fi
+disown $!
+
+# Close the floating terminal — i3 immediately returns focus to the previous window.
+i3-msg kill
