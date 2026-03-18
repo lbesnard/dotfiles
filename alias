@@ -748,6 +748,36 @@ function funk_rsync_config() {
     funk_rsync "$server_ip" "$folder_to_bckp" "$dest" "${extra_rsync_options[@]}" "$@"
 }
 
+# Translate rsync_options array elements to rclone-compatible equivalents.
+# Key differences handled:
+#   --filter "protect X"  →  --filter "P X"   (rsync uses word "protect"; rclone uses "P")
+#   --exclude=pattern     →  kept as-is        (rclone accepts same syntax)
+#   --max-delete=N        →  kept as-is        (rclone accepts same syntax)
+function _translate_rsync_opts_to_rclone() {
+    local -n _rclone_out=$1; shift
+    local args=("$@")
+    local i=0
+    while (( i < ${#args[@]} )); do
+        local opt="${args[$i]}"
+        case "$opt" in
+            --filter)
+                (( i++ ))
+                local filter_val="${args[$i]}"
+                # rsync "protect <path>" → rclone "P <path>"
+                if [[ "$filter_val" == protect\ * ]]; then
+                    _rclone_out+=("--filter" "P ${filter_val#protect }")
+                else
+                    _rclone_out+=("--filter" "$filter_val")
+                fi
+                ;;
+            *)
+                _rclone_out+=("$opt")
+                ;;
+        esac
+        (( i++ ))
+    done
+}
+
 function funk_rclone_config() {
     if ! command -v jq &>/dev/null || ! command -v fzf &>/dev/null; then
         echo "Error: 'jq' and 'fzf' are required."
@@ -767,13 +797,14 @@ function funk_rclone_config() {
     local server_ip=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .server' "$config_file")
     local folder_to_bckp=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .source' "$config_file")
     local dest=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .destination' "$config_file")
-    
-    # Map your old rsync_options from JSON to rclone compatible ones if necessary, 
-    # though most flags like --dry-run work for both.
-    local extra_options=()
+
+    local raw_options=()
     while IFS= read -r line; do
-        extra_options+=("$line")
+        raw_options+=("$line")
     done < <(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .rsync_options[]' "$config_file")
+
+    local extra_options=()
+    _translate_rsync_opts_to_rclone extra_options "${raw_options[@]}"
 
     funk_rclone "$server_ip" "$folder_to_bckp" "$dest" "${extra_options[@]}" "$@"
 }
