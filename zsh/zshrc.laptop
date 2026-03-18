@@ -90,12 +90,11 @@ if command -v task > /dev/null && [[ -n "$TMUX" ]]; then
         else
            echo "run python3 -m pip install git+https://github.com/lbesnard/task-tui.git"
         fi
-        
-        echo \n
-        echo -e "\e[38;5;214m--- 🗓️  Reminder: Fill yesterday's timesheet! ---\e[0m"
-        echo "$TODAY" > "$LAST_PROMPT_FILE"
-        echo -e "\e[38;5;81m📅 TODAY'S PLAN\e[0m"
-        task-today
-        echo ""
     fi
+        
+    echo -e "\e[38;5;214m--- 🗓️  Reminder: Fill yesterday's timesheet! ---\e[0m"
+    echo "$TODAY" > "$LAST_PROMPT_FILE"
+    echo -e "\e[38;5;81m📅 TODAY'S PLAN\e[0m"
+    task-today
+    echo ""
 fi
