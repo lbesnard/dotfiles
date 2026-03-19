@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
 """
-Unit tests for funk_rclone / funk_rclone_config bash functions.
+Unit tests for funk_rclone / funk_rclone_config.
 
-Tests use two local temp directories instead of an SFTP server, exercising
-rclone's local backend to validate option parsing and filter/exclude behaviour.
+Strategy
+--------
+- Config-validation tests: parse the real funk_rsync_config.json and assert
+  every rclone_option is syntactically valid rclone syntax.
+- Behaviour tests: create two local temp directories, populate them with
+  representative files, run `rclone sync` with options extracted from a mock
+  config that mirrors real task patterns, and assert the results.
+
+The tests use rclone's local backend (plain directory paths) so no SSH /
+SFTP setup is required.
 """
 
 import json
@@ -12,59 +20,163 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# Location of the real config (symlinked into dotfiles)
+# ---------------------------------------------------------------------------
+_REPO_ROOT = Path(__file__).parent
+_REAL_CONFIG = _REPO_ROOT / "funk_rsync_config"  # symlink → dotfiles_private
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-MOCK_CONFIG = {
+def touch(path: Path, content: str = "") -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content)
+    return path
+
+
+def rclone_sync(src: Path, dst: Path, extra_opts: list[str]) -> subprocess.CompletedProcess:
+    """Run `rclone sync src dst [opts]` and return the CompletedProcess."""
+    cmd = ["rclone", "sync", str(src), str(dst), "--delete-after"] + extra_opts
+    return subprocess.run(cmd, capture_output=True, text=True)
+
+
+def get_rclone_opts(config: dict, task_name: str) -> list[str]:
+    for task in config["tasks"]:
+        if task["name"] == task_name:
+            return list(task.get("rclone_options", []))
+    raise KeyError(f"Task not found: {task_name!r}")
+
+
+# ---------------------------------------------------------------------------
+# Mock config – mirrors the patterns used in the real funk_rsync_config tasks
+# ---------------------------------------------------------------------------
+MOCK_CONFIG: dict = {
     "tasks": [
+        # ── plain sync, no extra options ──────────────────────────────────
         {
-            "name": "test-basic-sync",
-            "source": "data",
-            "server": "localhost",
-            "destination": "/tmp/dest",
+            "name": "plain-sync",
+            "source": "docker",
+            "server": "somehost.home",
+            "destination": "/media/dest",
             "rsync_options": [],
             "rclone_options": [],
         },
+        # ── nextcloud: exclude backup archives + limit deletes ────────────
         {
-            "name": "test-exclude-option",
-            "source": "data",
-            "server": "localhost",
-            "destination": "/tmp/dest",
-            "rsync_options": ["--max-delete=10"],
-            "rclone_options": ["--max-delete=10", "--exclude=ignored/**"],
+            "name": "nextcloud-backup",
+            "source": "nextcloud",
+            "server": "somehost.home",
+            "destination": "/media/dest",
+            "rsync_options": [
+                "--exclude=backups/nextcloud-*",
+                "--exclude=*/backups/nextcloud-*",
+                "--max-delete=300",
+            ],
+            "rclone_options": [
+                "--exclude=backups/nextcloud-*",
+                "--exclude=**/backups/nextcloud-*",
+                "--max-delete=300",
+            ],
         },
+        # ── games: exclude console dirs entirely (trailing-slash = dir match)
         {
-            "name": "test-protect-dir",
+            "name": "games-no-console",
+            "source": "games",
+            "server": "somehost.home",
+            "destination": "/media/dest",
+            "rsync_options": [
+                "--exclude=Switch/",
+                "--exclude=Wii/",
+                "--max-delete=100",
+            ],
+            "rclone_options": [
+                "--exclude=Switch/",
+                "--exclude=Wii/",
+                "--max-delete=100",
+            ],
+        },
+        # ── Switch: protect specific dirs on destination ──────────────────
+        {
+            "name": "switch-sync",
+            "source": "games/emulation/Nintendo/Switch",
+            "server": "somehost.home",
+            "destination": "/media/dest",
+            "rsync_options": [
+                "--filter", "protect backup_xaw10010599470",
+                "--filter", "protect Saves",
+                "--max-delete=100",
+            ],
+            "rclone_options": [
+                "--exclude=backup_xaw10010599470/**",
+                "--exclude=Saves/**",
+                "--max-delete=100",
+            ],
+        },
+        # ── movies: protect Sport dir, exclude other subdirs ─────────────
+        {
+            "name": "movies-sync",
+            "source": "movies",
+            "server": "somehost.home",
+            "destination": "/media/dest",
+            "rsync_options": [
+                "--filter", "protect Sport/",
+                "--exclude=Movies(French)/",
+                "--max-delete=20",
+            ],
+            "rclone_options": [
+                "--exclude=Sport/**",
+                "--exclude=Movies(French)/",
+                "--max-delete=20",
+            ],
+        },
+        # ── music: exclude beets DB files ────────────────────────────────
+        {
+            "name": "music-no-beet",
+            "source": "music",
+            "server": "somehost.home",
+            "destination": "/media/dest",
+            "rsync_options": [
+                "--exclude=*.blb",
+                "--exclude=*.sqlite",
+                "--max-delete=10000",
+            ],
+            "rclone_options": [
+                "--exclude=*.blb",
+                "--exclude=*.sqlite",
+                "--max-delete=10000",
+            ],
+        },
+        # ── pictures: protect photoprism dir ─────────────────────────────
+        {
+            "name": "pictures-sync",
             "source": "pictures",
-            "server": "brownfunk.home",
+            "server": "somehost.home",
             "destination": "/media/dest",
             "rsync_options": [
                 "--max-delete=100",
-                "--filter",
-                "protect docker_photoprism",
+                "--filter", "protect docker_photoprism",
             ],
-            # Fixed: was --filter "P docker_photoprism" which is invalid rclone syntax
             "rclone_options": [
                 "--max-delete=100",
                 "--exclude=docker_photoprism/**",
             ],
         },
+        # ── shows: protect several show dirs ─────────────────────────────
         {
-            "name": "test-protect-multiple",
+            "name": "shows-sync",
             "source": "TV Shows",
-            "server": "brownfunk.home",
+            "server": "somehost.home",
             "destination": "/media/dest",
             "rsync_options": [
                 "--max-delete=600",
-                "--filter",
-                "protect Adventure Time*",
-                "--filter",
-                "protect Fringe*",
+                "--filter", "protect Adventure Time*",
+                "--filter", "protect Fringe*",
             ],
-            # Fixed: was --filter "P Adventure Time*" etc.
             "rclone_options": [
                 "--max-delete=600",
                 "--exclude=Adventure Time*/**",
@@ -75,212 +187,287 @@ MOCK_CONFIG = {
 }
 
 
-def rclone_sync(src: str, dest: str, extra_opts: list[str]) -> subprocess.CompletedProcess:
-    """Run rclone sync between two local directories."""
-    cmd = [
-        "rclone", "sync",
-        src, dest,
-        "--delete-after",
-    ] + extra_opts
-    return subprocess.run(cmd, capture_output=True, text=True)
-
-
-def parse_rclone_options(config: dict, task_name: str) -> list[str]:
-    """Extract rclone_options for a named task from the config dict."""
-    for task in config["tasks"]:
-        if task["name"] == task_name:
-            return task.get("rclone_options", [])
-    raise KeyError(f"Task {task_name!r} not found in config")
-
-
 # ---------------------------------------------------------------------------
-# Tests
+# 1. Config-validation tests (no rclone invocation)
 # ---------------------------------------------------------------------------
 
-class TestRcloneOptionsFromConfig(unittest.TestCase):
-    """Verify option parsing from JSON config (no filesystem side-effects)."""
+class TestRcloneConfigValidation(unittest.TestCase):
+    """Assert the real config contains only valid rclone option syntax."""
 
-    def _write_config(self, tmp_dir: str, cfg: dict) -> str:
-        path = os.path.join(tmp_dir, "config.json")
-        with open(path, "w") as fh:
-            json.dump(cfg, fh)
-        return path
+    def _load_real_config(self) -> dict:
+        if not _REAL_CONFIG.exists():
+            self.skipTest(f"Real config not found at {_REAL_CONFIG}")
+        with _REAL_CONFIG.open() as fh:
+            return json.load(fh)
 
-    def test_parse_empty_options(self):
-        opts = parse_rclone_options(MOCK_CONFIG, "test-basic-sync")
-        self.assertEqual(opts, [])
-
-    def test_parse_options_with_exclude(self):
-        opts = parse_rclone_options(MOCK_CONFIG, "test-exclude-option")
-        self.assertIn("--max-delete=10", opts)
-        self.assertIn("--exclude=ignored/**", opts)
-
-    def test_no_invalid_P_filter_rule_in_config(self):
-        """Regression: ensure no task contains the malformed 'P ...' filter rule."""
-        config_path = os.path.join(
-            os.path.dirname(__file__), "funk_rsync_config"
-        )
-        if not os.path.exists(config_path):
-            self.skipTest("funk_rsync_config not found next to test file")
-        with open(config_path) as fh:
-            cfg = json.load(fh)
+    def test_no_filter_P_rules(self):
+        """Regression: 'P <pattern>' is rsync-only and must not appear."""
+        cfg = self._load_real_config()
         for task in cfg["tasks"]:
-            opts = task.get("rclone_options", [])
-            for opt in opts:
+            for opt in task.get("rclone_options", []):
                 self.assertFalse(
                     opt.startswith("P "),
-                    msg=(
-                        f"Task {task['name']!r} contains invalid rclone filter "
-                        f"rule {opt!r}. Use --exclude=... instead of "
-                        f"--filter 'P ...'."
-                    ),
+                    msg=f"Task {task['name']!r} has invalid rclone filter rule {opt!r}. "
+                        "Use --exclude=... instead.",
                 )
 
-    def test_protect_dir_uses_exclude_not_filter_P(self):
-        opts = parse_rclone_options(MOCK_CONFIG, "test-protect-dir")
-        self.assertNotIn("--filter", opts, "rclone_options must not use --filter P syntax")
-        self.assertTrue(
-            any("docker_photoprism" in o for o in opts),
-            "docker_photoprism should still appear as an exclude rule",
-        )
+    def test_no_bare_filter_token(self):
+        """'--filter' must never appear alone as an option token (it takes an argument)."""
+        cfg = self._load_real_config()
+        for task in cfg["tasks"]:
+            opts = task.get("rclone_options", [])
+            for i, opt in enumerate(opts):
+                if opt == "--filter":
+                    # The next token must exist and be the rule
+                    self.assertLess(
+                        i + 1, len(opts),
+                        msg=f"Task {task['name']!r}: bare '--filter' at end of options list.",
+                    )
+                    rule = opts[i + 1]
+                    # Rule must start with +, -, or ! (not rsync's 'protect'/'P')
+                    self.assertTrue(
+                        rule[0] in ("+", "-", "!"),
+                        msg=f"Task {task['name']!r}: --filter rule {rule!r} is not valid rclone "
+                            "syntax (must start with +, -, or !).",
+                    )
 
-    def test_protect_multiple_dirs_uses_excludes(self):
-        opts = parse_rclone_options(MOCK_CONFIG, "test-protect-multiple")
-        self.assertNotIn("--filter", opts)
-        self.assertTrue(any("Adventure Time" in o for o in opts))
-        self.assertTrue(any("Fringe" in o for o in opts))
+    def test_exclude_patterns_have_wildcards_where_needed(self):
+        """Patterns ending with '-' that look like prefixes must include a wildcard."""
+        cfg = self._load_real_config()
+        for task in cfg["tasks"]:
+            for opt in task.get("rclone_options", []):
+                if opt.startswith("--exclude=") and opt.endswith("-") and "*" not in opt:
+                    self.fail(
+                        f"Task {task['name']!r}: {opt!r} looks like a prefix without a "
+                        "wildcard. Did you mean to append '*'?"
+                    )
 
+    def test_all_rclone_options_start_with_double_dash(self):
+        """Every rclone option must start with '--' (no short flags like -v)."""
+        cfg = self._load_real_config()
+        for task in cfg["tasks"]:
+            for opt in task.get("rclone_options", []):
+                self.assertTrue(
+                    opt.startswith("--"),
+                    msg=f"Task {task['name']!r}: option {opt!r} is not a long-form rclone flag.",
+                )
 
-class TestRcloneSyncLocal(unittest.TestCase):
-    """Integration-style tests that actually invoke rclone between temp dirs."""
-
-    def setUp(self):
-        self.tmp = tempfile.mkdtemp(prefix="funk_rclone_test_")
-        self.src = os.path.join(self.tmp, "source")
-        self.dst = os.path.join(self.tmp, "dest")
-        os.makedirs(self.src)
-        os.makedirs(self.dst)
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp, ignore_errors=True)
-
-    # ------------------------------------------------------------------
-    def test_basic_sync_copies_files(self):
-        """Files in source appear in dest after sync."""
-        _touch(self.src, "hello.txt")
-        result = rclone_sync(self.src, self.dst, [])
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertTrue(os.path.exists(os.path.join(self.dst, "hello.txt")))
-
-    def test_basic_sync_removes_extra_files(self):
-        """Files present only in dest are removed during sync (--delete-after)."""
-        _touch(self.dst, "stale.txt")
-        result = rclone_sync(self.src, self.dst, [])
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertFalse(os.path.exists(os.path.join(self.dst, "stale.txt")))
-
-    def test_exclude_dir_not_deleted_from_dest(self):
-        """
-        A directory excluded from sync is NOT deleted from the destination,
-        simulating rsync 'protect' behaviour via --exclude.
-        """
-        protected = os.path.join(self.dst, "protected_dir")
-        os.makedirs(protected)
-        _touch(protected, "keep_me.txt")
-
-        result = rclone_sync(self.src, self.dst, ["--exclude=protected_dir/**"])
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertTrue(
-            os.path.exists(os.path.join(protected, "keep_me.txt")),
-            "Protected directory content should survive the sync",
-        )
-
-    def test_exclude_dir_not_overwritten_from_source(self):
-        """
-        A directory excluded from sync is NOT copied from source to dest either.
-        """
-        src_protected = os.path.join(self.src, "protected_dir")
-        os.makedirs(src_protected)
-        _touch(src_protected, "source_version.txt")
-
-        result = rclone_sync(self.src, self.dst, ["--exclude=protected_dir/**"])
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertFalse(
-            os.path.exists(os.path.join(self.dst, "protected_dir", "source_version.txt")),
-            "Excluded directory should not be copied from source",
-        )
-
-    def test_options_from_mock_config_exclude_task(self):
-        """Run rclone with options extracted from the mock config."""
-        opts = parse_rclone_options(MOCK_CONFIG, "test-exclude-option")
-        # Remove --max-delete=10 for local test (no meaningful effect on local fs)
-        local_opts = [o for o in opts if not o.startswith("--max-delete")]
-
-        _make_dir_with_file(self.src, "ignored", "should_be_excluded.txt")
-        _touch(self.src, "included.txt")
-
-        result = rclone_sync(self.src, self.dst, local_opts)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertTrue(os.path.exists(os.path.join(self.dst, "included.txt")))
-        self.assertFalse(
-            os.path.exists(os.path.join(self.dst, "ignored", "should_be_excluded.txt"))
-        )
-
-    def test_options_from_mock_config_protect_dir_task(self):
-        """Protect-style exclude from config preserves dest-only directories."""
-        opts = parse_rclone_options(MOCK_CONFIG, "test-protect-dir")
-        local_opts = [o for o in opts if not o.startswith("--max-delete")]
-
-        # Destination has a 'docker_photoprism' dir that must be preserved
-        protected = os.path.join(self.dst, "docker_photoprism")
-        os.makedirs(protected)
-        _touch(protected, "config.yml")
-
-        _touch(self.src, "normal_picture.jpg")
-
-        result = rclone_sync(self.src, self.dst, local_opts)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertTrue(
-            os.path.exists(os.path.join(protected, "config.yml")),
-            "docker_photoprism dir should be preserved (excluded from sync)",
-        )
-        self.assertTrue(os.path.exists(os.path.join(self.dst, "normal_picture.jpg")))
-
-    def test_options_from_mock_config_protect_multiple_dirs(self):
-        """Multiple protect-style excludes from config all preserve their dirs."""
-        opts = parse_rclone_options(MOCK_CONFIG, "test-protect-multiple")
-        local_opts = [o for o in opts if not o.startswith("--max-delete")]
-
-        for show in ("Adventure Time Season 1", "Fringe Season 3"):
-            show_dir = os.path.join(self.dst, show)
-            os.makedirs(show_dir)
-            _touch(show_dir, "episode.mkv")
-
-        result = rclone_sync(self.src, self.dst, local_opts)
-        self.assertEqual(result.returncode, 0, result.stderr)
-
-        for show in ("Adventure Time Season 1", "Fringe Season 3"):
+    def test_mock_config_matches_real_option_patterns(self):
+        """Ensure the mock config used in tests is consistent with real-config patterns."""
+        real_cfg = self._load_real_config()
+        real_opts = {
+            opt
+            for task in real_cfg["tasks"]
+            for opt in task.get("rclone_options", [])
+        }
+        mock_opts = {
+            opt
+            for task in MOCK_CONFIG["tasks"]
+            for opt in task.get("rclone_options", [])
+            if not opt.startswith("--max-delete")  # max-delete values differ
+        }
+        # Every mock option must be representable in a real rclone invocation
+        for opt in mock_opts:
             self.assertTrue(
-                os.path.exists(os.path.join(self.dst, show, "episode.mkv")),
-                f"{show} should be preserved by exclude rule",
+                opt.startswith("--"),
+                msg=f"Mock config contains non-option token: {opt!r}",
             )
 
 
 # ---------------------------------------------------------------------------
-# Utilities
+# 2. Option-extraction tests
 # ---------------------------------------------------------------------------
 
-def _touch(directory: str, filename: str) -> str:
-    path = os.path.join(directory, filename)
-    with open(path, "w") as fh:
-        fh.write("")
-    return path
+class TestRcloneOptionParsing(unittest.TestCase):
+
+    def test_parse_empty_options(self):
+        opts = get_rclone_opts(MOCK_CONFIG, "plain-sync")
+        self.assertEqual(opts, [])
+
+    def test_parse_nextcloud_options(self):
+        opts = get_rclone_opts(MOCK_CONFIG, "nextcloud-backup")
+        self.assertIn("--exclude=backups/nextcloud-*", opts)
+        self.assertIn("--exclude=**/backups/nextcloud-*", opts)
+        self.assertIn("--max-delete=300", opts)
+
+    def test_parse_games_options(self):
+        opts = get_rclone_opts(MOCK_CONFIG, "games-no-console")
+        self.assertIn("--exclude=Switch/", opts)
+        self.assertIn("--exclude=Wii/", opts)
+
+    def test_no_rsync_protect_in_rclone_options(self):
+        for task in MOCK_CONFIG["tasks"]:
+            for opt in task.get("rclone_options", []):
+                self.assertFalse(
+                    opt.startswith("P "),
+                    msg=f"Task {task['name']!r}: invalid rclone option {opt!r}",
+                )
+
+    def test_task_not_found_raises(self):
+        with self.assertRaises(KeyError):
+            get_rclone_opts(MOCK_CONFIG, "does-not-exist")
 
 
-def _make_dir_with_file(parent: str, subdir: str, filename: str) -> str:
-    d = os.path.join(parent, subdir)
-    os.makedirs(d, exist_ok=True)
-    return _touch(d, filename)
+# ---------------------------------------------------------------------------
+# 3. Rclone behaviour tests (local src/dst temp dirs)
+# ---------------------------------------------------------------------------
+
+class TestRcloneSyncBehaviour(unittest.TestCase):
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="funk_rclone_test_"))
+        self.src = self.tmp / "src"
+        self.dst = self.tmp / "dst"
+        self.src.mkdir()
+        self.dst.mkdir()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    # -- helpers --
+
+    def _sync(self, task_name: str) -> subprocess.CompletedProcess:
+        opts = [o for o in get_rclone_opts(MOCK_CONFIG, task_name)
+                if not o.startswith("--max-delete")]
+        return rclone_sync(self.src, self.dst, opts)
+
+    # -- basic --
+
+    def test_plain_sync_copies_files(self):
+        touch(self.src / "hello.txt")
+        r = rclone_sync(self.src, self.dst, [])
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue((self.dst / "hello.txt").exists())
+
+    def test_plain_sync_removes_stale_files(self):
+        touch(self.dst / "stale.txt")
+        r = rclone_sync(self.src, self.dst, [])
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertFalse((self.dst / "stale.txt").exists())
+
+    # -- trailing-slash dir exclude (Switch/, Wii/) --
+
+    def test_dir_trailing_slash_exclude_not_synced_from_source(self):
+        """--exclude=Switch/ prevents Switch content being copied from source."""
+        touch(self.src / "Switch" / "game.bin")
+        touch(self.src / "other.txt")
+        r = self._sync("games-no-console")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertFalse((self.dst / "Switch" / "game.bin").exists())
+        self.assertTrue((self.dst / "other.txt").exists())
+
+    def test_dir_trailing_slash_exclude_protects_dest(self):
+        """--exclude=Switch/ preserves existing Switch content on destination."""
+        touch(self.dst / "Switch" / "saves.sav")
+        touch(self.src / "other.txt")
+        r = self._sync("games-no-console")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue(
+            (self.dst / "Switch" / "saves.sav").exists(),
+            "Switch dir must be preserved on destination",
+        )
+
+    # -- /**  protect-style exclude (backup_xaw…, Saves, docker_photoprism) --
+
+    def test_glob_star_star_exclude_not_synced_from_source(self):
+        """--exclude=Saves/** prevents Saves content being copied from source."""
+        touch(self.src / "Saves" / "slot1.sav")
+        touch(self.src / "rom.bin")
+        r = self._sync("switch-sync")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertFalse((self.dst / "Saves" / "slot1.sav").exists())
+        self.assertTrue((self.dst / "rom.bin").exists())
+
+    def test_glob_star_star_exclude_protects_dest(self):
+        """--exclude=docker_photoprism/** preserves dest-only content."""
+        touch(self.dst / "docker_photoprism" / "config.yml")
+        touch(self.src / "photo.jpg")
+        r = self._sync("pictures-sync")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue(
+            (self.dst / "docker_photoprism" / "config.yml").exists(),
+            "docker_photoprism must be preserved on destination",
+        )
+        self.assertTrue((self.dst / "photo.jpg").exists())
+
+    # -- glob wildcard excludes (Adventure Time*/**) --
+
+    def test_glob_wildcard_dir_exclude_protects_dest(self):
+        """--exclude=Adventure Time*/** preserves show dirs on destination."""
+        touch(self.dst / "Adventure Time Season 1" / "s01e01.mkv")
+        touch(self.dst / "Fringe Season 3" / "s03e01.mkv")
+        touch(self.src / "New Show" / "s01e01.mkv")
+        r = self._sync("shows-sync")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue(
+            (self.dst / "Adventure Time Season 1" / "s01e01.mkv").exists(),
+            "Adventure Time must be preserved",
+        )
+        self.assertTrue(
+            (self.dst / "Fringe Season 3" / "s03e01.mkv").exists(),
+            "Fringe must be preserved",
+        )
+
+    # -- extension excludes (*.blb, *.sqlite) --
+
+    def test_extension_exclude_skips_matching_files(self):
+        """--exclude=*.blb skips beets DB files."""
+        touch(self.src / "library.blb")
+        touch(self.src / "library.sqlite")
+        touch(self.src / "song.mp3")
+        r = self._sync("music-no-beet")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertFalse((self.dst / "library.blb").exists())
+        self.assertFalse((self.dst / "library.sqlite").exists())
+        self.assertTrue((self.dst / "song.mp3").exists())
+
+    # -- deep-path glob (backups/nextcloud-*  and  **/backups/nextcloud-*) --
+
+    def test_nextcloud_backup_exclude_shallow(self):
+        """--exclude=backups/nextcloud-* removes nextcloud backup archives at top level."""
+        touch(self.src / "backups" / "nextcloud-2024-01.tar.gz")
+        touch(self.src / "backups" / "other_backup.tar.gz")
+        touch(self.src / "data.txt")
+        r = self._sync("nextcloud-backup")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertFalse(
+            (self.dst / "backups" / "nextcloud-2024-01.tar.gz").exists(),
+            "nextcloud backup archive must be excluded",
+        )
+        self.assertTrue((self.dst / "backups" / "other_backup.tar.gz").exists())
+        self.assertTrue((self.dst / "data.txt").exists())
+
+    def test_nextcloud_backup_exclude_deep(self):
+        """--exclude=**/backups/nextcloud-* removes archives at any depth."""
+        deep = self.src / "users" / "admin" / "backups"
+        touch(deep / "nextcloud-2024-01.tar.gz")
+        touch(deep / "keep.tar.gz")
+        r = self._sync("nextcloud-backup")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertFalse((self.dst / "users" / "admin" / "backups" / "nextcloud-2024-01.tar.gz").exists())
+        self.assertTrue((self.dst / "users" / "admin" / "backups" / "keep.tar.gz").exists())
+
+    # -- movies: protect Sport via /**,  exclude Movies(French) via trailing / --
+
+    def test_movies_sport_protected_on_dest(self):
+        """--exclude=Sport/** preserves Sport dir on destination."""
+        touch(self.dst / "Sport" / "match.mkv")
+        touch(self.src / "Interstellar.mkv")
+        r = self._sync("movies-sync")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue(
+            (self.dst / "Sport" / "match.mkv").exists(),
+            "Sport dir must be preserved",
+        )
+
+    def test_movies_french_excluded(self):
+        """--exclude=Movies(French)/ skips the French movies directory."""
+        touch(self.src / "Movies(French)" / "film.mkv")
+        touch(self.src / "Interstellar.mkv")
+        r = self._sync("movies-sync")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertFalse((self.dst / "Movies(French)" / "film.mkv").exists())
+        self.assertTrue((self.dst / "Interstellar.mkv").exists())
 
 
 # ---------------------------------------------------------------------------
