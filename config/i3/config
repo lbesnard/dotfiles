@@ -44,7 +44,10 @@ bindsym $mod+i exec firefox
 bindsym $mod+Shift+q kill
 
 # Start rofi program launcher
-bindsym $mod+d exec --no-startup-id rofi -show combi -columns 3
+bindsym $mod+d exec --no-startup-id i3-dmenu-desktop
+# bindsym $mod+d exec --no-startup-id dmenu
+# bindsym $mod+d exec --no-startup-id rofi -show drun -theme-str 'configuration { combi-modes: "drun"; }' -columns 3
+# bindsym $mod+d exec --no-startup-id dmenu_run -fn 'Monospace-12' -nb '#222222' -nf '#bbbbbb' -sb '#4c7899' -sf '#ffffff' -p 'Run:'
 # bindsym $mod+d exec sleep 0.2 &&  rofi -show run
 
 # passhole fzf floating terminal

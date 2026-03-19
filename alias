@@ -748,50 +748,6 @@ function funk_rsync_config() {
     funk_rsync "$server_ip" "$folder_to_bckp" "$dest" "${extra_rsync_options[@]}" "$@"
 }
 
-# Translate rsync_options to rclone-compatible equivalents (prints one token per line).
-# Capture output with: while IFS= read -r line; do arr+=("$line"); done < <(_translate_rsync_opts_to_rclone ...)
-# Translations applied:
-#   --filter "protect X"   →  --filter "- X"    (rclone has no protect; exclude prevents deletion too)
-#   --exclude='pattern'    →  --exclude=pattern  (strip embedded shell quotes from JSON values)
-#   --max-delete=N         →  --max-delete N     (rclone requires space-separated integer)
-function _translate_rsync_opts_to_rclone() {
-    while (( $# > 0 )); do
-        local opt="$1"; shift
-        case "$opt" in
-            --filter)
-                local filter_val="$1"; shift
-                # rsync "protect <path>" → rclone "- <path>"
-                # rclone has no protect rule; exclude keeps files from being deleted during sync
-                if [[ "$filter_val" == protect\ * ]]; then
-                    printf '%s\n' "--filter" "- ${filter_val#protect }"
-                else
-                    printf '%s\n' "--filter" "$filter_val"
-                fi
-                ;;
-            --exclude=*)
-                local val="${opt#--exclude=}"
-                # Strip embedded shell quotes (e.g. --exclude='*.blb' → --exclude=*.blb)
-                if [[ "${val:0:1}" == "'" && "${val: -1}" == "'" ]]; then
-                    val="${val:1:${#val}-2}"
-                elif [[ "${val:0:1}" == '"' && "${val: -1}" == '"' ]]; then
-                    val="${val:1:${#val}-2}"
-                fi
-                printf '%s\n' "--exclude=${val}"
-                ;;
-            --max-delete=*)
-                # rclone requires space-separated integer: --max-delete N (not --max-delete=N)
-                printf '%s\n' "--max-delete" "${opt#--max-delete=}"
-                ;;
-            --max-delete)
-                printf '%s\n' "--max-delete" "$1"; shift
-                ;;
-            *)
-                printf '%s\n' "$opt"
-                ;;
-        esac
-    done
-}
-
 function funk_rclone_config() {
     if ! command -v jq &>/dev/null || ! command -v fzf &>/dev/null; then
         echo "Error: 'jq' and 'fzf' are required."
@@ -812,15 +768,10 @@ function funk_rclone_config() {
     local folder_to_bckp=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .source' "$config_file")
     local dest=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .destination' "$config_file")
 
-    local raw_options=()
-    while IFS= read -r line; do
-        raw_options+=("$line")
-    done < <(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .rsync_options[]' "$config_file")
-
     local extra_options=()
     while IFS= read -r line; do
         extra_options+=("$line")
-    done < <(_translate_rsync_opts_to_rclone "${raw_options[@]}")
+    done < <(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .rclone_options[]' "$config_file")
 
     funk_rclone "$server_ip" "$folder_to_bckp" "$dest" "${extra_options[@]}" "$@"
 }
