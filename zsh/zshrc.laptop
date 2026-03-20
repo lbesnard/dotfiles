@@ -1,9 +1,9 @@
 
-zi lucid light-mode wait'2' \
+zi lucid light-mode \
  atinit'zstyle ":omz:plugins:ssh-agent" lazy yes' for \
  "OMZ::plugins/ssh-agent/ssh-agent.plugin.zsh"
 
-zi lucid light-mode wait'2' \
+zi lucid light-mode \
  atinit'zstyle ":omz:plugins:gpg-agent" identities' for \
  "OMZ::plugins/gpg-agent/gpg-agent.plugin.zsh"
 
