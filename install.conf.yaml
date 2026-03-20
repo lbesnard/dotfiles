@@ -21,6 +21,7 @@
     ~/.config/cheat/conf.yml: { create: true, force: true, path: cheat.yml }
     ~/.config/cmus/autosave: { create: true, force: true, path: cmus/autosave }
     ~/.config/gh: { create: true, force: true, path: config/gh/ }
+    ~/.config/ghostty/config: { create: true, force: true, path: config/ghostty/config }
     ~/.config/joplin-desktop:
       { create: true, force: false, path: config/joplin-desktop/ }
     ~/.config/nvim: { create: true, force: true, path: nvim/ }
