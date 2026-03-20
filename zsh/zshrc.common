@@ -51,10 +51,14 @@ PATH="$PYENV_ROOT/bin:$PATH"
 # eval "$(pyenv init --path)"
 
 # -----------------------------
-# Prompt — Starship (managed via zinit)
-# -----------------------------
-zinit ice as"command" from"gh-r" atclone"./starship init zsh > init.zsh; ./starship completions zsh > _starship" atpull"%atclone" src"init.zsh"
-zinit light starship/starship
+# Prompt — Starship
+# If already installed (e.g. via Nix), init directly; otherwise let zinit install it
+if command -v starship &>/dev/null && [[ ! -f "${ZINIT[PLUGINS_DIR]}/starship---starship/init.zsh" ]]; then
+    eval "$(starship init zsh)"
+else
+    zinit ice as"command" from"gh-r" atclone"./starship init zsh > init.zsh; ./starship completions zsh > _starship" atpull"%atclone" src"init.zsh"
+    zinit light starship/starship
+fi
 
 # -----------------------------
 # Colors & terminal settings
