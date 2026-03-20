@@ -148,10 +148,15 @@ zinit has'zoxide' lucid for z-shell/zsh-zoxide
 
 # -----------------------------
 # Plugins: syntax highlighting, autosuggestions, completions
+# NOTE: fzf-tab must load after compinit but BEFORE autosuggestions and
+# fast-syntax-highlighting, otherwise ZLE widget wrapping causes
+# characters to be double-rendered when typing (known fzf-tab requirement)
 # -----------------------------
 zinit lucid for \
     atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" blockf \
     light-mode zsh-users/zsh-completions \
+    chitoku-k/fzf-zsh-completions \
+    Aloxaf/fzf-tab \
     compile'{src/*.zsh,src/strategies/*}' atload"!_zsh_autosuggest_start" \
     light-mode zsh-users/zsh-autosuggestions \
     zdharma-continuum/fast-syntax-highlighting
@@ -351,7 +356,4 @@ zstyle ':completion:*:(ssh|scp|rsync):*:hosts-ipaddr' ignored-patterns '^(<->.<-
 
 unalias jq 2>/dev/null
 
-zinit lucid light-mode for \
-    chitoku-k/fzf-zsh-completions \
-    Aloxaf/fzf-tab
 
