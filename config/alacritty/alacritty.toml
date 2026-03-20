@@ -4,6 +4,10 @@ WINIT_X11_SCALE_FACTOR = "1.55"
 [font]
 size = 12
 
+[terminal.shell]
+program = "zsh"
+args = ["--login"]
+
 [font.bold]
 family = "SauceCodePro Nerd Font Mono"
 style = "Bold"
@@ -20,6 +24,20 @@ style = "Italic"
 family = "SauceCodePro Nerd Font Mono"
 style = "Regular"
 
+[[keyboard.bindings]]
+action = "ScrollPageUp"
+key = "Up"
+mods = "Shift"
+
+[[keyboard.bindings]]
+action = "ScrollPageDown"
+key = "Down"
+mods = "Shift"
+
+# [mouse.url.launcher]
+# args = "--new-tab"
+# program = "opera"
+
 [scrolling]
 history = 10000
 multiplier = 3
@@ -27,3 +45,4 @@ multiplier = 3
 [selection]
 save_to_clipboard = true
 
+[keyboard]

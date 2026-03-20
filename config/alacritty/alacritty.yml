@@ -38,13 +38,13 @@ font:
 selection:
   save_to_clipboard: true
 
-mouse:
-  url:
-    launcher:
-      program: opera
-      args: --new-tab
-      #program: firefox
-      #args:  -P default-release -no-remote --new-tab
+# mouse:
+#   url:
+#     launcher:
+#       program: opera
+#       args: --new-tab
+#       #program: firefox
+#args:  -P default-release -no-remote --new-tab
 
 key_bindings:
   - { key: Up, mods: Shift, action: ScrollPageUp }
