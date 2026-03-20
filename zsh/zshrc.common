@@ -51,10 +51,14 @@ PATH="$PYENV_ROOT/bin:$PATH"
 # eval "$(pyenv init --path)"
 
 # -----------------------------
-# Prompt — Starship (managed via zinit)
-# -----------------------------
-zinit ice as"command" from"gh-r" atclone"./starship init zsh > init.zsh; ./starship completions zsh > _starship" atpull"%atclone" src"init.zsh"
-zinit light starship/starship
+# Prompt — Starship
+# If already installed (e.g. via Nix), init directly; otherwise let zinit install it
+if command -v starship &>/dev/null && [[ ! -f "${ZINIT[PLUGINS_DIR]}/starship---starship/init.zsh" ]]; then
+    eval "$(starship init zsh)"
+else
+    zinit ice as"command" from"gh-r" atclone"./starship init zsh > init.zsh; ./starship completions zsh > _starship" atpull"%atclone" src"init.zsh"
+    zinit light starship/starship
+fi
 
 # -----------------------------
 # Colors & terminal settings
@@ -140,12 +144,12 @@ zstyle :omz:plugins:ssh-agent identities id_rsa
 # -----------------------------
 zinit ice as'null' from"gh-r" sbin
 zinit light ajeetdsouza/zoxide
-zinit has'zoxide' wait lucid for z-shell/zsh-zoxide
+zinit has'zoxide' lucid for z-shell/zsh-zoxide
 
 # -----------------------------
 # Plugins: syntax highlighting, autosuggestions, completions
 # -----------------------------
-zinit wait lucid for \
+zinit lucid for \
     atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" blockf \
     light-mode zsh-users/zsh-completions \
     compile'{src/*.zsh,src/strategies/*}' atload"!_zsh_autosuggest_start" \
@@ -155,7 +159,7 @@ zinit wait lucid for \
 # -----------------------------
 # OMZP core plugins (lazy)
 # -----------------------------
-zi lucid light-mode wait'3' for \
+zi lucid light-mode for \
   OMZP::"command-not-found" OMZP::"common-aliases" \
   OMZP::"docker-compose" OMZP::"extract" OMZP::"nmap" \
   OMZP::"pip" OMZP::"rsync" OMZP::"sudo" OMZP::"systemd" \
@@ -165,12 +169,13 @@ zi lucid light-mode wait'3' for \
   OMZP::"cp" # cp with rsync -> call cpv
 
 # brew only on systems where it is available
-(( $+commands[brew] )) && zinit lucid light-mode wait'3' for OMZP::"brew"
+(( $+commands[brew] )) && zinit lucid light-mode for OMZP::"brew"
 
 
-# TMUX plugin for non-SSH local terminals only
+# TMUX plugin for non-SSH local terminals only — load synchronously so
+# tmux autostart runs during zshrc init and exit is immediate (no turbo workers)
 if [[ -z "${SSH_TTY}" && -t 0 ]]; then
-    zinit wait lucid for OMZP::"tmux"
+    zinit lucid for OMZP::"tmux"
 fi
 
 # -----------------------------
@@ -179,7 +184,7 @@ fi
 # Disable default forgit aliases (conflict with grc); custom aliases in ~/.alias_forgit
 export FORGIT_NO_ALIASES=True
 
-zi lucid light-mode wait'3' for \
+zi lucid light-mode for \
   "OMZ::plugins/git-extras/git-extras.plugin.zsh" \
   "wfxr/forgit" \
   "fdw/ranger-zoxide" \
@@ -346,7 +351,7 @@ zstyle ':completion:*:(ssh|scp|rsync):*:hosts-ipaddr' ignored-patterns '^(<->.<-
 
 unalias jq 2>/dev/null
 
-zinit wait lucid light-mode for \
+zinit lucid light-mode for \
     chitoku-k/fzf-zsh-completions \
     Aloxaf/fzf-tab
 
