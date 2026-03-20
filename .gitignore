@@ -27,3 +27,4 @@ aws/sso/cache/*
 aws/credentials
 config/pgcli/log
 .aider*
+.nixos-install.yaml
