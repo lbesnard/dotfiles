@@ -1371,29 +1371,43 @@ alias hugo_server_start='hugo server -D'
 # list of aliases with fzf
 ##########################
 falias() {
-  # Combine aliases (name=def) and user functions ([fn] name) into one fzf list
-  local selection=$(
+  local tmpdir
+  tmpdir=$(mktemp -d /tmp/falias.XXXXXX)
+
+  # Store alias definitions (one per file)
+  alias | while IFS='=' read -r name def; do
+    printf '%s' "${def#\'}" | sed "s/'$//" > "$tmpdir/alias_${name}"
+  done
+
+  # Store function bodies (one per file)
+  for fn in ${(ok)functions}; do
+    [[ "$fn" == _* ]] && continue
+    typeset -f "$fn" > "$tmpdir/fn_${fn}" 2>/dev/null
+  done
+
+  local selection
+  selection=$(
     {
-      alias
-      print -l ${(ok)functions} | grep -v '^_' | sed 's/^/[fn] /'
-    } | fzf --height 40% --reverse --header "Select an alias or function to run"
+      ls "$tmpdir" | sed 's/^alias_//;s/^fn_//' | sort -u
+    } | fzf --height 60% --reverse \
+        --header "Enter: run | right panel: definition" \
+        --preview "
+          n={}
+          if [ -f \"${tmpdir}/fn_\${n}\" ]; then
+            cat \"${tmpdir}/fn_\${n}\"
+          elif [ -f \"${tmpdir}/alias_\${n}\" ]; then
+            echo \"alias \${n}='\$(cat ${tmpdir}/alias_\${n})'\"
+          fi
+        " \
+        --preview-window=right:60%:wrap
   )
 
-  if [[ -n "$selection" ]]; then
-    local cmd_name cmd_def
-    if [[ "$selection" == \[fn\]\ * ]]; then
-      cmd_name="${selection#\[fn\] }"
-      cmd_def="(function)"
-    else
-      cmd_name="${selection%%=*}"
-      cmd_def="${selection#*=}"
-      cmd_def="${cmd_def#\'}" ; cmd_def="${cmd_def%\'}"
-      cmd_def="${cmd_def#\"}" ; cmd_def="${cmd_def%\"}"
-    fi
+  rm -rf "$tmpdir"
 
-    echo -e "\033[1;32mExecuting:\033[0m $cmd_name \033[34m($cmd_def)\033[0m"
-    print -s "$cmd_name"
-    eval "$cmd_name"
+  if [[ -n "$selection" ]]; then
+    echo -e "\033[1;32mExecuting:\033[0m $selection"
+    print -s "$selection"
+    eval "$selection"
   fi
 }
 
