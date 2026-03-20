@@ -1374,23 +1374,26 @@ falias() {
   local tmpdir
   tmpdir=$(mktemp -d /tmp/falias.XXXXXX)
 
-  # Store alias definitions (one per file)
+  # Store alias definitions (skip names with special chars that break filenames)
   alias | while IFS='=' read -r name def; do
+    [[ "$name" =~ [^a-zA-Z0-9_.:@-] ]] && continue
     printf '%s' "${def#\'}" | sed "s/'$//" > "$tmpdir/alias_${name}"
   done
 
-  # Store function bodies (one per file)
-  for fn in ${(ok)functions}; do
-    [[ "$fn" == _* ]] && continue
+  # Store ONLY user-defined functions from ~/.alias (not zinit/plugin internals)
+  local user_fns
+  user_fns=$(grep -oE '^[a-zA-Z_][a-zA-Z0-9_-]*[[:space:]]*\(\)' ~/.alias 2>/dev/null \
+             | sed 's/[[:space:]]*()$//')
+  for fn in ${(f)user_fns}; do
+    [[ -z "$fn" ]] && continue
     typeset -f "$fn" > "$tmpdir/fn_${fn}" 2>/dev/null
   done
 
   local selection
   selection=$(
-    {
-      ls "$tmpdir" | sed 's/^alias_//;s/^fn_//' | sort -u
-    } | fzf --height 60% --reverse \
-        --header "Enter: run | right panel: definition" \
+    ls "$tmpdir" | sed 's/^alias_//;s/^fn_//' | sort -u | \
+    fzf --height 60% --reverse \
+        --header "Enter: run | right panel: full definition" \
         --preview "
           n={}
           if [ -f \"${tmpdir}/fn_\${n}\" ]; then
