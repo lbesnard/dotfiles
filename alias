@@ -875,6 +875,24 @@ alias cscli_bouncer_list="cscli bouncers list"
 # BROWNFUNK load beets with miniforge
 alias beet="[ -f ~/miniforge3/envs/beets/bin/python ] && conda activate beets;beet"
 
+mount_beefunk_pics() {
+  if [[ -d ~/beefunk_pictures/ ]]; then
+    sshfs lbesnard@beefunk.lan:/media/lbesnard/beefunk_12tb_c/pictures beefunk_pictures
+  else
+    mkdir -p ~/beefunk_pictures/ &&    sshfs lbesnard@beefunk.lan:/media/lbesnard/beefunk_12tb_c/pictures beefunk_pictures
+  fi
+}
+
+# mount only when close to efunk server
+mount_efunknuc_pics() {
+  if [[ -d ~/beefunk_pictures/ ]]; then
+    sshfs lbesnard@evrynucfunk.lan:/media/beefunk_12tb_1/pictures beefunk_pictures
+  else
+    mkdir -p ~/beefunk_pictures/ &&    sshfs lbesnard@evrynucfunk.lan:/media/beefunk_12tb_1/pictures beefunk_pictures
+  fi
+}
+
+
 dask_tunnel() {
   if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     echo "Usage: dask_tunnel <ssh_host> <dask_url> [local_port]"
@@ -953,6 +971,143 @@ PY
   echo "SSH tunnel established (pid: ${ssh_pid:-unknown})"
 }
 
+
+#dask_tunnel() {
+#  if [ "$#" -ne 3 ]; then
+#  echo "Usage: dask_tunnel <target_host> <ssh_host> <token>"
+#  return 1
+#  fi
+#
+#  target_host="$1"
+#  ssh_host="$2"
+#  token="$3"
+#
+#
+#  full_url="https://localhost:8080/status?token=$token"
+#
+#  echo "Connecting to Dask cluster at: $full_url"
+#  unset -f ssh
+#
+#  ssh -L 8080:"$target_host":443 "$ssh_host" -N &
+#
+#  ssh_pid=$!
+#
+#  sleep 2
+#
+#  echo "Please open the following URL in your browser: $full_url"
+#
+#  echo "SSH tunnel established with PID: $ssh_pid"
+#}
+
+# tunnel jupyter notebook from 8888 to 8080 localhost
+jupyter_tunnel(){
+  unset -f ssh 
+  ssh -L 8080:localhost:8888 laptop_work -N &
+}
+
+# function to create the norwegian diary to Nextcloud
+diary_anki() {
+    cd ~/github_repos/LingoAnki/ || return
+
+    # Create a temporary directory
+    temp_dir=$(mktemp -d)
+    temp_shell_nix="$temp_dir/shell.nix"
+
+    # Write the temporary shell.nix
+    cat > "$temp_shell_nix" <<EOF
+{
+  pkgs ? import <nixpkgs> { },
+}:
+let
+  fhs = pkgs.buildFHSEnv {
+    name = "my-fhs-environment";
+
+    targetPkgs = _: [
+      pkgs.micromamba
+    ];
+
+    profile = ''
+      set -e
+      eval "\$(micromamba shell hook --shell=posix)"
+      envName=lingoAnki
+
+      # https://stackoverflow.com/questions/75080993/dbuserrorresponse-while-running-poetry-install
+      export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
+      export MAMBA_ROOT_PREFIX=\${builtins.getEnv "PWD"}/.mamba
+      if ! test -d \$MAMBA_ROOT_PREFIX/envs/lingoAnki; then
+          micromamba env create --yes -q -f environment.yml && micromamba activate \$envName && poetry install --with dev
+      fi
+      micromamba activate \$envName
+      set +e
+      # for nexcloud_efunk
+      diaryAnki -m /home/lbesnard/Nextcloud_efunk/joplin/abf6d92db1ad4cbf984a8b1d5458f446.md -d "Norwegian 🇳🇴:::Diary 📖" -o ~/Nextcloud_efunk/Anki_Norwegian/ -p
+      #
+      # for nexcloud_bfunk
+      #diaryAnki -m /home/lbesnard/Nextcloud/joplin/18cf5fb35d3d4e20b5c6a4be0a56e429.md -d "Norwegian 🇳🇴:::Diary 📖" -o ~/Nextcloud/Anki_Norwegian/ -p
+    '';
+  };
+in
+fhs.env
+EOF
+
+    # Run nix-shell using the temporary shell.nix
+    nix-shell "$temp_shell_nix"
+
+    # Remove the temporary directory and its contents
+    rm -rf "$temp_dir"
+}
+
+# function to create the norwegian TPRS to Nextcloud
+diary_tprs() {
+    cd ~/github_repos/LingoAnki/ || return
+
+    # Create a temporary directory
+    temp_dir=$(mktemp -d)
+    temp_shell_nix="$temp_dir/shell.nix"
+
+    # Write the temporary shell.nix
+    cat > "$temp_shell_nix" <<EOF
+{
+  pkgs ? import <nixpkgs> { },
+}:
+let
+  fhs = pkgs.buildFHSEnv {
+    name = "my-fhs-environment";
+
+    targetPkgs = _: [
+      pkgs.micromamba
+    ];
+
+    profile = ''
+      set -e
+      eval "\$(micromamba shell hook --shell=posix)"
+      envName=lingoAnki
+
+      # https://stackoverflow.com/questions/75080993/dbuserrorresponse-while-running-poetry-install
+      export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
+      export MAMBA_ROOT_PREFIX=\${builtins.getEnv "PWD"}/.mamba
+      if ! test -d \$MAMBA_ROOT_PREFIX/envs/lingoAnki; then
+          micromamba env create --yes -q -f environment.yml && micromamba activate \$envName && poetry install --with dev
+      fi
+      micromamba activate \$envName
+      set +e
+      # for nexcloud_efunk
+      diaryTprs -m /home/lbesnard/Nextcloud_efunk/joplin/ecc5d58773214322bc91cfb676f62c4f.md -d "Norwegian 🇳🇴:::Diary 📖" -o ~/Nextcloud_efunk/Anki_Norwegian/TPRS -p
+      #
+      # for nexcloud_bfunk
+      #diaryTprs -m /home/lbesnard/Nextcloud/joplin/ecc5d58773214322bc91cfb676f62c4.md -d "Norwegian 🇳🇴:::Diary 📖" -o ~/Nextcloud/Anki_Norwegian/TPRS -p
+    '';
+  };
+in
+fhs.env
+EOF
+
+    # Run nix-shell using the temporary shell.nix
+    nix-shell "$temp_shell_nix"
+
+    # Remove the temporary directory and its contents
+    rm -rf "$temp_dir"
+}
  
 ## taskwarrior
 # Short alias for general use
@@ -1236,3 +1391,6 @@ falias() {
     eval "$cmd_name"
   fi
 }
+
+# Ghostty: override TERM for remote servers that don't have xterm-ghostty terminfo
+alias ssh='TERM=xterm-256color ssh'
