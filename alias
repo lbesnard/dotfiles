@@ -1,6 +1,6 @@
 [ -f ~/.env ] && source ~/.env
 [ -f ~/.env_private ] && source ~/.env_private
-
+[ -f ~/.alias.nixos ] && source ~/.alias.nixos
 unalias  fd >/dev/null 2>/dev/null # in order to use https://github.com/sharkdp/fd
 
 alias mintupdate='sudo mintupdate-cli --install-recommends -y upgrade'
