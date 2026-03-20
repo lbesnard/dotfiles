@@ -83,7 +83,7 @@ export PIPELINE_TASK_LOG_PATH=/mnt/ebs/log/pipeline/process
 # every file in there as a function. THIS IS A REQUIREMENT
 fpath=(~/.zsh_functions $fpath);
 if command -v autoload > /dev/null; then
-    autoload -U $fpath[1]/*(.:t)
+    autoload -U ${fpath[1]}/*(N-.:t)
 fi
 
 # For multiple functions files, just source them
