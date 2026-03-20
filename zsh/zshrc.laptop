@@ -11,9 +11,9 @@ SSH_ENV="$HOME/.ssh/environment"
 
 function start_agent {
     echo "Initialising new SSH agent..."
-    (umask 066; /usr/bin/ssh-agent > "${SSH_ENV}")
+    (umask 066; "$(command -v ssh-agent)" > "${SSH_ENV}")
     . "${SSH_ENV}" > /dev/null
-    /usr/bin/ssh-add;
+    "$(command -v ssh-add)";
 }
 
 # rename ssh tmux pane to hostname (last non-option arg)
