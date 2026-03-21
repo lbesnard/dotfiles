@@ -657,7 +657,15 @@ function funk_rsync() {
         --exclude=.deleted "$@" || echo "$dest does not exist" # Use "$@" directly
 }
 
+function _ensure_ssh_key_loaded() {
+    if ! ssh-add -l &>/dev/null; then
+        echo "No SSH keys loaded. Running ssh-add..."
+        ssh-add
+    fi
+}
+
 function funk_rclone() {
+    _ensure_ssh_key_loaded
     local server_ip="$1"; shift
     local folder_to_bckp="$1"; shift
     local src="/data/$folder_to_bckp"
@@ -749,6 +757,7 @@ function funk_rsync_config() {
 }
 
 function funk_rclone_config() {
+    _ensure_ssh_key_loaded
     if ! command -v jq &>/dev/null || ! command -v fzf &>/dev/null; then
         echo "Error: 'jq' and 'fzf' are required."
         return 1
