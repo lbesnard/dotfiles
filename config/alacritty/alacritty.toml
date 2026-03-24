@@ -2,7 +2,7 @@
 WINIT_X11_SCALE_FACTOR = "1.55"
 
 [font]
-size = 12
+size = 6
 
 [terminal.shell]
 program = "zsh"
