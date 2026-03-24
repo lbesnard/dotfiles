@@ -1009,9 +1009,20 @@ PY
 #}
 
 # tunnel jupyter notebook from 8888 to 8080 localhost
+
 jupyter_tunnel(){
+
   unset -f ssh 
-  ssh -L 8080:localhost:8888 laptop_work -N &
+  # 1. Kill any existing ssh tunnel on port 8080 to prevent "Address already in use"
+  lsof -ti:8080 | xargs kill -9 2>/dev/null
+
+  # 2. Start the tunnel
+  # -f: Requests SSH to go to background just before command execution
+  # -N: Do not execute a remote command (useful for just forwarding ports)
+  # -M: ControlMaster for connection sharing
+  ssh -f -N -L 8080:localhost:8888 laptop-work
+  
+  echo "Jupyter tunnel established on http://localhost:8080"
 }
 
 # function to create the norwegian diary to Nextcloud
