@@ -280,7 +280,8 @@ set -g history-limit 10000
 # force Vi mode
 #   really you should export VISUAL or EDITOR environment variable, see manual
 #set -g status-keys vi
-#set -g mode-keys vi
+set -g mode-keys vi
+
 
 # replace C-a by C-s instead of using both prefixes
  set -gu prefix2
