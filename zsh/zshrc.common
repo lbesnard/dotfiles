@@ -93,7 +93,7 @@ if [[ -z "${SSH_TTY}" && -t 0 ]]; then
     fi
     ZSH_TMUX_AUTOSTART=true
     ZSH_TMUX_AUTOCONNECT=true
-    ZSH_TMUX_FIXTERM=true
+    ZSH_TMUX_FIXTERM=false
     ZSH_TMUX_AUTOQUIT=true
 fi
 
