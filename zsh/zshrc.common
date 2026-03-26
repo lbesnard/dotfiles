@@ -81,9 +81,22 @@ fi
 # Only autostart tmux for local terminals (not SSH). Without -t 0, a plain
 # `ssh host` (no PTY) would also satisfy -z SSH_TTY and crash.
 if [[ -z "${SSH_TTY}" && -t 0 ]]; then
-    # Prune any dead/unattachable tmux sessions before autostart.
-    # Run in background to avoid blocking prompt appearance.
     if (( $+commands[tmux] )); then
+        # Guard against a stale/corrupted tmux server socket. If the server is
+        # unresponsive, ZSH_TMUX_AUTOQUIT=true would close the terminal instantly
+        # when tmux fails to connect. Kill the stale server first so the plugin
+        # can start a clean new one.
+        local _tmux_out _tmux_rc
+        _tmux_out=$(timeout 3 tmux ls 2>&1)
+        _tmux_rc=$?
+        # exit 0  → healthy server; "no server" message → socket never existed (safe).
+        # Anything else (connection refused, timeout exit 124, etc.) → stale socket.
+        if (( _tmux_rc != 0 )) && [[ "$_tmux_out" != *"no server"* ]]; then
+            tmux kill-server 2>/dev/null
+        fi
+        unset _tmux_out _tmux_rc
+
+        # Prune any dead/unattachable sessions in background.
         (
           tmux list-sessions 2>/dev/null | while IFS= read -r line; do
               local sess="${line%%:*}"
