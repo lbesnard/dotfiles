@@ -1,3 +1,5 @@
+./nvim/lazy-lock.json
+
 bin/share
 *.pyc
 *jetbrains-toolbox
