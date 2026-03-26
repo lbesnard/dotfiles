@@ -209,7 +209,12 @@ function conda_activate () {
 alias mamba_activate=conda_activate
 
 function conda_destroy () {
-  mamba env remove -n "$(mamba info --envs | grep envs |fzf | awk '{print $1}')"
+  local envs
+  envs=$(mamba info --envs | grep envs | fzf --multi --prompt="Select env(s) to destroy > " | awk '{print $1}')
+  [[ -z "$envs" ]] && return
+  while IFS= read -r env; do
+    mamba env remove -n "$env" --yes
+  done <<< "$envs"
 }
 alias conda_remove=conda_destroy
 alias mamba_destroy=conda_destroy
