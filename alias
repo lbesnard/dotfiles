@@ -658,9 +658,23 @@ function funk_rsync() {
 }
 
 function _ensure_ssh_key_loaded() {
+    # Define a fixed path for the socket
+    export SSH_AUTH_SOCK="$HOME/.ssh/ssh-agent.sock"
+
+    # 1. Test if the socket is alive
     if ! ssh-add -l &>/dev/null; then
-        echo "No SSH keys loaded. Running ssh-add..."
-        ssh-add
+        # Check if it's just missing keys or if the agent is totally dead (exit code 2)
+        if [ $? -eq 2 ]; then
+            echo "SSH agent not running. Starting new agent at $SSH_AUTH_SOCK..."
+            rm -f "$SSH_AUTH_SOCK" # Clean up stale file if it exists
+            eval "$(ssh-agent -s -a "$SSH_AUTH_SOCK")" > /dev/null
+        fi
+
+        # 2. If still no keys, add them
+        if ! ssh-add -l &>/dev/null; then
+            echo "No SSH keys loaded. Running ssh-add..."
+            ssh-add
+        fi
     fi
 }
 
