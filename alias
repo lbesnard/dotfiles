@@ -657,24 +657,27 @@ function funk_rsync() {
         --exclude=.deleted "$@" || echo "$dest does not exist" # Use "$@" directly
 }
 
-function _ensure_ssh_key_loaded() {
-    # Define a fixed path for the socket
+_ensure_ssh_key_loaded () {
     export SSH_AUTH_SOCK="$HOME/.ssh/ssh-agent.sock"
 
-    # 1. Test if the socket is alive
-    if ! ssh-add -l &>/dev/null; then
-        # Check if it's just missing keys or if the agent is totally dead (exit code 2)
-        if [ $? -eq 2 ]; then
-            echo "SSH agent not running. Starting new agent at $SSH_AUTH_SOCK..."
-            rm -f "$SSH_AUTH_SOCK" # Clean up stale file if it exists
-            eval "$(ssh-agent -s -a "$SSH_AUTH_SOCK")" > /dev/null
-        fi
+    # 1. Check if the socket file physically exists. 
+    # If it doesn't, or if the agent is unreachable (exit 2), start it.
+    if [[ ! -S "$SSH_AUTH_SOCK" ]]; then
+        echo "SSH agent socket missing. Starting new agent at $SSH_AUTH_SOCK..."
+        rm -f "$SSH_AUTH_SOCK"
+        eval "$(ssh-agent -s -a "$SSH_AUTH_SOCK")" > /dev/null
+    fi
 
-        # 2. If still no keys, add them
-        if ! ssh-add -l &>/dev/null; then
-            echo "No SSH keys loaded. Running ssh-add..."
-            ssh-add
+    # 2. Now that the agent is definitely running, check for keys.
+    if ! ssh-add -l &> /dev/null; then
+        # If exit code was 2, the socket was there but the process died.
+        if [ $? -eq 2 ]; then
+             rm -f "$SSH_AUTH_SOCK"
+             eval "$(ssh-agent -s -a "$SSH_AUTH_SOCK")" > /dev/null
         fi
+        
+        echo "No SSH keys loaded. Running ssh-add..."
+        ssh-add -t 10h
     fi
 }
 
