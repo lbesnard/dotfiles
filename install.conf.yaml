@@ -21,7 +21,8 @@
     ~/.config/cheat/conf.yml: { create: true, force: true, path: cheat.yml }
     ~/.config/cmus/autosave: { create: true, force: true, path: cmus/autosave }
     ~/.config/gh: { create: true, force: true, path: config/gh/ }
-    ~/.config/ghostty/config: { create: true, force: true, path: config/ghostty/config }
+    ~/.config/ghostty/config:
+      { create: true, force: true, path: config/ghostty/config }
     ~/.config/joplin-desktop:
       { create: true, force: false, path: config/joplin-desktop/ }
     ~/.config/nvim: { create: true, force: true, path: nvim/ }
@@ -39,6 +40,7 @@
     ~/.config/i3: { create: true, force: true, path: config/i3/ }
     ~/.config/i3blocks: { create: true, force: true, path: config/i3blocks/ }
     ~/.config/rofi: { create: true, force: true, path: config/rofi/ }
+    ~/.config/rmpc: { create: true, force: true, path: config/rmpc/ }
     ~/.dotfiles: { force: true, path: ".", create: true }
     ~/.env: { force: true, path: env, create: true }
     ~/.env_private: { force: true, path: env_private, create: true }
