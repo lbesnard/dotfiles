@@ -1,0 +1,11 @@
+#![enable(implicit_some)]
+(
+    address: "192.168.8.136:6600",
+    theme: "default",
+    // Optional: If you have a password on your MPD server
+    // password: "your_password",
+    
+    // Since you use Kitty/Tux, rmpc can show album art.
+    // If your music is on a network share mounted locally:
+    // music_directory: "/home/lbesnard/mnt/music", 
+)
