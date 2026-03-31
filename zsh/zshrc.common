@@ -256,6 +256,7 @@ export FZF_DEFAULT_OPTS="
 "
 
 export FORGIT_FZF_DEFAULT_OPTS="
+--ansi
 --prompt='∼ ' --pointer='▶' --marker='✓'
 --border
 --cycle
