@@ -39,7 +39,7 @@
     hunk-header-line-number-style = "#067a00"
     hunk-header-style = file line-number syntax
 [color]
-    ui = true
+	ui = always
     branch      = auto
     diff        = auto
     interactive = auto
