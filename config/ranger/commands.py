@@ -6,60 +6,105 @@ class rcomics(Command):
     """
     :rename_comics by appending the folder name to the start of the selected files
     """
+
     def execute(self):
         import os
+
         files = [f.relative_path for f in self.fm.thistab.get_selection()]
 
         for file in files:
             album_dir = os.path.basename(os.path.dirname(os.path.realpath(file)))
-            os.rename(file, '{prefix} - {filename}'.format(prefix=album_dir,
-                                                           filename=file))
+            os.rename(
+                file, "{prefix} - {filename}".format(prefix=album_dir, filename=file)
+            )
+
+
 class mcomics(Command):
     """
     :move selected comic to a folder of the same name
     """
+
     def execute(self):
         import os
+
         files = [f.relative_path for f in self.fm.thistab.get_selection()]
 
         for file in files:
             album_dir = os.path.splitext(file)[0]
             os.makedirs(album_dir)
-            os.rename(file, os.path.join(album_dir,
-                                         file))
+            os.rename(file, os.path.join(album_dir, file))
+
 
 class fzf_select(Command):
     """
     :fzf_select
-
     Find a file using fzf.
-
-    With a prefix argument select only directories.
-
-    See: https://github.com/junegunn/fzf
     """
+
     def execute(self):
         import subprocess
         import os.path
+
         if self.quantifier:
-            # match only directories
-            command="find -L . \( -path '*/\.*' -o -fstype 'dev' -o -fstype 'proc' \) -prune \
+            # Added 'r' before the quotes to make it a raw string
+            command = (
+                r"find -L . \( -path '*/\.*' -o -fstype 'dev' -o -fstype 'proc' \) -prune \
             -o -type d -print 2> /dev/null | sed 1d | cut -b3- | fzf +m"
+            )
         else:
-            # match files and directories
-            command="find -L . \( -path '*/\.*' -o -fstype 'dev' -o -fstype 'proc' \) -prune \
+            # Added 'r' before the quotes here as well
+            command = (
+                r"find -L . \( -path '*/\.*' -o -fstype 'dev' -o -fstype 'proc' \) -prune \
             -o -print 2> /dev/null | sed 1d | cut -b3- | fzf +m"
-        fzf = self.fm.execute_command(command, universal_newlines=True, stdout=subprocess.PIPE)
+            )
+
+        fzf = self.fm.execute_command(
+            command, universal_newlines=True, stdout=subprocess.PIPE
+        )
         stdout, stderr = fzf.communicate()
         if fzf.returncode == 0:
-            fzf_file = os.path.abspath(stdout.rstrip('\n'))
+            fzf_file = os.path.abspath(stdout.rstrip("\n"))
             if os.path.isdir(fzf_file):
                 self.fm.cd(fzf_file)
             else:
                 self.fm.select_file(fzf_file)
 
 
+#
+# class fzf_select(Command):
+#     """
+#     :fzf_select
+#
+#     Find a file using fzf.
+#
+#     With a prefix argument select only directories.
+#
+#     See: https://github.com/junegunn/fzf
+#     """
+#     def execute(self):
+#         import subprocess
+#         import os.path
+#         if self.quantifier:
+#             # match only directories
+#             command="find -L . \( -path '*/\.*' -o -fstype 'dev' -o -fstype 'proc' \) -prune \
+#             -o -type d -print 2> /dev/null | sed 1d | cut -b3- | fzf +m"
+#         else:
+#             # match files and directories
+#             command="find -L . \( -path '*/\.*' -o -fstype 'dev' -o -fstype 'proc' \) -prune \
+#             -o -print 2> /dev/null | sed 1d | cut -b3- | fzf +m"
+#         fzf = self.fm.execute_command(command, universal_newlines=True, stdout=subprocess.PIPE)
+#         stdout, stderr = fzf.communicate()
+#         if fzf.returncode == 0:
+#             fzf_file = os.path.abspath(stdout.rstrip('\n'))
+#             if os.path.isdir(fzf_file):
+#                 self.fm.cd(fzf_file)
+#             else:
+#                 self.fm.select_file(fzf_file)
+#
+
 fd_deq = deque()
+
+
 class fd_search(Command):
     """:fd_search [-d<depth>] <query>
 
@@ -71,15 +116,16 @@ class fd_search(Command):
     def execute(self):
         import subprocess
         from ranger.ext.get_executables import get_executables
-        if not 'fd' in get_executables():
+
+        if not "fd" in get_executables():
             self.fm.notify("Couldn't find fd on the PATH.", bad=True)
             return
         if self.arg(1):
-            if self.arg(1)[:2] == '-d':
+            if self.arg(1)[:2] == "-d":
                 depth = self.arg(1)
                 target = self.rest(2)
             else:
-                depth = '-d1'
+                depth = "-d1"
                 target = self.rest(1)
         else:
             self.fm.notify(":fd_search needs a query.", bad=True)
@@ -89,19 +135,29 @@ class fd_search(Command):
         # fd's behavior from splitting results by \0, which allows for newlines
         # in your filenames to splitting results by \n, which allows for \0 in
         # filenames.
-        null_sep = {'arg': '-0', 'split': '\0'}
-        nl_sep = {'arg': '', 'split': '\n'}
+        null_sep = {"arg": "-0", "split": "\0"}
+        nl_sep = {"arg": "", "split": "\n"}
         result_sep = null_sep
 
-        process = subprocess.Popen(['fd', result_sep['arg'], depth, target],
-                    universal_newlines=True, stdout=subprocess.PIPE)
+        process = subprocess.Popen(
+            ["fd", result_sep["arg"], depth, target],
+            universal_newlines=True,
+            stdout=subprocess.PIPE,
+        )
         (search_results, _err) = process.communicate()
         global fd_deq
-        fd_deq = deque((self.fm.thisdir.path + os.sep + rel for rel in
-            sorted(search_results.split(result_sep['split']), key=str.lower)
-            if rel != ''))
+        fd_deq = deque(
+            (
+                self.fm.thisdir.path + os.sep + rel
+                for rel in sorted(
+                    search_results.split(result_sep["split"]), key=str.lower
+                )
+                if rel != ""
+            )
+        )
         if len(fd_deq) > 0:
             self.fm.select_file(fd_deq[0])
+
 
 class fd_next(Command):
     """:fd_next
@@ -111,10 +167,11 @@ class fd_next(Command):
 
     def execute(self):
         if len(fd_deq) > 1:
-            fd_deq.rotate(-1) # rotate left
+            fd_deq.rotate(-1)  # rotate left
             self.fm.select_file(fd_deq[0])
         elif len(fd_deq) == 1:
             self.fm.select_file(fd_deq[0])
+
 
 class fd_prev(Command):
     """:fd_prev
@@ -124,7 +181,7 @@ class fd_prev(Command):
 
     def execute(self):
         if len(fd_deq) > 1:
-            fd_deq.rotate(1) # rotate right
+            fd_deq.rotate(1)  # rotate right
             self.fm.select_file(fd_deq[0])
         elif len(fd_deq) == 1:
             self.fm.select_file(fd_deq[0])
@@ -138,6 +195,7 @@ class fzf_rga_documents_search(Command):
 
     Usage: fzf_rga_search_documents <search string>
     """
+
     def execute(self):
         if self.arg(1):
             search_string = self.rest(1)
@@ -148,15 +206,23 @@ class fzf_rga_documents_search(Command):
         import subprocess
         import os.path
         from ranger.container.file import File
-        command="rga '%s' . --rga-adapters=pandoc,poppler | fzf +m | awk -F':' '{print $1}'" % search_string
-        fzf = self.fm.execute_command(command, universal_newlines=True, stdout=subprocess.PIPE)
+
+        command = (
+            "rga '%s' . --rga-adapters=pandoc,poppler | fzf +m | awk -F':' '{print $1}'"
+            % search_string
+        )
+        fzf = self.fm.execute_command(
+            command, universal_newlines=True, stdout=subprocess.PIPE
+        )
         stdout, stderr = fzf.communicate()
         if fzf.returncode == 0:
-            fzf_file = os.path.abspath(stdout.rstrip('\n'))
+            fzf_file = os.path.abspath(stdout.rstrip("\n"))
             self.fm.execute_file(File(fzf_file))
+
 
 from ranger.gui.colorscheme import ColorScheme
 from ranger.gui.color import *
+
 
 class Default(ColorScheme):
     def use(self, context):
@@ -186,9 +252,9 @@ class Default(ColorScheme):
             if context.directory:
                 attr |= normal
                 fg = magenta
-            elif context.executable and not \
-                    any((context.media, context.container,
-                        context.fifo, context.socket)):
+            elif context.executable and not any(
+                (context.media, context.container, context.fifo, context.socket)
+            ):
                 attr |= bold
                 fg = red
             if context.socket:
