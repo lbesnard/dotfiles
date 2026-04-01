@@ -46,6 +46,10 @@ if [ -x "$path_to_lsd" ] ; then
     alias lt='ls --tree'
 fi
 
+if command -v ag >/dev/null 2>&1; then
+    alias ag='ag --hidden'
+fi
+
 ##########################
 # CHEF cooking + Ansible provisionning
 ##########################
@@ -218,6 +222,42 @@ function conda_destroy () {
 }
 alias conda_remove=conda_destroy
 alias mamba_destroy=conda_destroy
+
+# Interactive Poetry Activation (Zsh 2.0)
+function poetry_activate() {
+  # 1. Try to find a local .venv first (fastest)
+  if [[ -f ".venv/bin/activate" ]]; then
+    source .venv/bin/activate
+    echo "Activated local .venv"
+  # 2. Fallback to asking poetry where the env is hidden
+  else
+    local env_path
+    env_path=$(poetry env info --path 2>/dev/null)
+    if [[ -n "$env_path" ]]; then
+      source "$env_path/bin/activate"
+      echo "Activated: $env_path"
+    else
+      echo "No poetry environment found. Run 'make dev' first."
+    fi
+  fi
+}
+alias pa=poetry_activate
+#
+# Interactive Poetry Environment Removal (Zsh Optimized)
+function poetry_destroy() {
+  local envs
+  # Get all envs, allow multi-select with Tab
+  envs=$(poetry env list | fzf --multi --height 40% --reverse --prompt="Select Env(s) to Destroy (Tab to mark) > " | awk '{print $1}')
+  
+  [[ -z "$envs" ]] && return
+
+  # Use Zsh parameter expansion (f) to iterate over lines properly
+  for env in ${(f)envs}; do
+    echo "Destroying: $env"
+    poetry env remove "$env"
+  done
+}
+alias pd=poetry_destroy
 
 ##########################
 # Display
