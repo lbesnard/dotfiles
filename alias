@@ -720,31 +720,7 @@ _ensure_ssh_key_loaded () {
         ssh-add -t 10h
     fi
 }
-#
-# _ensure_ssh_key_loaded () {
-#     export SSH_AUTH_SOCK="$HOME/.ssh/ssh-agent.sock"
-#
-#     # 1. Check if the socket file physically exists. 
-#     # If it doesn't, or if the agent is unreachable (exit 2), start it.
-#     if [[ ! -S "$SSH_AUTH_SOCK" ]]; then
-#         echo "SSH agent socket missing. Starting new agent at $SSH_AUTH_SOCK..."
-#         rm -f "$SSH_AUTH_SOCK"
-#         eval "$(ssh-agent -s -a "$SSH_AUTH_SOCK")" > /dev/null
-#     fi
-#
-#     # 2. Now that the agent is definitely running, check for keys.
-#     if ! ssh-add -l &> /dev/null; then
-#         # If exit code was 2, the socket was there but the process died.
-#         if [ $? -eq 2 ]; then
-#              rm -f "$SSH_AUTH_SOCK"
-#              eval "$(ssh-agent -s -a "$SSH_AUTH_SOCK")" > /dev/null
-#         fi
-#
-#         echo "No SSH keys loaded. Running ssh-add..."
-#         ssh-add -t 10h
-#     fi
-# }
-#
+
 function funk_rclone() {
     _ensure_ssh_key_loaded
     local server_ip="$1"; shift
@@ -755,7 +731,17 @@ function funk_rclone() {
     
     mkdir -p "$dest"
 
-    local rclone_src=":sftp,host=$server_ip,port=9000,user=root,use_agent_auth=true,skip_hostkey_check=true:$src"
+    local rclone_conf="$HOME/.config/rclone/rclone.conf"
+    local rclone_src
+
+    if [[ -f "$rclone_conf" ]]; then
+        # Use the remote defined in rclone.conf and override the host
+        # This assumes you named the remote [funk_sftp] in the file
+        rclone_src="funk_sftp,host=$server_ip:$src"
+    else
+        # Fallback to on-the-fly backend if no config exists
+        rclone_src=":sftp,host=$server_ip,port=9000,user=root,use_agent_auth=true,skip_hostkey_check=true:$src"
+    fi
 
     if [ -d "$dest" ]; then
         rclone sync "$rclone_src" "$dest" \
@@ -863,6 +849,7 @@ function funk_rclone_config() {
         extra_options+=("$line")
     done < <(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .rclone_options[]' "$config_file")
 
+    print -P "%F{green}❯ $selected_task%f"
     funk_rclone "$server_ip" "$folder_to_bckp" "$dest" "${extra_options[@]}" "$@"
 }
 
