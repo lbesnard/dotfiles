@@ -696,6 +696,7 @@ _funk_mounts_cache=""
 
 # Returns true if the destination path's underlying mount point is available.
 # Reads /proc/mounts once and caches the result for the session.
+# Handles both Ubuntu (/media/USER/DRIVE) and NixOS (/run/media/USER/DRIVE) layouts.
 _funk_dest_is_available() {
     local dest="$1"
 
@@ -707,16 +708,28 @@ _funk_dest_is_available() {
         _funk_mounts_cache=$(awk '{print $2}' /proc/mounts 2>/dev/null | tr '\n' ':')
     fi
 
-    # Walk up from dest; return true if any ancestor is a real mount point
-    local path="$dest"
-    while [[ "$path" != "/" ]]; do
-        if [[ ":${_funk_mounts_cache}:" == *":${path}:"* ]]; then
-            return 0
-        fi
-        path="${path:h}"
+    # Paths to walk up: the destination itself, plus /run<dest> for NixOS
+    # (/media/USER/DRIVE configs also mount at /run/media/USER/DRIVE on NixOS)
+    local -a candidates=("$dest")
+    [[ "$dest" == /media/* ]] && candidates+=("/run$dest")
+
+    local candidate path stop_at
+    for candidate in "${candidates[@]}"; do
+        # For /run/media/... paths stop walking before /run/media itself
+        # (which is a tmpfs, not a drive mount)
+        stop_at="/"
+        [[ "$candidate" == /run/media/* ]] && stop_at="/run/media"
+
+        path="$candidate"
+        while [[ "$path" != "$stop_at" && "$path" != "/" ]]; do
+            if [[ ":${_funk_mounts_cache}:" == *":${path}:"* ]]; then
+                return 0
+            fi
+            path="${path:h}"
+        done
     done
 
-    # No non-root mount point found — local paths are ok, media paths are not
+    # No mount found — local paths are always ok, media paths are not
     case "$dest" in
         /media/*|/mnt/*|/run/media/*) return 1 ;;
         *) return 0 ;;
