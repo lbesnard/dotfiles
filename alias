@@ -671,6 +671,82 @@ NEXCTLOUD_DATA_DIR=/export/nexctloud
 # when files are copied manually to nextcloud folder
 alias nextcloud_force_rescan='docker exec nextcloud sudo -u abc php /config/www/nextcloud/occ files:scan --all'
 
+# ---------------------------------------------------------------------------
+# funk_rsync / funk_rclone helpers
+# ---------------------------------------------------------------------------
+
+# Returns (and creates) the state directory for sync timestamps.
+_funk_state_dir() {
+    local dir="$HOME/.local/share/funk_rsync"
+    mkdir -p "$dir"
+    #echo "$dir"
+}
+
+# Returns the path to the per-task state file.
+# Task names are sanitized (: / and spaces → _) to form a safe filename.
+_funk_state_file() {
+    local task_name="$1"
+    local safe_name="${task_name//[:\/]/_}"
+    safe_name="${safe_name// /_}"
+    echo "$(_funk_state_dir)/$safe_name"
+}
+
+# Cache of mount points loaded from /proc/mounts (lazy, one read per session).
+_funk_mounts_cache=""
+
+# Returns true if the destination path's underlying mount point is available.
+# Reads /proc/mounts once and caches the result for the session.
+_funk_dest_is_available() {
+    local dest="$1"
+
+    # Skip placeholder destinations
+    [[ -z "$dest" || "$dest" == "TO_BE_FILLED_MANUALLY" ]] && return 1
+
+    # Populate cache once (colon-delimited list of mount points)
+    if [[ -z "$_funk_mounts_cache" ]]; then
+        _funk_mounts_cache=$(awk '{print $2}' /proc/mounts 2>/dev/null | tr '\n' ':')
+    fi
+
+    # Walk up from dest; return true if any ancestor is a real mount point
+    local path="$dest"
+    while [[ "$path" != "/" ]]; do
+        if [[ ":${_funk_mounts_cache}:" == *":${path}:"* ]]; then
+            return 0
+        fi
+        path="${path:h}"
+    done
+
+    # No non-root mount point found — local paths are ok, media paths are not
+    case "$dest" in
+        /media/*|/mnt/*|/run/media/*) return 1 ;;
+        *) return 0 ;;
+    esac
+}
+
+# Returns a formatted last-sync string for fzf display.
+_funk_last_sync_info() {
+    local task_name="$1"
+    local state_file
+    state_file=$(_funk_state_file "$task_name")
+    if [[ -f "$state_file" ]]; then
+        local ts
+        ts=$(cat "$state_file")
+        # Format to YYYY-MM-DD HH:MM (trim seconds and timezone)
+        echo "last: ${ts:0:16}"
+    else
+        echo "never synced"
+    fi
+}
+
+# Records a successful sync timestamp for a task.
+_funk_record_sync() {
+    local task_name="$1"
+    local state_file
+    state_file=$(_funk_state_file "$task_name")
+    date -Iseconds > "$state_file"
+}
+
+# ---------------------------------------------------------------------------
 # delete function without. can be added manually in optional
 # arguments. This removes the risks of deleting files if I/O error
 function funk_rsync() {
@@ -800,27 +876,44 @@ function funk_rsync_config() {
         return 1
     fi
 
-    # Parse tasks from JSON and list them using fzf
-    local selected_task=$(jq -r '.tasks[] | "\(.name)"' "$config_file" | fzf --prompt="Select a task: " --height=10 --border --ansi)
+    # Build the fzf list: only tasks whose destination is mounted, with last-sync info
+    local fzf_lines=() dest sync_info
+    while IFS= read -r task_name; do
+        dest=$(jq -r --arg t "$task_name" '.tasks[] | select(.name == $t) | .destination' "$config_file")
+        _funk_dest_is_available "$dest" || continue
+        sync_info=$(_funk_last_sync_info "$task_name")
+        fzf_lines+=("${task_name}  │  ${sync_info}")
+    done < <(jq -r '.tasks[].name' "$config_file")
 
-    # Exit if no task was selected
-    if [[ -z "$selected_task" ]]; then
-        echo "No task selected. Exiting."
+    if [[ ${#fzf_lines[@]} -eq 0 ]]; then
+        echo "No tasks with available destinations found."
         return 1
     fi
 
+    # Show picker and extract task name (before the │ delimiter)
+    local selected_line
+    selected_line=$(printf '%s\n' "${fzf_lines[@]}" | fzf --prompt="Select a task: " --height=15 --border --ansi)
+    [[ -z "$selected_line" ]] && { echo "No task selected. Exiting."; return 1; }
+
+    local selected_task
+    selected_task=$(echo "$selected_line" | awk -F'  │  ' '{print $1}')
+
     # Extract the selected task's details from the JSON
-    local server_ip=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .server' "$config_file")
-    local folder_to_bckp=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .source' "$config_file")
-    local dest=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .destination' "$config_file")
-    # Use a while read loop to read jq output line by line into the array, preserving spaces within lines
+    local server_ip folder_to_bckp dest
+    server_ip=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .server' "$config_file")
+    folder_to_bckp=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .source' "$config_file")
+    dest=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .destination' "$config_file")
+
     local extra_rsync_options=()
     while IFS= read -r line; do
         extra_rsync_options+=("$line")
     done < <(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .rsync_options[]' "$config_file")
 
-    # Call funk_rsync with the extracted details and any extra rsync options passed to funk_rsync_config
+    # Call funk_rsync; record timestamp on success
     funk_rsync "$server_ip" "$folder_to_bckp" "$dest" "${extra_rsync_options[@]}" "$@"
+    local exit_code=$?
+    [[ $exit_code -eq 0 ]] && _funk_record_sync "$selected_task"
+    return $exit_code
 }
 
 function funk_rclone_config() {
@@ -836,13 +929,32 @@ function funk_rclone_config() {
         return 1
     fi
 
-    local selected_task=$(jq -r '.tasks[] | .name' "$config_file" | fzf --prompt="Select a task: " --height=10 --border)
+    # Build the fzf list: only tasks whose destination is mounted, with last-sync info
+    local fzf_lines=() dest sync_info
+    while IFS= read -r task_name; do
+        dest=$(jq -r --arg t "$task_name" '.tasks[] | select(.name == $t) | .destination' "$config_file")
+        _funk_dest_is_available "$dest" || continue
+        sync_info=$(_funk_last_sync_info "$task_name")
+        fzf_lines+=("${task_name}  │  ${sync_info}")
+    done < <(jq -r '.tasks[].name' "$config_file")
 
-    [[ -z "$selected_task" ]] && return 1
+    if [[ ${#fzf_lines[@]} -eq 0 ]]; then
+        echo "No tasks with available destinations found."
+        return 1
+    fi
 
-    local server_ip=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .server' "$config_file")
-    local folder_to_bckp=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .source' "$config_file")
-    local dest=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .destination' "$config_file")
+    # Show picker and extract task name (before the │ delimiter)
+    local selected_line
+    selected_line=$(printf '%s\n' "${fzf_lines[@]}" | fzf --prompt="Select a task: " --height=15 --border)
+    [[ -z "$selected_line" ]] && return 1
+
+    local selected_task
+    selected_task=$(echo "$selected_line" | awk -F'  │  ' '{print $1}')
+
+    local server_ip folder_to_bckp dest
+    server_ip=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .server' "$config_file")
+    folder_to_bckp=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .source' "$config_file")
+    dest=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .destination' "$config_file")
 
     local extra_options=()
     while IFS= read -r line; do
@@ -851,6 +963,9 @@ function funk_rclone_config() {
 
     print -P "%F{green}❯ $selected_task%f"
     funk_rclone "$server_ip" "$folder_to_bckp" "$dest" "${extra_options[@]}" "$@"
+    local exit_code=$?
+    [[ $exit_code -eq 0 ]] && _funk_record_sync "$selected_task"
+    return $exit_code
 }
 
 function funk_rsync_cron() {
@@ -929,7 +1044,9 @@ function funk_rsync_cron() {
         echo "[$name] Running dry-run..."
         if "${rsync_base[@]}" --dry-run "$server_ip:$src/" "$target/"; then
             echo "[$name] Dry-run succeeded. Starting sync..."
-            "${rsync_base[@]}" --bwlimit 1500 "$server_ip:$src/" "$target/"
+            if "${rsync_base[@]}" --bwlimit 1500 "$server_ip:$src/" "$target/"; then
+                _funk_record_sync "$name"
+            fi
         else
             echo "[$name] Dry-run failed. Skipping task."
         fi
