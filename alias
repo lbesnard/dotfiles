@@ -679,7 +679,7 @@ alias nextcloud_force_rescan='docker exec nextcloud sudo -u abc php /config/www/
 _funk_state_dir() {
     local dir="$HOME/.local/share/funk_rsync"
     mkdir -p "$dir"
-    #echo "$dir"
+    echo "$dir"
 }
 
 # Returns the path to the per-task state file.
@@ -698,7 +698,7 @@ _funk_mounts_cache=""
 # Reads /proc/mounts once and caches the result for the session.
 # Handles both Ubuntu (/media/USER/DRIVE) and NixOS (/run/media/USER/DRIVE) layouts.
 _funk_dest_is_available() {
-    local dest="$1"
+    local dest="${1%/}"  # strip trailing slash so ${path:h} doesn't skip the mount point
 
     # Skip placeholder destinations
     [[ -z "$dest" || "$dest" == "TO_BE_FILLED_MANUALLY" ]] && return 1
@@ -913,14 +913,14 @@ function funk_rsync_config() {
 
     # Extract the selected task's details from the JSON
     local server_ip folder_to_bckp dest
-    server_ip=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .server' "$config_file")
-    folder_to_bckp=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .source' "$config_file")
-    dest=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .destination' "$config_file")
+    server_ip=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .server)' "$config_file")
+    folder_to_bckp=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .source)' "$config_file")
+    dest=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .destination)' "$config_file")
 
     local extra_rsync_options=()
     while IFS= read -r line; do
         extra_rsync_options+=("$line")
-    done < <(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .rsync_options[]' "$config_file")
+    done < <(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task)) | .rsync_options[]' "$config_file")
 
     # Call funk_rsync; record timestamp on success
     funk_rsync "$server_ip" "$folder_to_bckp" "$dest" "${extra_rsync_options[@]}" "$@"
@@ -965,14 +965,14 @@ function funk_rclone_config() {
     selected_task=$(echo "$selected_line" | awk -F'  │  ' '{print $1}')
 
     local server_ip folder_to_bckp dest
-    server_ip=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .server' "$config_file")
-    folder_to_bckp=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .source' "$config_file")
-    dest=$(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .destination' "$config_file")
+    server_ip=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .server)' "$config_file")
+    folder_to_bckp=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .source)' "$config_file")
+    dest=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .destination)' "$config_file")
 
     local extra_options=()
     while IFS= read -r line; do
         extra_options+=("$line")
-    done < <(jq -r --arg task "$selected_task" '.tasks[] | select(.name == $task) | .rclone_options[]' "$config_file")
+    done < <(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task)) | .rclone_options[]' "$config_file")
 
     print -P "%F{green}❯ $selected_task%f"
     funk_rclone "$server_ip" "$folder_to_bckp" "$dest" "${extra_options[@]}" "$@"
