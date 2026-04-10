@@ -702,30 +702,49 @@ function funk_rsync() {
         --exclude=.deleted "$@" || echo "$dest does not exist" # Use "$@" directly
 }
 
+
 _ensure_ssh_key_loaded () {
     export SSH_AUTH_SOCK="$HOME/.ssh/ssh-agent.sock"
 
-    # 1. Check if the socket file physically exists. 
-    # If it doesn't, or if the agent is unreachable (exit 2), start it.
-    if [[ ! -S "$SSH_AUTH_SOCK" ]]; then
-        echo "SSH agent socket missing. Starting new agent at $SSH_AUTH_SOCK..."
+    ssh-add -l &> /dev/null
+    local ssh_exit_code=$?
+
+    if [ $ssh_exit_code -eq 2 ] || [[ ! -S "$SSH_AUTH_SOCK" ]]; then
+        echo "SSH agent unreachable or socket dead. Restarting..."
         rm -f "$SSH_AUTH_SOCK"
         eval "$(ssh-agent -s -a "$SSH_AUTH_SOCK")" > /dev/null
     fi
 
-    # 2. Now that the agent is definitely running, check for keys.
     if ! ssh-add -l &> /dev/null; then
-        # If exit code was 2, the socket was there but the process died.
-        if [ $? -eq 2 ]; then
-             rm -f "$SSH_AUTH_SOCK"
-             eval "$(ssh-agent -s -a "$SSH_AUTH_SOCK")" > /dev/null
-        fi
-        
         echo "No SSH keys loaded. Running ssh-add..."
         ssh-add -t 10h
     fi
 }
-
+#
+# _ensure_ssh_key_loaded () {
+#     export SSH_AUTH_SOCK="$HOME/.ssh/ssh-agent.sock"
+#
+#     # 1. Check if the socket file physically exists. 
+#     # If it doesn't, or if the agent is unreachable (exit 2), start it.
+#     if [[ ! -S "$SSH_AUTH_SOCK" ]]; then
+#         echo "SSH agent socket missing. Starting new agent at $SSH_AUTH_SOCK..."
+#         rm -f "$SSH_AUTH_SOCK"
+#         eval "$(ssh-agent -s -a "$SSH_AUTH_SOCK")" > /dev/null
+#     fi
+#
+#     # 2. Now that the agent is definitely running, check for keys.
+#     if ! ssh-add -l &> /dev/null; then
+#         # If exit code was 2, the socket was there but the process died.
+#         if [ $? -eq 2 ]; then
+#              rm -f "$SSH_AUTH_SOCK"
+#              eval "$(ssh-agent -s -a "$SSH_AUTH_SOCK")" > /dev/null
+#         fi
+#
+#         echo "No SSH keys loaded. Running ssh-add..."
+#         ssh-add -t 10h
+#     fi
+# }
+#
 function funk_rclone() {
     _ensure_ssh_key_loaded
     local server_ip="$1"; shift
@@ -736,7 +755,7 @@ function funk_rclone() {
     
     mkdir -p "$dest"
 
-    local rclone_src=":sftp,host=$server_ip,port=9000,user=root,use_agent_auth=true:$src"
+    local rclone_src=":sftp,host=$server_ip,port=9000,user=root,use_agent_auth=true,skip_hostkey_check=true:$src"
 
     if [ -d "$dest" ]; then
         rclone sync "$rclone_src" "$dest" \
