@@ -31,6 +31,7 @@
       { create: true, force: true, path: config/passhole.ini }
     ~/.config/pgcli: { create: true, force: true, path: config/pgcli/ }
     ~/.config/ranger: { create: true, force: true, path: config/ranger/ }
+    ~/.config/rclone: { create: true, force: true, path: config/rclone/ }
     ~/.config/redlist: { create: true, force: true, path: config/redlist/ }
     ~/.config/sublime-text-2:
       { create: true, force: true, path: config/sublime-text-2/ }
