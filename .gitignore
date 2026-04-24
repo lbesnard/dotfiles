@@ -1,4 +1,6 @@
 ./nvim/lazy-lock.json
+lazy-lock.json
+
 
 bin/share
 *.pyc
