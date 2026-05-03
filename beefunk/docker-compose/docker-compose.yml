@@ -1,6 +1,6 @@
 networks:
   proxy:
-    driver: bridge  # created auto my docker
+    driver: bridge # created auto my docker
     # external: true
   frontend:
     ipam:
@@ -22,12 +22,12 @@ services:
       - "443:443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ~/traefik/certs:/certs:ro  # mount cert folder
+      - ~/traefik/certs:/certs:ro # mount cert folder
       - ~/traefik/dynamic_tls.yml:/etc/traefik/dynamic_tls.yml:ro
     networks:
       - proxy
       - frontend
-      
+
   pihole:
     container_name: pihole
     image: pihole/pihole:latest
@@ -73,7 +73,7 @@ services:
       - "traefik.http.routers.pihole-https.rule=Host(`pihole.beefunk.local`)"
       - "traefik.http.routers.pihole-https.entrypoints=websecure"
       - "traefik.http.routers.pihole-https.tls=true"
-      - "traefik.http.services.pihole.loadbalancer.server.port=80"  # <--- internal port
+      - "traefik.http.services.pihole.loadbalancer.server.port=80" # <--- internal port
 
       # HTTP router → redirect to HTTPS
       - "traefik.http.routers.pihole-http.rule=Host(`pihole.beefunk.local`)"
@@ -133,7 +133,7 @@ services:
       - ./homer/config.yml:/www/config.yml
       - ./homer/local/assets/:/www/assets
     # ports:
-      # - 80:8080
+    # - 80:8080
     restart: unless-stopped
     networks:
       - proxy
@@ -183,7 +183,7 @@ services:
       - TZ=$TZ
       - FIREFOX_CLI=https://www.google.com
     labels:
-        - "traefik.enable=false"
+      - "traefik.enable=false"
     volumes:
       - $DOCKER_CONFIG_PATH/firefox:/config
     ports:
@@ -285,8 +285,8 @@ services:
     dns:
       - 192.168.8.214
       - 8.8.8.8
-#    ports:
-#      - "8080:4533"
+    #    ports:
+    #      - "8080:4533"
     restart: unless-stopped
     networks:
       - proxy
@@ -326,6 +326,10 @@ services:
       - "com.centurylinklabs.watchtower.enable=true"
     environment:
       # Optional: put your config options customization here. Examples:
+      ND_PLUGINS_ENABLED: "true"
+      ND_PLUGINS_AUTORELOAD: "true"
+      ND_AGENTS: "audiomuseai,lastfm" # Note 'audiomuseai' is added here
+      ND_DEVARTISTINFOTIMETOLIVE: "1s" # Recommended by the dev for responsiveness
       ND_SCANINTERVAL: 1h
       ND_LOGLEVEL: info
       ND_SESSIONTIMEOUT: 24h
@@ -341,6 +345,7 @@ services:
       WATCHTOWER_CLEANUP: "true"
     volumes:
       - $DOCKER_CONFIG_PATH/navidrome:/data
+      - $DOCKER_CONFIG_PATH/navidrome/plugins:/plugin
       - $MUSIC_PATH:/music:ro
 
   sshfs-moode-mpd:
@@ -385,8 +390,8 @@ services:
     image: ghcr.io/jcorporation/mympd/mympd
     container_name: mympd
     # ports:
-      # - 8097:8080
-      # - 8443:8443
+    # - 8097:8080
+    # - 8443:8443
     user: 1000:1000
     environment:
       TZ: $TZ
@@ -457,8 +462,8 @@ services:
     image: ghcr.io/mealie-recipes/mealie:latest #
     container_name: mealie
     restart: always
-#    ports:
-#      - "9925:9000" #
+    #    ports:
+    #      - "9925:9000" #
     networks:
       - proxy
     labels:
@@ -509,8 +514,8 @@ services:
 
   audiobookshelf:
     image: ghcr.io/advplyr/audiobookshelf:latest
-#    ports:
-#      - 13378:80
+    #    ports:
+    #      - 13378:80
     volumes:
       - $AUDIOBOOKS_PATH:/audiobooks
       - $PODCASTS_PATH:/podcasts
@@ -573,8 +578,8 @@ services:
     volumes:
       - $DOCKER_CONFIG_PATH/calibre-web:/config
       - $EBOOKS_PATH:/books:ro
-#    ports:
-#      - 8083:8083
+    #    ports:
+    #      - 8083:8083
     restart: unless-stopped
     depends_on:
       - calibre
@@ -638,8 +643,8 @@ services:
     volumes:
       - $PIWIGO_CONFIG_PATH/piwigo/config:/config
       - $PIWIGO_CONFIG_PATH/piwigo/gallery:/gallery
-#    ports:
-#      - 8282:80
+    #    ports:
+    #      - 8282:80
     restart: unless-stopped
     networks:
       - proxy
@@ -814,10 +819,10 @@ services:
     container_name: portainer
     environment:
       - WATCHTOWER_CLEANUP=true
-#    ports:
-#      - 6767:8000
-#      - 6263:9000
-#      - 9443:9433
+    #    ports:
+    #      - 6767:8000
+    #      - 6263:9000
+    #      - 9443:9433
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - $DOCKER_CONFIG_PATH/portainer:/data
@@ -871,7 +876,7 @@ services:
         target: /etc/timezone
         read_only: true
     # ports:
-      # - 9980:25600
+    # - 9980:25600
     user: "$PUID_USER:$PGID_USER"
     environment:
       - JAVA_TOOL_OPTIONS=-Xmx4g
@@ -986,8 +991,8 @@ services:
   bentopdf:
     image: bentopdf/bentopdf:latest
     container_name: bentopdf
-#    ports:
-#      - "3000:8080"
+    #    ports:
+    #      - "3000:8080"
     restart: unless-stopped
     networks:
       - proxy
@@ -1047,8 +1052,8 @@ services:
       - FB_BASEURL=/filebrowser
       - FB_DATABASE=/config/filebrowser.db
       - WATCHTOWER_CLEANUP=true
-#    ports:
-#      - 9295:80
+    #    ports:
+    #      - 9295:80
     volumes:
       - $DOCKER_CONFIG_PATH/filebrowser/database:/database
       - $DOCKER_CONFIG_PATH/filebrowser/config:/config
@@ -1099,8 +1104,8 @@ services:
     restart: unless-stopped
     volumes:
       - $DOCKER_CONFIG_PATH/peanut:/config
-#    ports:
-#      - 8686:8080
+    #    ports:
+    #      - 8686:8080
     environment:
       - WEB_PORT=8080
     networks:
@@ -1147,8 +1152,8 @@ services:
       - USER_ADMIN_PASSWORD=$OWNFOIL_PASSWORD
       - SAVE_ENABLED=true
     restart: unless-stopped
-#    ports:
-#      - "8465:8465"
+    #    ports:
+    #      - "8465:8465"
     networks:
       - proxy
     labels:
@@ -1182,8 +1187,8 @@ services:
     volumes:
       - $SWITCH_PATH:/games
       - $DOCKER_CONFIG_PATH/ownfoil_v1:/app/config
-#    ports:
-#      - "8000:80"
+    #    ports:
+    #      - "8000:80"
     restart: unless-stopped
     networks:
       - proxy
@@ -1212,8 +1217,8 @@ services:
   playerr:
     image: maikboarder/playerr:latest
     container_name: playerr
-#    ports:
-#      - "2727:2727"
+    #    ports:
+    #      - "2727:2727"
     volumes:
       - $DOCKER_CONFIG_PATH/playerr/config:/app/config
       - $SWITCH_PATH:/media:ro
@@ -1360,8 +1365,8 @@ services:
       - REMOTE_HOST=$EFUNK_IP
       - REMOTE_PORT=2283
       - LOCAL_PORT=80
-#    ports:
-#      - 2283:80
+    #    ports:
+    #      - 2283:80
     dns:
       - $PIHOLE_DOCKER_SUB_IP_DNS
     networks:
@@ -1396,8 +1401,8 @@ services:
       - REMOTE_HOST=$EFUNK_IP
       - REMOTE_PORT=8084
       - LOCAL_PORT=80
-#    ports:
-#      - 8084:80
+    #    ports:
+    #      - 8084:80
     dns:
       - $PIHOLE_DOCKER_SUB_IP_DNS
     networks:
@@ -1432,8 +1437,8 @@ services:
       - REMOTE_HOST=$BFUNK_IP
       - REMOTE_PORT=8989
       - LOCAL_PORT=80
-#    ports:
-#      - 8989:80
+    #    ports:
+    #      - 8989:80
     dns:
       - $PIHOLE_DOCKER_SUB_IP_DNS
     networks:
@@ -1468,8 +1473,8 @@ services:
       - REMOTE_HOST=$BFUNK_IP
       - REMOTE_PORT=7878
       - LOCAL_PORT=80
-#    ports:
-#      - 7878:80
+    #    ports:
+    #      - 7878:80
     dns:
       - $PIHOLE_DOCKER_SUB_IP_DNS
     networks:
@@ -1504,8 +1509,8 @@ services:
       - REMOTE_HOST=$BFUNK_IP
       - REMOTE_PORT=9091
       - LOCAL_PORT=80
-#    ports:
-#      - 9091:80
+    #    ports:
+    #      - 9091:80
     dns:
       - $PIHOLE_DOCKER_SUB_IP_DNS
     networks:
@@ -1540,8 +1545,8 @@ services:
       - REMOTE_HOST=$BFUNK_IP
       - REMOTE_PORT=9117
       - LOCAL_PORT=80
-#    ports:
-#      - 9117:80
+    #    ports:
+    #      - 9117:80
     dns:
       - $PIHOLE_DOCKER_SUB_IP_DNS
     networks:
@@ -1580,8 +1585,8 @@ services:
       - WATCHTOWER_CLEANUP=true
     volumes:
       - $DOCKER_CONFIG_PATH/prowlarr:/config
-#    ports:
-#      - 9696:9696
+    #    ports:
+    #      - 9696:9696
     dns:
       - $PIHOLE_DOCKER_SUB_IP_DNS
     depends_on:
@@ -1589,6 +1594,7 @@ services:
     restart: unless-stopped
     networks:
       - proxy
+      - frontend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.prowlarr-http1.rule=Host(`prowlarr.beefunk.lan`)"
@@ -1612,13 +1618,59 @@ services:
       - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
       - "com.centurylinklabs.watchtower.enable=true"
 
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_HTML=${LOG_HTML:-false}
+      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+      - PUID=$PUID_USER
+      - PGID=$PGID_USER
+      - TZ=$TZ
+      - WATCHTOWER_CLEANUP=true
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    shm_size: "2gb" # Recommended for Chromium stability in Docker
+    ports:
+      - 8191:8191
+    networks:
+      - proxy
+      - frontend # Ensure this matches the network Prowlarr is on
+    depends_on:
+      - pihole
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.flaresolverr-http1.rule=Host(`flaresolverr.beefunk.lan`)"
+      - "traefik.http.routers.flaresolverr-http1.entrypoints=web"
+      - "traefik.http.routers.flaresolverr-http1.tls=false"
+      - "traefik.http.routers.flaresolverr-http2.rule=Host(`flaresolverr.beefunk.home`)"
+      - "traefik.http.routers.flaresolverr-http2.entrypoints=web"
+      - "traefik.http.routers.flaresolverr-http2.tls=false"
+      - "traefik.http.routers.flaresolverr-http3.rule=Host(`flaresolverr.beefunk.local`)"
+      - "traefik.http.routers.flaresolverr-http3.entrypoints=web"
+      - "traefik.http.routers.flaresolverr-http3.tls=false"
+      - "traefik.http.routers.flaresolverr-https1.rule=Host(`flaresolverr.beefunk.lan`)"
+      - "traefik.http.routers.flaresolverr-https1.entrypoints=websecure"
+      - "traefik.http.routers.flaresolverr-https1.tls=true"
+      - "traefik.http.routers.flaresolverr-https2.rule=Host(`flaresolverr.beefunk.home`)"
+      - "traefik.http.routers.flaresolverr-https2.entrypoints=websecure"
+      - "traefik.http.routers.flaresolverr-https2.tls=true"
+      - "traefik.http.routers.flaresolverr-https3.rule=Host(`flaresolverr.beefunk.local`)"
+      - "traefik.http.routers.flaresolverr-https3.entrypoints=websecure"
+      - "traefik.http.routers.flaresolverr-https3.tls=true"
+      - "traefik.http.services.flaresolverr.loadbalancer.server.port=8191"
+      - "com.centurylinklabs.watchtower.enable=true"
+
   #### netdata
   netdata:
     image: netdata/netdata
     container_name: netdata
     hostname: $SERVER_URL # set to fqdn of host
-#    ports:
-#      - 19999:19999
+    #    ports:
+    #      - 19999:19999
     restart: unless-stopped
     cap_add:
       - SYS_PTRACE
