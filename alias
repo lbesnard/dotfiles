@@ -1084,18 +1084,18 @@ alias beet="[ -f ~/miniforge3/envs/beets/bin/python ] && conda activate beets;be
 
 mount_beefunk_pics() {
   if [[ -d ~/beefunk_pictures/ ]]; then
-    sshfs lbesnard@beefunk.lan:/media/lbesnard/beefunk_12tb_c/pictures beefunk_pictures
+    sshfs lbesnard@beefunk.lan:/media/lbesnard/beefunk_12tb_c/pictures ~/beefunk_pictures
   else
-    mkdir -p ~/beefunk_pictures/ &&    sshfs lbesnard@beefunk.lan:/media/lbesnard/beefunk_12tb_c/pictures beefunk_pictures
+    mkdir -p ~/beefunk_pictures/ &&    sshfs lbesnard@beefunk.lan:/media/lbesnard/beefunk_12tb_c/pictures ~/beefunk_pictures
   fi
 }
 
 # mount only when close to efunk server
 mount_efunknuc_pics() {
   if [[ -d ~/beefunk_pictures/ ]]; then
-    sshfs lbesnard@evrynucfunk.lan:/media/beefunk_12tb_1/pictures beefunk_pictures
+    sshfs lbesnard@evrynucfunk.lan:/media/beefunk_12tb_1/pictures ~/beefunk_pictures
   else
-    mkdir -p ~/beefunk_pictures/ &&    sshfs lbesnard@evrynucfunk.lan:/media/beefunk_12tb_1/pictures beefunk_pictures
+    mkdir -p ~/beefunk_pictures/ &&    sshfs lbesnard@evrynucfunk.lan:/media/beefunk_12tb_1/pictures ~/beefunk_pictures
   fi
 }
 
