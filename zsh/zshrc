@@ -70,3 +70,8 @@ fi
 [ -e "$HOME/.nix-profile/etc/profile.d/nix.sh" ] && source "$HOME/.nix-profile/etc/profile.d/nix.sh"
 
 [[ -n $ZSH_PROFILE ]] && zprof
+
+# Set display if it's not already defined
+if [ -z "$DISPLAY" ]; then
+    export DISPLAY=:0
+fi
