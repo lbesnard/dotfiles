@@ -189,7 +189,8 @@ aliases:
 
           echo "📥 Importing #$num: $title"
           url=$($GH_PATH issue view "$num" -R "$repo" --json url --jq .url)
-          task add "$title ($url)" project:"$pjt" priority:"$tw_prio" due:today +today +github
+          pjt=$(echo "$pjt" | perl -pe 's/\b(\w)/\U$1/g; s/\s+//g')
+          task add "$title ($url)" project:"Work.$pjt" priority:"$tw_prio" due:today +today +github
         else
           echo "🌐 Opening #$num in browser..."
           $GH_PATH issue view "$num" -R "$repo" --web

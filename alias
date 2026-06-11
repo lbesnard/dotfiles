@@ -1634,3 +1634,55 @@ falias() {
 
 # Ghostty: override TERM for remote servers that don't have xterm-ghostty terminfo
 alias ssh='TERM=xterm-256color ssh'
+
+# Quick directory archiving with size warning
+archive_dir() {
+    local threshold=1048576 # 1GB in Kilobytes
+    local target="${1%/}"
+    local date_stamp=$(date +%Y-%m-%d)
+
+    # Validation
+    if [[ -z "$target" ]]; then
+        echo "Usage: archive <directory>"
+        return 1
+    fi
+
+    if [[ ! -d "$target" ]]; then
+        echo "Error: '$target' is not a directory."
+        return 1
+    fi
+
+    # Calculate size
+    local dir_kb=$(du -sk "$target" | cut -f1)
+
+    if (( dir_kb > threshold )); then
+        local human_size=$(du -sh "$target" | cut -f1)
+        echo "Warning: '$target' is $human_size."
+        echo -n "Proceed with compression? (y/n): "
+        read -r response
+        if [[ "$response" != "y" ]]; then
+            echo "Cancelled."
+            return 0
+        fi
+    fi
+
+    # Execute tar
+    local archive_name="${target}_${date_stamp}.tar.gz"
+    echo "Creating $archive_name..."
+    tar -czf "$archive_name" "$target" && echo "Done: $archive_name"
+}
+
+
+# Nintendo 5300 V64 to Z64 converter (byte swap)
+v64toz64() {
+    if [[ -z "$1" ]]; then
+        echo "Usage: v64toz64 input.v64"
+        return 1
+    fi
+    local out="${1%.v64}.z64"
+    python3 -c "
+with open('$1', 'rb') as f_in, open('$out', 'wb') as f_out:
+    while chunk := f_in.read(2):
+        f_out.write(bytes([chunk[1], chunk[0]]) if len(chunk) == 2 else chunk)
+" && echo "Converted successfully to $out"
+}
