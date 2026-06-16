@@ -1,2 +1,8 @@
-# lazy-lock.json is machine-specific — don't share across computers
-lazy-lock.json
+tt.*
+.tests
+doc/tags
+debug
+.repro
+foo.*
+*.log
+data
