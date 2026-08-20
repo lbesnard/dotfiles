@@ -6,6 +6,9 @@ footer: '<p>Created with <span class="has-text-danger">❤️</span>. Click on <
 connectivityCheck: true
 theme: dark
 
+# 3-column card grid layout
+columns: 3
+
 widgets:
   - type: "search"
     target: "_blank"
