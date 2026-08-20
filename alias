@@ -25,6 +25,9 @@ alias update_appimages='update_nextcloud; update_joplin; update_etcher; update_s
 alias shotcut='Shotcut.AppImage --QT_SCALE_FACTOR 1'
 alias Shotcut='shotcut'
 
+alias weather="curl wttr.in"
+alias ww="curl wttr.in"
+
 ##########################
 # ls and cd aliases
 ##########################
@@ -704,9 +707,9 @@ _funk_dest_is_available() {
     [[ -z "$dest" || "$dest" == "TO_BE_FILLED_MANUALLY" ]] && return 1
 
     # Populate cache once (colon-delimited list of mount points)
-    if [[ -z "$_funk_mounts_cache" ]]; then
-        _funk_mounts_cache=$(awk '{print $2}' /proc/mounts 2>/dev/null | tr '\n' ':')
-    fi
+    # if [[ -z "$_funk_mounts_cache" ]]; then
+    _funk_mounts_cache=$(awk '{print $2}' /proc/mounts 2>/dev/null | tr '\n' ':')
+    # fi
 
     # Paths to walk up: the destination itself, plus /run<dest> for NixOS
     # (/media/USER/DRIVE configs also mount at /run/media/USER/DRIVE on NixOS)
@@ -1685,4 +1688,131 @@ with open('$1', 'rb') as f_in, open('$out', 'wb') as f_out:
     while chunk := f_in.read(2):
         f_out.write(bytes([chunk[1], chunk[0]]) if len(chunk) == 2 else chunk)
 " && echo "Converted successfully to $out"
+}
+
+
+zip2chd() {
+    local delete_input=0
+    local outdir=""
+    local input=""
+    local disc=""
+    local outfile=""
+    local outfile_name=""
+    local tmpdir=""
+    local chd_type=""
+
+    while getopts "do:" opt; do
+        case "$opt" in
+            d)
+                delete_input=1
+                ;;
+            o)
+                outdir="$OPTARG"
+                ;;
+            *)
+                echo "Usage: zip2chd [-d] [-o output_dir] <zip|cue|gdi|ccd|iso>"
+                return 1
+                ;;
+        esac
+    done
+    shift $((OPTIND - 1))
+
+    if [[ $# -ne 1 ]]; then
+        echo "Usage: zip2chd [-d] [-o output_dir] <zip|cue|gdi|ccd|iso>"
+        return 1
+    fi
+
+    input="$1"
+
+    case "$input" in
+        *.zip|*.ZIP)
+            tmpdir=$(mktemp -d) || return 1
+
+            echo "Extracting: $input"
+
+            unzip -qq "$input" -d "$tmpdir" || {
+                echo "Failed to extract $input"
+                rm -rf "$tmpdir"
+                return 1
+            }
+
+            # Prefer descriptor files.
+            # GDI/CUE/CCD reference other files, so we must pass
+            # the descriptor to chdman rather than the BIN/RAW files.
+            disc=$(find "$tmpdir" -type f \( \
+                -iname "*.gdi" -o \
+                -iname "*.cue" -o \
+                -iname "*.ccd" -o \
+                -iname "*.iso" \
+            \) -print | head -n1)
+
+            if [[ -z "$disc" ]]; then
+                echo "No supported disc image found in:"
+                echo "  $input"
+                rm -rf "$tmpdir"
+                return 1
+            fi
+
+            # Determine CD/DVD conversion from descriptor
+            case "$disc" in
+                *.iso|*.ISO)
+                    chd_type="createdvd"
+                    ;;
+                *)
+                    chd_type="createcd"
+                    ;;
+            esac
+
+            outfile_name="${input:t:r}.chd"
+            ;;
+        *.gdi|*.GDI|*.cue|*.CUE|*.ccd|*.CCD)
+            disc="$input"
+            chd_type="createcd"
+            outfile_name="${input:t:r}.chd"
+            ;;
+        *.iso|*.ISO)
+            disc="$input"
+            chd_type="createdvd"
+            outfile_name="${input:t:r}.chd"
+            ;;
+        *)
+            echo "Unsupported input: $input"
+            echo "Supported: zip, gdi, cue, ccd, iso"
+            return 1
+            ;;
+    esac
+
+    if [[ -n "$outdir" ]]; then
+        mkdir -p "$outdir" || {
+            rm -rf "$tmpdir"
+            return 1
+        }
+
+        outfile="$outdir/$outfile_name"
+    else
+        outfile="${input:h}/$outfile_name"
+    fi
+
+    echo "Input : $disc"
+    echo "Output: $outfile"
+    echo "Type  : $chd_type"
+
+    chdman "$chd_type" -i "$disc" -o "$outfile"
+
+    if [[ $? -ne 0 ]]; then
+        echo "chdman failed"
+        rm -f "$outfile"
+        rm -rf "$tmpdir"
+        return 1
+    fi
+
+    # Only delete a directly supplied image.
+    # Never delete the ZIP itself.
+    if (( delete_input )) && [[ -z "$tmpdir" ]]; then
+        rm -f "$input"
+    fi
+
+    rm -rf "$tmpdir"
+
+    echo "Done: $outfile"
 }
