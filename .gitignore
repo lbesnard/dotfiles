@@ -32,3 +32,6 @@ aws/credentials
 config/pgcli/log
 .aider*
 .nixos-install.yaml
+
+efunk/docker-compose/tandoor/mediafiles/
+efunk/docker-compose/data/
