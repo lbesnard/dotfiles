@@ -79,7 +79,7 @@ services:
   #
   # ownfoil:
   #   container_name: ownfoil
-  #   image: a1ex4/ownfoil:v1
+  #   image: a2ex4/ownfoil:v1
   #   environment:
   #     # For write permission in config directory
   #     - PUID=1000
@@ -96,6 +96,30 @@ services:
   #   labels:
   #     com.centurylinklabs.watchtower.enable: true
   #
+  aerofoil:
+    container_name: aerofoil
+    image: luketanti/aerofoil:latest
+    environment:
+      # For write permission in config directory
+      - PUID=1000
+      - PGID=1000
+      # to create/update an admin user at startup
+      - USER_ADMIN_NAME=admin
+      - USER_ADMIN_PASSWORD=admin
+      # to create/update a regular user at startup
+      - USER_GUEST_NAME=guest
+      - USER_GUEST_PASSWORD=guest
+      # cache TTLs (seconds): use none/unset for rebuild-only
+      - SHOP_SECTIONS_CACHE_TTL_S=none
+      - MEDIA_INDEX_TTL_S=none
+    restart: unless-stopped
+    volumes:
+      - $SWITCH_PATH:/games
+      - $DOCKER_CONFIG_PATH/aerofoil:/app/config
+      - $DOCKER_CONFIG_PATH/aerofoil_data:/app/data
+    ports:
+      - "8465:8465"
+
   jellyfin:
     image: linuxserver/jellyfin
     container_name: jellyfin
@@ -485,7 +509,7 @@ services:
       OPENAI_API_KEY: $OPENAI_API_KEY
       BASE_URL: https://mealie.evryfunk.home
 
-  portforward:
+  portforward_radarr:
     image: marcnuri/port-forward
     container_name: portforward
     environment:
