@@ -1,0 +1,21 @@
+services:
+  rsync-server:
+    image: quentintin/rsync-server
+    container_name: rsync-server
+    volumes:
+      - $HOME/.ssh/authorized_keys:/root/.ssh/authorized_keys
+      - $EBOOKS_AUDIOBOOKS_PATH:/data/ebooks_audiobooks:ro
+      - $EBOOKS_FR_PATH:/data/ebooks_fr:ro
+      - $GAMES_PATH:/data/games:ro
+      - $MUSIC_ROOT_PATH:/data/music:ro
+      - $PICTURES_PATH:/data/pictures:ro
+      - $SELF_IMPROVEMENT_PATH:/data/self_improvement:ro
+    environment:
+      #- USERNAME=nouser
+      #- PASSWORD=nopass
+      PUID: $PUID_USER
+      PGID: $PGID_USER
+    ports:
+      #- "873:873" #uncomment if want to use rsyncd
+      - "9000:22" #  for tailscale+LAN
+    restart: always
