@@ -1082,22 +1082,36 @@ alias cscli_bouncer_list="cscli bouncers list"
 # BROWNFUNK load beets with miniforge
 alias beet="[ -f ~/miniforge3/envs/beets/bin/python ] && conda activate beets;beet"
 
-mount_beefunk_pics() {
-  if [[ -d ~/beefunk_pictures/ ]]; then
-    sshfs lbesnard@beefunk.lan:/media/lbesnard/beefunk_12tb_c/pictures ~/beefunk_pictures
-  else
-    mkdir -p ~/beefunk_pictures/ &&    sshfs lbesnard@beefunk.lan:/media/lbesnard/beefunk_12tb_c/pictures ~/beefunk_pictures
-  fi
+
+# Generic SSHFS mount helper
+_mount_sshfs_share () {
+  local remote_target="$1"
+  local local_target="$2"
+
+  mkdir -p "$local_target"
+  sshfs "$remote_target" "$local_target" \
+    -o ServerAliveInterval=15 \
+    -o ServerAliveCountMax=3 \
+    -o reconnect \
+    -o ConnectTimeout=10 \
+    -o auto_cache \
+    -o attr_timeout=3600 \
+    -o entry_timeout=3600 \
+    -o negative_timeout=10 \
+    -o Ciphers=aes128-gcm@openssh.com \
+    -o Compression=no
 }
 
-# mount only when close to efunk server
-mount_efunknuc_pics() {
-  if [[ -d ~/beefunk_pictures/ ]]; then
-    sshfs lbesnard@evrynucfunk.lan:/media/beefunk_12tb_1/pictures ~/beefunk_pictures
-  else
-    mkdir -p ~/beefunk_pictures/ &&    sshfs lbesnard@evrynucfunk.lan:/media/beefunk_12tb_1/pictures ~/beefunk_pictures
-  fi
+# Specific target functions
+mount_beefunk_pics () {
+  _mount_sshfs_share "lbesnard@beefunk.lan:/media/lbesnard/beefunk_12tb_c/pictures" "$HOME/beefunk_pictures"
 }
+
+# Mount only when close to efunk server
+mount_efunknuc_pics () {
+  _mount_sshfs_share "lbesnard@evrynucfunk.lan:/media/beefunk_12tb_1/pictures" "$HOME/beefunk_pictures"
+}
+
 
 
 dask_tunnel() {
