@@ -164,6 +164,33 @@ services:
         url: "http://immich.beefunk.local"
         target: "_.local"
 
+      - name: "Immich-Kiosk"
+        logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/immich-kiosk.png"
+        subtitle: "Slideshow"
+        tag: "photos"
+        tagstyle: "is-warning"
+        url: "http://immich-kiosk.beefunk.local"
+        target: "_.local"
+
+      - name: "Digikam"
+        logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/digi-kam.png"
+        subtitle: "Photo Management"
+        tag: "photos"
+        tagstyle: "is-warning"
+        url: "https://digikam.beefunk.local"
+        target: "_.local"
+
+
+      - name: "Darktable"
+        logo: "https://upload.wikimedia.org/wikipedia/commons/7/7b/Darktable_icon.svg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original"
+        subtitle: "Photo Raw Editor"
+        tag: "photos"
+        tagstyle: "is-warning"
+        url: "https://darktable.beefunk.local"
+        target: "_.local"
+
+
+
       - name: "Piwigo"
         logo: "assets/lens.png"
         subtitle: "Picture gallery"
@@ -333,7 +360,7 @@ services:
         subtitle: "Router config"
         tag: "geek"
         tagstyle: "is-light"
-        url: "http://192.168.1.1"
+        url: "http://192.168.8.1"
         target: "_.local"
 
       - name: "Scrutiny"

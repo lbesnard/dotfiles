@@ -103,7 +103,7 @@ services:
       - SERVERPORT=51820 #optional
       - PEERS=$WG2_PEERS #optional
       # - PEERDNS=$PIHOLE_DOCKER_SUB_IP_DNS #using pihole docker, default port is 53, which is dsn by default # docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' pihole
-      - PEERDNS=192.168.8.214
+      - PEERDNS=$BEEFUNK_LOCAL_IP
       - INTERNAL_SUBNET=10.13.13.0 #optional
     volumes:
       - $DOCKER_CONFIG_PATH/wireguard2/config:/config
@@ -212,7 +212,7 @@ services:
       - ENABLE_SCHEDULED_RESCAN=true
       - SCHEDULED_RESCAN_CRON=0 */4 * * *
     dns:
-      - 192.168.8.214
+      - $BEEFUNK_LOCAL_IP
       - 8.8.8.8
     volumes:
       - $DOCKER_CONFIG_PATH/romm/resources:/romm/resources
@@ -367,7 +367,7 @@ services:
       - $PYLOAD_DL_PATH:/downloads
     dns:
       - 8.8.8.8
-      - 192.168.8.214
+      - $BEEFUNK_LOCAL_IP
     networks:
       - proxy
     labels:
@@ -399,7 +399,7 @@ services:
       - PGID=$PGID_USER
     dns:
       - 8.8.8.8
-      - 192.168.8.214
+      - $BEEFUNK_LOCAL_IP
     devices:
       - /dev/dri:/dev/dri
     volumes:
@@ -488,7 +488,7 @@ services:
         condition: service_healthy
     user: $PUID_USER:$PGID_USER # should be owner of volumes
     dns:
-      - 192.168.8.214
+      - $BEEFUNK_LOCAL_IP
       - 8.8.8.8
     #    ports:
     #      - "8080:4533"
@@ -559,7 +559,7 @@ services:
     networks:
       - proxy
     dns:
-      - 192.168.8.214
+      - $BEEFUNK_LOCAL_IP
       - 192.168.8.1
       - 8.8.8.8
     command: ["sh", "-c", "while true; do sleep 30; done"]
@@ -570,52 +570,52 @@ services:
       retries: 3
       start_period: 5s
 
-  sshfs-moode-mpd:
-    image: pschmitt/sshfs
-    container_name: sshfs-moode-mpd
-    cap_add:
-      - SYS_ADMIN
-    devices:
-      - /dev/fuse:/dev/fuse
-    security_opt:
-      - apparmor:unconfined
-    environment:
-      - UID=1000
-      - GID=1000
-    volumes:
-      - ~/.ssh/id_moode_sshfs:/config/id_rsa:ro
-      - ${DOCKER_CONFIG_PATH}/moode_mpd:/mount:shared
-    command: >
-      root@192.168.8.136:/var/lib/mpd/
-    # restart: unless-stopped
-    depends_on:
-      moode-check:
-        condition: service_healthy
-    restart: "no"
-
-  sshfs-moode-mnt:
-    image: pschmitt/sshfs
-    container_name: sshfs-moode-mnt
-    cap_add:
-      - SYS_ADMIN
-    devices:
-      - /dev/fuse:/dev/fuse
-    security_opt:
-      - apparmor:unconfined
-    environment:
-      - UID=1000
-      - GID=1000
-    volumes:
-      - ~/.ssh/id_moode_sshfs:/config/id_rsa:ro
-      - ${DOCKER_CONFIG_PATH}/moode_mount:/mount:shared
-    command: >
-      root@192.168.8.136:/mnt/
-    # restart: unless-stopped
-    depends_on:
-      moode-check:
-        condition: service_healthy
-    restart: "no"
-
+  # sshfs-moode-mpd:
+  #   image: pschmitt/sshfs
+  #   container_name: sshfs-moode-mpd
+  #   cap_add:
+  #     - SYS_ADMIN
+  #   devices:
+  #     - /dev/fuse:/dev/fuse
+  #   security_opt:
+  #     - apparmor:unconfined
+  #   environment:
+  #     - UID=1000
+  #     - GID=1000
+  #   volumes:
+  #     - ~/.ssh/id_moode_sshfs:/config/id_rsa:ro
+  #     - ${DOCKER_CONFIG_PATH}/moode_mpd:/mount:shared
+  #   command: >
+  #     root@192.168.8.136:/var/lib/mpd/
+  #   # restart: unless-stopped
+  #   depends_on:
+  #     moode-check:
+  #       condition: service_healthy
+  #   restart: "no"
+  #
+  # sshfs-moode-mnt:
+  #   image: pschmitt/sshfs
+  #   container_name: sshfs-moode-mnt
+  #   cap_add:
+  #     - SYS_ADMIN
+  #   devices:
+  #     - /dev/fuse:/dev/fuse
+  #   security_opt:
+  #     - apparmor:unconfined
+  #   environment:
+  #     - UID=1000
+  #     - GID=1000
+  #   volumes:
+  #     - ~/.ssh/id_moode_sshfs:/config/id_rsa:ro
+  #     - ${DOCKER_CONFIG_PATH}/moode_mount:/mount:shared
+  #   command: >
+  #     root@192.168.8.136:/mnt/
+  #   # restart: unless-stopped
+  #   depends_on:
+  #     moode-check:
+  #       condition: service_healthy
+  #   restart: "no"
+  #
   mympd:
     image: ghcr.io/jcorporation/mympd/mympd
     container_name: mympd
@@ -629,21 +629,27 @@ services:
       MYMPD_MYMPD_URI: https://mympd.beefunk.local
       # MYMPD_MYMPD_URI: http://beefunk:8097
       MYMPD_LOGLEVEL: 7
-    depends_on:
-      - sshfs-moode-mpd
-      - sshfs-moode-mnt
+    # depends_on:
+      # - sshfs-moode-mpd
+      # - sshfs-moode-mnt
     volumes:
       - /run/mpd:/run/mpd
+      - moode_mpd_nfs:/var/lib/mpd:ro
+      - moode_mnt_nfs:/mnt:ro
+      # - $MUSIC_PATH:/var/lib/mpd/music:ro
+      - $MUSIC_PATH:/mnt/NAS/beefunkMusic:ro
+      - $DOCKER_CONFIG_PATH/mympd/workdir:/var/lib/mympd
+      - $DOCKER_CONFIG_PATH/mympd/cachedir:/var/cache/mympd
       ## Optional for myGPIOd support
       ## - /run/mygpiod:/run/mygpiod
       # - /docker/mympd/workdir:/var/lib/mympd
       # - /docker/mympd/cachedir:/var/cache/mympd
-      - $DOCKER_CONFIG_PATH/moode_mpd/music:/var/lib/mpd/music:ro
-      - $DOCKER_CONFIG_PATH/moode_mpd/playlists:/var/lib/mpd/playlists:ro
-      - $DOCKER_CONFIG_PATH/moode_mount/:/mnt:ro
-      # - /var/lib/mpd/playlists:/var/lib/mpd/playlists:ro
-      - $DOCKER_CONFIG_PATH/mympd/workdir:/var/lib/mympd
-      - $DOCKER_CONFIG_PATH/mympd/cachedir:/var/cache/mympd
+      # - $DOCKER_CONFIG_PATH/moode_mpd/music:/var/lib/mpd/music:ro
+      # - $DOCKER_CONFIG_PATH/moode_mpd/playlists:/var/lib/mpd/playlists:ro
+      # - $DOCKER_CONFIG_PATH/moode_mount/:/mnt:ro
+      # # - /var/lib/mpd/playlists:/var/lib/mpd/playlists:ro
+      # - $DOCKER_CONFIG_PATH/mympd/workdir:/var/lib/mympd
+      # - $DOCKER_CONFIG_PATH/mympd/cachedir:/var/cache/mympd
       # - $DOCKER_CONFIG_PATH/mympd/lib/mpd/music:/var/lib/mpd/music:ro
       # - $DOCKER_CONFIG_PATH/mympd/var/lib/mpd/playlists:/var/lib/mpd/playlists:ro
       #
@@ -884,6 +890,9 @@ services:
     restart: unless-stopped
     networks:
       - proxy
+    dns:
+      - $BEEFUNK_LOCAL_IP
+      - 8.8.8.8
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.piwigo-http1.rule=Host(`piwigo.beefunk.lan`)"
@@ -1196,6 +1205,19 @@ services:
       - "9000:22"
     restart: always
   #######################
+  nfs:
+    image: erichough/nfs-server:latest
+    container_name: nfs_server
+    restart: unless-stopped
+    network_mode: "host"
+    privileged: true
+    environment:
+      - NFS_EXPORT_0={PICTURES_PATH} *(rw,async,no_subtree_check,no_root_squash)
+    volumes:
+      - ${PICTURES_PATH}:${PICTURES_PATH}
+    ports:
+      - "2049:2049"
+
   # Samba
   samba:
     image: dperson/samba
@@ -1454,7 +1476,7 @@ services:
       media-mount-check:
         condition: service_healthy
     dns:
-      - 192.168.8.214
+      - $BEEFUNK_LOCAL_IP
       - 8.8.8.8
     volumes:
       - $SWITCH_PATH:/games
@@ -1501,7 +1523,7 @@ services:
   #     media-mount-check:
   #       condition: service_healthy
   #   dns:
-  #     - 192.168.8.214
+  #     - $BEEFUNK_LOCAL_IP
   #     - 8.8.8.8
   #   volumes:
   #     - $SWITCH_PATH:/games
@@ -1635,7 +1657,7 @@ services:
     restart: unless-stopped
     
     dns:
-      - 192.168.8.214
+      - $BEEFUNK_LOCAL_IP
       - 8.8.8.8
 
     networks:
@@ -1800,6 +1822,188 @@ services:
       - "traefik.http.routers.immich-https3.tls=true"
       - "traefik.http.services.immich.loadbalancer.server.port=80"
     restart: unless-stopped
+
+  immich-kiosk:
+    container_name: immich-kiosk
+    image: ghcr.io/damongolding/immich-kiosk:latest
+    tty: true
+    dns:
+      - $BEEFUNK_LOCAL_IP
+      - 8.8.8.8
+    environment:
+      LANG: "en_GB"
+      TZ: "Europe/London"
+      KIOSK_IMMICH_URL: "http://immich.beefunk.local"     
+      KIOSK_IMMICH_API_KEY: $IMMICH_KIOSK_API
+    volumes:
+      - $DOCKER_CONFIG_PATH/immich-kiosk/config:/config
+    restart: always
+    healthcheck:
+      test: ["CMD", "/kiosk", "--healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+
+      # HTTP Routers
+      - "traefik.http.routers.immich-kiosk-http1.rule=Host(`immich-kiosk.beefunk.lan`)"
+      - "traefik.http.routers.immich-kiosk-http1.entrypoints=web"
+      - "traefik.http.routers.immich-kiosk-http1.tls=false"
+
+      - "traefik.http.routers.immich-kiosk-http2.rule=Host(`immich-kiosk.beefunk.home`)"
+      - "traefik.http.routers.immich-kiosk-http2.entrypoints=web"
+      - "traefik.http.routers.immich-kiosk-http2.tls=false"
+
+      - "traefik.http.routers.immich-kiosk-http3.rule=Host(`immich-kiosk.beefunk.local`)"
+      - "traefik.http.routers.immich-kiosk-http3.entrypoints=web"
+      - "traefik.http.routers.immich-kiosk-http3.tls=false"
+
+      # HTTPS Routers
+      - "traefik.http.routers.immich-kiosk-https1.rule=Host(`immich-kiosk.beefunk.lan`)"
+      - "traefik.http.routers.immich-kiosk-https1.entrypoints=websecure"
+      - "traefik.http.routers.immich-kiosk-https1.tls=true"
+
+      - "traefik.http.routers.immich-kiosk-https2.rule=Host(`immich-kiosk.beefunk.home`)"
+      - "traefik.http.routers.immich-kiosk-https2.entrypoints=websecure"
+      - "traefik.http.routers.immich-kiosk-https2.tls=true"
+
+      - "traefik.http.routers.immich-kiosk-https3.rule=Host(`immich-kiosk.beefunk.local`)"
+      - "traefik.http.routers.immich-kiosk-https3.entrypoints=websecure"
+      - "traefik.http.routers.immich-kiosk-https3.tls=true"
+
+      # Service Port
+      - "traefik.http.services.immich-kiosk.loadbalancer.server.port=3000"
+
+  digikam:
+    container_name: digikam
+    image: lscr.io/linuxserver/digikam:latest
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=$TZ
+      - PIXELFLUX_WAYLAND=true
+      - DRINODE=/dev/dri/renderD128
+      - DRI_NODE=/dev/dri/renderD128
+      # Optional authentication:
+      # - CUSTOM_USER=$USER
+      # - PASSWORD=$DIGIKAM_PASSWORD
+      - NO_DECOR=true
+      # - NO_GAMEPAD=true
+      # - SELKIES_IS_MANUAL_RESOLUTION_MODE=true
+      # - SELKIES_MANUAL_WIDTH=1920
+      # - SELKIES_MANUAL_HEIGHT=1080
+      # - AUTO_GPU=true
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - $PICTURES_PATH/Digikam_linuxserver:/config
+      - $PICTURES_PATH/Pictures:/photos
+    # ports:
+      # - "3001:3001"
+    shm_size: "2gb"
+    dns:
+      - $BEEFUNK_LOCAL_IP
+    depends_on:
+      - pihole
+    restart: unless-stopped
+    networks:
+      - proxy
+      - frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      - "traefik.http.routers.digikam-https1.rule=Host(`digikam.beefunk.lan`)"
+      - "traefik.http.routers.digikam-https1.entrypoints=websecure"
+      - "traefik.http.routers.digikam-https1.tls=true"
+
+      - "traefik.http.routers.digikam-https2.rule=Host(`digikam.beefunk.home`)"
+      - "traefik.http.routers.digikam-https2.entrypoints=websecure"
+      - "traefik.http.routers.digikam-https2.tls=true"
+
+      - "traefik.http.routers.digikam-https3.rule=Host(`digikam.beefunk.local`)"
+      - "traefik.http.routers.digikam-https3.entrypoints=websecure"
+      - "traefik.http.routers.digikam-https3.tls=true"
+
+      # - "traefik.http.services.digikam.loadbalancer.server.port=3000"
+      - "traefik.http.services.digikam.loadbalancer.server.port=3001"
+      - "traefik.http.services.digikam.loadbalancer.server.scheme=https"
+      - "traefik.http.services.digikam.loadbalancer.serverstransport=digikam-tls@file"
+
+      - "traefik.http.middlewares.digikam-ws.headers.customrequestheaders.Connection=upgrade"
+      - "traefik.http.middlewares.digikam-ws.headers.customrequestheaders.Upgrade=websocket"
+
+      - "traefik.http.routers.digikam-https1.middlewares=digikam-ws"
+      - "traefik.http.routers.digikam-https2.middlewares=digikam-ws"
+      - "traefik.http.routers.digikam-https3.middlewares=digikam-ws"
+
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  darktable:
+    container_name: darktable
+    image: lscr.io/linuxserver/darktable:latest
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=$TZ
+      - PIXELFLUX_WAYLAND=true
+      - DRINODE=/dev/dri/renderD128
+      - DRI_NODE=/dev/dri/renderD128
+      # Optional authentication:
+      # - CUSTOM_USER=$USER
+      # - PASSWORD=$DIGIKAM_PASSWORD
+      - NO_DECOR=true
+      # - NO_GAMEPAD=true
+      # - SELKIES_IS_MANUAL_RESOLUTION_MODE=true
+      # - SELKIES_MANUAL_WIDTH=1920
+      # - SELKIES_MANUAL_HEIGHT=1080
+      # - AUTO_GPU=true
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - $PICTURES_PATH/Pictures:/Pictures
+      - $PICTURES_PATH/darktable_config:/config
+    shm_size: "2gb"
+    dns:
+      - $BEEFUNK_LOCAL_IP
+    depends_on:
+      - pihole
+    restart: unless-stopped
+    networks:
+      - proxy
+      - frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      - "traefik.http.routers.darktable-https1.rule=Host(`darktable.beefunk.lan`)"
+      - "traefik.http.routers.darktable-https1.entrypoints=websecure"
+      - "traefik.http.routers.darktable-https1.tls=true"
+
+      - "traefik.http.routers.darktable-https2.rule=Host(`darktable.beefunk.home`)"
+      - "traefik.http.routers.darktable-https2.entrypoints=websecure"
+      - "traefik.http.routers.darktable-https2.tls=true"
+
+      - "traefik.http.routers.darktable-https3.rule=Host(`darktable.beefunk.local`)"
+      - "traefik.http.routers.darktable-https3.entrypoints=websecure"
+      - "traefik.http.routers.darktable-https3.tls=true"
+
+      - "traefik.http.services.darktable.loadbalancer.server.port=3001"
+      - "traefik.http.services.darktable.loadbalancer.server.scheme=https"
+      - "traefik.http.services.darktable.loadbalancer.serverstransport=digikam-tls@file"
+
+      - "traefik.http.middlewares.darktable-ws.headers.customrequestheaders.Connection=upgrade"
+      - "traefik.http.middlewares.darktable-ws.headers.customrequestheaders.Upgrade=websocket"
+
+      - "traefik.http.routers.darktable-https1.middlewares=darktable-ws"
+      - "traefik.http.routers.darktable-https2.middlewares=darktable-ws"
+      - "traefik.http.routers.darktable-https3.middlewares=darktable-ws"
+
+      - "com.centurylinklabs.watchtower.enable=true"
 
   portforward_lingodiary:
     image: marcnuri/port-forward
@@ -2126,3 +2330,17 @@ services:
 volumes:
   netdatalib:
   netdatacache:
+
+  moode_mnt_nfs:
+      driver: local
+      driver_opts:
+        type: nfs
+        o: "addr=${MOODE_AUDIO_LOCAL_IP},nfsvers=4,rw,nolock,soft,timeo=10"
+        device: ":/mnt/"
+
+  moode_mpd_nfs:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: "addr=${MOODE_AUDIO_LOCAL_IP},nfsvers=4,rw,nolock,soft,timeo=10"
+      device: ":/var/lib/mpd/"
