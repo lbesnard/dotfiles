@@ -1114,6 +1114,7 @@ mount_efunknuc_pics () {
   _mount_sshfs_share "lbesnard@evrynucfunk.lan:/media/beefunk_12tb_1/pictures" "$HOME/beefunk_pictures"
 }
 
+alias sync_export_pics_beefunk_2_efunk_immich='rsync -av --progress /media/lbesnard/beefunk_12tb_c/pictures/Export efunk:/media/efunk_4tb_1/pictures_laurent_export/'
 
 
 dask_tunnel() {
