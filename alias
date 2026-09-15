@@ -1082,8 +1082,7 @@ alias cscli_alerts_list="cscli alerts list"
 alias cscli_metrics="cscli metrics"
 alias cscli_bouncer_list="cscli bouncers list"
 
-# BROWNFUNK load beets with miniforge
-alias beet="[ -f ~/miniforge3/envs/beets/bin/python ] && conda activate beets;beet"
+alias beet_install="uv tool install --force --with python3-discogs-client --with flask --with \"$HOME/.config/beets/whatlastgenre_org/[discogs]\" \"beets[lyrics,lastgenre,discogs,chroma,web]==2.13.1\""
 
 mount_beefunk_pics() {
   if [[ -d ~/beefunk_pictures/ ]]; then
