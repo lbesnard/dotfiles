@@ -28,15 +28,19 @@ Icon Show Resolution=false
 Icon Show Size=false
 Icon Show Tags=true
 Icon Show Title=true
-IconView Font=Montserrat,12,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+IconView Font=Montserrat,12,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,,0,0
 Image Group Mode=2
 Image Group Sort Order=0
 Image Sort Order=0
 Image Sorting=0
 Item Left Click Action=0
+Preview Auto Play=true
 Preview Convert To Eight Bit=false
 Preview Image Smooth Scaled=true
 Preview Load Full Image Size=false
+Preview Magnifier Size=150
+Preview Magnifier Zoom Factor=1.5
+Preview Overlay=false
 Preview Scale Fit To Window=false
 Preview Show Icons=true
 Rating Filter Condition=0
@@ -48,7 +52,7 @@ Show Thumbbar=true
 Show ToolTips=false
 Sidebar Title Style=2
 Theme=Black Body
-ToolTips Font=Montserrat,12,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+ToolTips Font=Montserrat,12,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,,0,0
 ToolTips Show Album Caption=true
 ToolTips Show Album Category=true
 ToolTips Show Album Collection=true
@@ -81,14 +85,14 @@ ToolTips Show Video Aspect Ratio=true
 ToolTips Show Video Codec=true
 ToolTips Show Video Duration=true
 ToolTips Show Video Frame Rate=true
-TreeView Font=Montserrat,12,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+TreeView Font=Montserrat,12,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,,0,0
 Update Type=0
 
 [AlbumFolderView Sidebar]
-CurrentIndex=1372
-Expansion=0,1,4,6,8,9,32,34,35,50,53,56,76,263,412,413,415,416,479,488,529,534,537,536,539,541,589,599,600,612,614,629,634,644,648,695,696,697,760,762,763,764,783,785,792,793,794,795,800,801,802,803,804,805,806,807,930,1000,1001,1002,1006,1009,1172,1192,1206,1207,1208,1209,1215,1216,1217,1218,1219,1222,1251,1252,1253,1254,1255,1256,1265,1270,1271,1273,1274,1275,1276,1278,1288,1293,1307,1309,1310,1312,1313,1314,1355,1375,1359,1360,1361,1377,1363,1372,1364,1365,1366,1376,1367,1369,1370,1371
+CurrentIndex=0
+Expansion=0
 RestoreChecked=false
-Selection=1372
+Selection=0
 SortColumn=0
 SortOrder=0
 
@@ -96,20 +100,20 @@ SortOrder=0
 CaseSensitive=0
 
 [AlbumSelectWidget]
-AlbumTreeViewCurrentIndex=1
-AlbumTreeViewExpansion=1,1310
+AlbumTreeViewCurrentIndex=
+AlbumTreeViewExpansion=1
 AlbumTreeViewRestoreChecked=false
-AlbumTreeViewSelection=1
+AlbumTreeViewSelection=
 AlbumTreeViewSortColumn=0
 AlbumTreeViewSortOrder=0
 CaseSensitive=0
 
 [Autotags Settings]
 AlbumComboBox-Checked=
-AlbumComboBox-CurrentIndex=1
-AlbumComboBox-Expansion=1
+AlbumComboBox-CurrentIndex=
+AlbumComboBox-Expansion=
 AlbumComboBox-RestoreChecked=true
-AlbumComboBox-Selection=1
+AlbumComboBox-Selection=
 AlbumComboBox-SortColumn=0
 AlbumComboBox-SortOrder=0
 AlbumTypeEntry=0
@@ -123,7 +127,7 @@ TagComboBox-Checked=
 TagComboBox-CurrentIndex=237
 TagComboBox-Expansion=
 TagComboBox-RestoreChecked=true
-TagComboBox-Selection=237,390
+TagComboBox-Selection=86,390
 TagComboBox-SortColumn=0
 TagComboBox-SortOrder=0
 UseWholeAlbumsEntry=true
@@ -249,6 +253,18 @@ ManagedPreviews=true
 ManagedView=true
 ProofingRenderingIntent=3
 RenderingIntent=0
+
+[Color Names]
+ColorName_black=Black
+ColorName_darkblue=Blue
+ColorName_darkgray=Gray
+ColorName_darkgreen=Green
+ColorName_magenta=Magenta
+ColorName_nocolor=None
+ColorName_orange=Orange
+ColorName_red=Red
+ColorName_white=White
+ColorName_yellow=Yellow
 
 [CoreDB Settings]
 Recently Used Tags=395,396,23,383,27,26
@@ -989,7 +1005,7 @@ tagPaths=1
 
 [Database Settings]
 Database Connectoptions=
-Database Encrypted Password=AwKioqI=
+Database Encrypted Password=AwJfX18=
 Database Hostname=
 Database Name=/home/lbesnard/Documents/Digikam/
 Database Name Face=/home/lbesnard/Documents/Digikam/
@@ -1008,7 +1024,7 @@ Internal Database Server Path=
 
 [DateFolderView Sidebar]
 CurrentIndex=
-Expansion=1
+Expansion=
 Selection=
 SortColumn=0
 SortOrder=0
@@ -1017,7 +1033,7 @@ SortOrder=0
 1920x1200 screen: Window-Maximized=true
 
 [Digikam Left Sidebar]
-ActiveTab=8
+ActiveTab=0
 Minimized=false
 RestoreSize=-1
 
@@ -1197,11 +1213,11 @@ Face Recognition Accuracy=7
 Face Recognition Model=1
 
 [Face Management Settings]
-AlbumComboBox-Checked=1376,1363,1310,1367,1353,1312,1354,1375,1311,1355,1314,1373,1347,1361,1348,1360,1366,1352,1377,1359,1365,1351,1350,1370,1369,1364,1358,1346,1371,1374,1313,1349,1372,1357
-AlbumComboBox-CurrentIndex=1315
-AlbumComboBox-Expansion=1,1363
+AlbumComboBox-Checked=
+AlbumComboBox-CurrentIndex=
+AlbumComboBox-Expansion=
 AlbumComboBox-RestoreChecked=true
-AlbumComboBox-Selection=1315
+AlbumComboBox-Selection=
 AlbumComboBox-SortColumn=0
 AlbumComboBox-SortOrder=0
 AlbumTypeEntry=0
@@ -1219,7 +1235,7 @@ TagComboBox-Checked=
 TagComboBox-CurrentIndex=4
 TagComboBox-Expansion=
 TagComboBox-RestoreChecked=true
-TagComboBox-Selection=4,390,324
+TagComboBox-Selection=86,324
 TagComboBox-SortColumn=0
 TagComboBox-SortOrder=0
 Use Full CPU=false
@@ -1228,10 +1244,10 @@ UseWholeTagsEntry=false
 
 [Find Duplicates View]
 AlbumComboBox-Checked=
-AlbumComboBox-CurrentIndex=1
+AlbumComboBox-CurrentIndex=
 AlbumComboBox-Expansion=
 AlbumComboBox-RestoreChecked=true
-AlbumComboBox-Selection=1
+AlbumComboBox-Selection=
 AlbumComboBox-SortColumn=0
 AlbumComboBox-SortOrder=0
 AlbumTypeEntry=0
@@ -1242,10 +1258,10 @@ Last search album tag relation=0
 Last search results restriction=0
 Lower bound for minimum similarity=40
 TagComboBox-Checked=
-TagComboBox-CurrentIndex=390
+TagComboBox-CurrentIndex=86
 TagComboBox-Expansion=
 TagComboBox-RestoreChecked=true
-TagComboBox-Selection=390
+TagComboBox-Selection=86
 TagComboBox-SortColumn=0
 TagComboBox-SortOrder=0
 UseWholeAlbumsEntry=false
@@ -1269,10 +1285,10 @@ SortOrder=0
 
 [Fuzzy Search View]
 AlbumComboBox-Checked=
-AlbumComboBox-CurrentIndex=1
-AlbumComboBox-Expansion=1
+AlbumComboBox-CurrentIndex=
+AlbumComboBox-Expansion=
 AlbumComboBox-RestoreChecked=true
-AlbumComboBox-Selection=1
+AlbumComboBox-Selection=
 AlbumComboBox-SortColumn=0
 AlbumComboBox-SortOrder=0
 UseWholeAlbumsEntry=true
@@ -1317,11 +1333,12 @@ Zoom=marble:900
 CaseSensitive=0
 
 [General Settings]
-Application Font=Montserrat,12,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+Application Font=Montserrat,12,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,,0,0
 Application Style=adwaita-dark
 Apply Sidebar Changes Directly=false
 Automatically start a background face recognition scan when a new face is tagged=false
 Clean core DB At Start=false
+DateTime Format=M/d/yy h:mm Ap
 Detect faces in newly added images=false
 Draw Frames To Grouped Items=true
 Expand New Current Item On Click=true
@@ -1423,10 +1440,10 @@ XMP Tags Filter=
 [Image Quality Settings]
 Accepted Threshold=60
 AlbumComboBox-Checked=
-AlbumComboBox-CurrentIndex=1
-AlbumComboBox-Expansion=1
+AlbumComboBox-CurrentIndex=
+AlbumComboBox-Expansion=
 AlbumComboBox-RestoreChecked=true
-AlbumComboBox-Selection=1
+AlbumComboBox-Selection=
 AlbumComboBox-SortColumn=0
 AlbumComboBox-SortOrder=0
 AlbumTypeEntry=0
@@ -1465,7 +1482,7 @@ TagComboBox-Checked=
 TagComboBox-CurrentIndex=237
 TagComboBox-Expansion=
 TagComboBox-RestoreChecked=true
-TagComboBox-Selection=237,390
+TagComboBox-Selection=86,390
 TagComboBox-SortColumn=0
 TagComboBox-SortOrder=0
 UseWholeAlbumsEntry=true
@@ -1519,9 +1536,9 @@ RestoreToolSettings=true
 Show Thumbbar=false
 ShowImageSettingsDialog=true
 SixteenBitsImage=true
-SplitterState=AAAA/wAAAAEAAAACAAAB9AAAAAAB/////wAAAAABAQ==
+SplitterState=AAAA/wAAAAEAAAACAAAHXAAAAVUB/////wAAAAABAQ==
 TIFFCompression=false
-ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAAAAAEIAAAD0/wCAAAAAfsAAAAeAGUAZABpAHQAbwByAF8AdABoAHUAbQBiAGIAYQByAAAAAAAAAAPTAAAASgD///8AAAOMAAABwwAAAAQAAAAEAAAACAAAAAj8AAAAAA==
+ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAAAAAEIAAAD0/wCAAAAAfsAAAAeAGUAZABpAHQAbwByAF8AdABoAHUAbQBiAGIAYQByAAAAAAAAAAPTAAAASgD///8AAAdcAAAEZQAAAAQAAAAEAAAACAAAAAj8AAAAAA==
 Unclip Color=0
 UnderExposureColor=255,255,255
 UnderExposureIndicator=false
@@ -1743,7 +1760,7 @@ FullScreen Hide ToolBars=false
 Horizontal Splitter State=AAAA/wAAAAEAAAADAAABdQAAAFQAAAF1Af////8AAAAAAQE=
 Navigate By Pair=false
 Show Thumbbar=true
-ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAIAAANmAAAAwPwBAAAAAfsAAAAmAGwAaQBnAGgAdAB0AGEAYgBsAGUAXwB0AGgAdQBtAGIAYgBhAHIAAAAAAAAAA2YAAABKAP///wAAA2YAAAQIAAAABAAAAAQAAAAIAAAACPwAAAAA
+ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAIAAANmAAAAwPwBAAAAAfsAAAAmAGwAaQBnAGgAdAB0AGEAYgBsAGUAXwB0AGgAdQBtAGIAYgBhAHIAAAAAAAAAA2YAAABKAP///wAAA2YAAANBAAAABAAAAAQAAAAIAAAACPwAAAAA
 
 [LightTable Settings][Left Sidebar]
 ActiveTab=0
@@ -1910,9 +1927,9 @@ Version Properties Tab=versions
 Version Properties View Mode=2
 
 [MainWindow]
-InitialAlbumID=134217735
-SplitterState=AAAA/wAAAAEAAAADAAABXQAABFYAAAF1Af////8AAAAAAQE=
-ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAIAAARCAAAAyPwBAAAAAfsAAAAmAG0AYQBpAG4AdwBpAG4AZABvAHcAXwB0AGgAdQBtAGIAYgBhAHIAAAAAAAAABEIAAABKAP///wAABEIAAAQtAAAABAAAAAQAAAAIAAAACPwAAAAA
+InitialAlbumID=0
+SplitterState=AAAA/wAAAAEAAAADAAABXgAABFYAAAF1Af////8AAAAAAQE=
+ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAIAAARCAAAAyPwBAAAAAfsAAAAmAG0AYQBpAG4AdwBpAG4AZABvAHcAXwB0AGgAdQBtAGIAYgBhAHIIAAAAAAAABEIAAABKAP///wAABEEAAAQpAAAABAAAAAQAAAAIAAAACPwAAAAA
 
 [MaintenanceDlg Settings]
 1920x1200 screen: Window-Maximized=true
@@ -2021,11 +2038,11 @@ nonaBinary[$e]=
 pano_modifyBinary[$e]=
 
 [People Sidebar]
-CurrentIndex=7
-Expansion=383,26,23,4,7,5,6
+CurrentIndex=71
+Expansion=383,26,23,4,7,5,6,71
 FaceScanWidgetExpanded=true
 RestoreChecked=false
-Selection=7
+Selection=71
 SortColumn=0
 SortOrder=0
 
@@ -2189,10 +2206,10 @@ CaseSensitive=0
 
 [Select Reference]
 AlbumComboBox-Checked=
-AlbumComboBox-CurrentIndex=1
+AlbumComboBox-CurrentIndex=
 AlbumComboBox-Expansion=
 AlbumComboBox-RestoreChecked=true
-AlbumComboBox-Selection=1
+AlbumComboBox-Selection=
 AlbumComboBox-SortColumn=0
 AlbumComboBox-SortOrder=0
 UseWholeAlbumsEntry=false
@@ -2200,25 +2217,27 @@ UseWholeAlbumsEntry=false
 [Setup Dialog]
 1920x1200 screen: Window-Maximized=true
 2 screens: Window-Maximized=true
+AlbumView Tab=0
 Albumview Tab=0
 Camera Tab=0
+Collections Tab=0
 Editor Tab=0
 Geolocation Tab=0
 ICC Tab=0
 Metadata SubTab=0
-Metadata Tab=1
+Metadata Tab=0
 Misc Tab=0
-Plugin Tab=0
-Setup Page=0
+Plugin Tab=3
+Setup Page=7
 Template Tab=0
 ToolTip Tab=0
 
 [Sketch Search View]
 AlbumComboBox-Checked=
-AlbumComboBox-CurrentIndex=1
-AlbumComboBox-Expansion=1
+AlbumComboBox-CurrentIndex=
+AlbumComboBox-Expansion=
 AlbumComboBox-RestoreChecked=true
-AlbumComboBox-Selection=1
+AlbumComboBox-Selection=
 AlbumComboBox-SortColumn=0
 AlbumComboBox-SortOrder=0
 UseWholeAlbumsEntry=true
@@ -2230,6 +2249,93 @@ EnableSpellCheck=false
 IgnoredWords=digiKam,Showfoto,Apple,Nikon,Android,Canon,Sony,Samsung,Panasonic,Olympus,Exif,IPTC,Xmp
 TranslatorEngine=0
 TranslatorLang=de-DE,en-US,es-ES,fr-FR,it-IT,pt-PT
+
+[Survey Settings]
+Horizontal Splitter State=AAAA/wAAAAEAAAAC//////////8B/////wAAAAABAQ==
+Show Thumbbar=true
+ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAMAAAAAAAAAAPwBAAAAAfsAAAAeAHMAdQByAHYAZQB5AF8AdABoAHUAbQBiAGIAYQByAQAAAAD/////AAAASgD///8AAAAAAAAAAAAAAAQAAAAEAAAACAAAAAj8AAAAAA==
+
+[Survey Settings][Sidebar]
+ActiveTab=0
+DigikamProperties Expanded=true
+FileProperties Expanded=true
+ItemProperties Expanded=true
+LocationProperties Expanded=true
+Minimized=true
+PhotographProperties Expanded=true
+RestoreSize=-1
+RightsProperties Expanded=true
+TagsProperties Expanded=true
+VideoProperties Expanded=true
+
+[Survey Settings][Sidebar][Captions Tags Properties Tab]
+Contact Expanded=true
+ItemDescEdit Tab=0
+ItemDescEditTab CaptionsLang=x-default
+ItemDescEditTab SearchBarCaseSensitive=0
+ItemDescEditTab TagCheckViewCurrentIndex=
+ItemDescEditTab TagCheckViewExpansion=0
+ItemDescEditTab TagCheckViewRestoreChecked=false
+ItemDescEditTab TagCheckViewSelection=
+ItemDescEditTab TagCheckViewSortColumn=0
+ItemDescEditTab TagCheckViewSortOrder=0
+ItemDescEditTab TagCheckViewToggle Auto Tags=0
+ItemDescEditTab TitleLang=x-default
+Location Expanded=true
+Rights Expanded=true
+Subjects Expanded=true
+
+[Survey Settings][Sidebar][Color Properties Tab]
+Current ICC Item=
+Histogram Channel=0
+Histogram Scale=1
+ICC Level=2
+ImagePropertiesColors Tab=0
+
+[Survey Settings][Sidebar][GPS Properties Tab]
+Sort Order=0
+Web GPS Locator=0
+
+[Survey Settings][Sidebar][GPS Properties Tab][Map Widget]
+Backend=marble
+Center=geo:0,0
+GoogleMaps Map Type=ROADMAP
+GoogleMaps Show Map Type Control=true
+GoogleMaps Show Navigation Control=true
+GoogleMaps Show Scale Control=true
+Marble Map Theme=earth/openstreetmap/openstreetmap.dgml
+Marble Projection=spherical
+Marble Show Compass=false
+Marble Show Navigation=true
+Marble Show Overview Map=false
+Marble Show Scale Bar=false
+Marker Grouping Radius=1
+Mouse Mode=0
+Preview Grouped Items=true
+Preview Single Items=true
+Show Thumbnails=true
+Show numbers on items=true
+Sticky Mode State=false
+Thumbnail Grouping Radius=30
+Thumbnail Size=60
+Zoom=marble:900
+
+[Survey Settings][Sidebar][Metadata Properties Tab]
+Current EXIF Item=
+Current ExifTool Item=
+Current IPTC Item=
+Current MAKERNOTE Item=
+Current XMP Item=
+EXIF Level=0
+EXIFTOOL Level=0
+IPTC Level=0
+ImagePropertiesMetaData Tab=0
+MAKERNOTE Level=0
+XMP Level=0
+
+[Survey Settings][Sidebar][Version Properties Tab]
+Version Properties Tab=versions
+Version Properties View Mode=2
 
 [TagEditDlgTitleEdit Search Text Tool]
 CaseSensitive=0
@@ -2255,6 +2361,9 @@ Selection=27
 SortColumn=0
 SortOrder=0
 TagsSource=false
+
+[Tags Manager List]
+Items=
 
 [Time Adjust Dialog]
 1920x1200 screen: Height=1200
@@ -2298,6 +2407,11 @@ CaseSensitive=0
 [TranslatorLangSearchBar Search Text Tool]
 CaseSensitive=0
 
+[TrashView]
+TrashViewColumn_0=100
+TrashViewColumn_1=100
+TrashViewColumn_2=100
+
 [Versioning Settings]
 Auto-Save When Closing Editor=false
 Non-Destructive Editing Enabled=true
@@ -2307,6 +2421,35 @@ Save Intermediate When Not Reproducible=false
 Saving Format for Versions=JPG
 Show Intermediates in View=true
 Show Original in View=true
+
+[adjustlevels Tool]
+GammaChannel0=1
+GammaChannel1=1
+GammaChannel2=1
+GammaChannel3=1
+GammaChannel4=1
+HighInputChannel0=65280
+HighInputChannel1=65280
+HighInputChannel2=65280
+HighInputChannel3=65280
+HighInputChannel4=65280
+HighOutputChannel0=65280
+HighOutputChannel1=65280
+HighOutputChannel2=65280
+HighOutputChannel3=65280
+HighOutputChannel4=65280
+Histogram Channel=0
+Histogram Scale=1
+LowInputChannel0=0
+LowInputChannel1=0
+LowInputChannel2=0
+LowInputChannel3=0
+LowInputChannel4=0
+LowOutputChannel0=0
+LowOutputChannel1=0
+LowOutputChannel2=0
+LowOutputChannel3=0
+LowOutputChannel4=0
 
 [import_mapwidgetview]
 Sort Order=0
@@ -2339,7 +2482,7 @@ Sort Order=0
 
 [mainwindow_mapwidgetview][Central Map Widget]
 Backend=marble
-Center=geo:-41.566138857,145.430497746
+Center=geo:0,0
 GoogleMaps Map Type=ROADMAP
 GoogleMaps Show Map Type Control=true
 GoogleMaps Show Navigation Control=true
@@ -2358,7 +2501,7 @@ Show Thumbnails=true
 Show numbers on items=true
 Thumbnail Grouping Radius=35
 Thumbnail Size=70
-Zoom=marble:2162
+Zoom=marble:900
 
 [mainwindow_tableview]
 Grouping mode=2

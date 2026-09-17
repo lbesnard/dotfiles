@@ -1,0 +1,371 @@
+---
+# Homepage configuration
+# See https://fontawesome.com/icons for icons options
+
+title: "Brownfunk"
+#subtitle: "Home server"
+#logo: ""
+# Alternatively a fa icon can be provided:
+# icon: "fas fa-skull-crossbones"
+
+header: False # Set to false to hide the header
+footer: '<p>Created with <span class="has-text-danger">❤️</span>. Click on  <a href="http://brownfunk.lan:3000/s/H1tA_LShH" target="_blank">Server How to</a> to understand how to get by.</i></a></p>' # set false if you want to hide it.header:
+
+# Optional theming
+#theme: default # 'default' or one of the theme available in 'src/assets/themes'.
+
+theme: dark
+colors:
+  dark:
+    highlight-primary: "#2b2b2b"
+    highlight-secondary: "#484d54"
+    highlight-hover: "#cfdfae"
+    background: "#1313134a"
+    card-background: "#2b2b2b"
+    text: "#cadfae"
+    text-header: "#cfdfae"
+    text-title: "#cfdfae"
+    text-subtitle: "#cfdfae"
+    card-shadow: rgba(0, 0, 0, 0.4)
+    link-hover: "#cfdfae"
+  light:
+    highlight-primary: "#2b2b2b"
+    highlight-secondary: "#484d54"
+    highlight-hover: "#cfdfae"
+    background: "#1313134a"
+    card-background: "#2b2b2b"
+    text: "#cadfae"
+    text-header: "#cfdfae"
+    text-title: "#cfdfae"
+    text-subtitle: "#cfdfae"
+    card-shadow: rgba(0, 0, 0, 0.4)
+    link-hover: "#cfdfae"
+  # light:
+  #highlight-primary: "#3367d6"
+  #highlight-secondary: "#4285f4"
+  #highlight-hover: "#5a95f5"
+  #background: "#f5f5f5"
+  #card-background: "#ffffff"
+  #text: "#363636"
+  #text-header: "#424242"
+  #text-title: "#303030"
+  #text-subtitle: "#424242"
+  #card-shadow: rgba(0, 0, 0, 0.1)
+  #link-hover: "#363636"
+
+# Optional message
+message:
+  # url: "https://<my-api-endpoint>" # Can fetch information from an endpoint to override value below.
+  style: "is-warning"
+  title: "Welcome to Brownfunk!!"
+  content: '<a href="http://brownfunk.lan">http://brownfunk.lan</a> <br> Find more information about this media server at <a href="http://brownfunk.lan:3000/s/H1tA_LShH" target="_blank">Server How to</a>'
+  #content: "http://brownfunk.lan"
+
+# Optional navbar
+# links: [] # Allows for navbar (dark mode, layout, and search) without any links
+links:
+  #  - name: "Github"
+  #icon: "fab fa-github"
+  #url: "https://github.com/lbesnard"
+  #    target: "_blank" # optional html tag target attribute
+  - name: "Server Howto"
+    icon: "fas fa-book"
+    #logo: "assets/alert.png"
+    url: "http://brownfunk.lan:3000/s/H1tA_LShH"
+    target: "_blank" # optional html tag target attribute
+
+# Services
+# First level array represent a group.
+# Leave only a "items" key if not using group (group name, icon & tagstyle are optional, section separation will not be displayed).
+services:
+  - name: ""
+    icon: "assets/alert.png"
+    items:
+      - name: "Server Explanations"
+        logo: "assets/alert.png"
+        #subtitle: "Explains the bells and whistles of the server"
+        url: "http://brownfunk.lan:3000/s/H1tA_LShH"
+        target: "_blank" # optional html tag target attribute
+
+      - name: "SearX"
+        subtitle: "Self-hosted search engine"
+        logo: "assets/searx.png"
+        url: "https://searx.funkybrownfunk.duckdns.org/search"
+        target: "_blank" # optional html tag target attribute
+
+  - name: "Media Streaming"
+    icon: "fa fa-code-fork"
+    items:
+      - name: "Music"
+        logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/navidrome.png"
+        subtitle: "Navidrome - music streaming"
+        tag: "app"
+        url: "http://brownfunk.lan:8082"
+        target: "_blank" # optional html tag target attribute
+
+      - name: "Movies"
+        logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/jellyfin.png"
+        subtitle: "Jellyfin - media streaming"
+        tag: "app"
+        # Optional tagstyle
+        tagstyle: "is-success"
+        target: "_blank" # optional html tag target attribute
+        url: "http://brownfunk.lan:8096"
+
+      - name: "Comics"
+        logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/komga.png"
+        # logo: "assets/komga.png"
+        subtitle: "Komga - Comics streaming"
+        tag: "app"
+        tagstyle: "is-success"
+        url: "http://brownfunk.lan:9981"
+        target: "_blank"
+
+      - name: "Ebooks"
+        logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/calibre-web.png"
+        # logo: "assets/calibre.png"
+        subtitle: "Calibre Web - Ebooks download"
+        tag: "app"
+        # Optional tagstyle
+        tagstyle: "is-success"
+        url: "http://brownfunk.lan:8083"
+        target: "_blank"
+
+      # - name: "Audiobooks"
+      #   logo: "http://brownfunk.lan:4040/_nuxt/img/icon.14e26ae.svg"
+      #   subtitle: "AudiobookShelf - Audiobook streaming"
+      #   tag: "app"
+      #   # Optional tagstyle
+      #   tagstyle: "is-success"
+      #   url: "http://brownfunk.lan:4040"
+      #   target: "_blank"
+      #
+      - name: "File Browser"
+        logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/filebrowser.png"
+        subtitle: "Filebrowser - explore and download files on server"
+        tag: "app"
+        # Optional tagstyle
+        tagstyle: "is-success"
+        url: "http://brownfunk.lan:9295/"
+        target: "_blank"
+  #
+  # - name: ""
+  #   icon: ""
+  #   items:
+  #     - name: "Pictures"
+  #       logo: "assets/lens.png"
+  #       subtitle: "Piwigo - Picture gallery"
+  #       tag: "loz"
+  #       url: "http://beefunk.lan:8282"
+  #       target: "_blank" # optional html tag target attribute
+  #
+  #     - name: "Tablet Slideshow"
+  #       logo: "assets/lens.png"
+  #       subtitle: "Tablet Slideshow"
+  #       tag: "loz"
+  #       url: "http://brownfunk.lan:5671/piwigo-random.html"
+  #       target: "_blank" # optional html tag target attribute
+  #
+  #     - name: "Photoprism"
+  #       logo: "assets/photoprism.png"
+  #       subtitle: "Photoprism - Picture gallery"
+  #       tag: "loz"
+  #       url: "http://beefunk.lan:2342"
+  #       target: "_blank" # optional html tag target attribute
+  #
+  #     - name: "Blog - El Camino Loco"
+  #       logo: "assets/wordpress.png"
+  #       subtitle: "Wordpress - El Camino Loco"
+  #       tag: "loz"
+  #       url: "http://brownfunk.lan:5555"
+  #       target: "_blank" # optional html tag target attribute
+  #
+  #     - name: "Music Sheet"
+  #       logo: "assets/solfege.png"
+  #       subtitle: "A list of sheet played throughtout years"
+  #       tag: "cloud"
+  #       url: "http://brownfunk.lan:3000/s/BW3Tx522S#"
+  #       target: "_blank" # optional html tag target attribute
+  #
+  - name: "Cloud"
+    icon: ""
+    items:
+      - name: "Cloud storage"
+        logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/nextcloud.png"
+        # logo: "assets/nextcloud.png"
+        subtitle: "Nextcloud - cloud storage"
+        tag: "cloud"
+        url: "https://brownfunk.lan:9393"
+        target: "_blank" # optional html tag target attribute
+
+      - name: "Notes"
+        logo: "assets/clipboard.png"
+        subtitle: "CodiMD - Note taking in Markdown"
+        tag: "cloud"
+        url: "http://brownfunk.lan:3000"
+        target: "_blank" # optional html tag target attribute
+
+      # - name: "Wallabag"
+      #   logo: "assets/wallabag.png"
+      #   subtitle: "Wallabag - Pin and save web pages - read them later"
+      #   tag: "cloud"
+      #   url: "http://brownfunk.lan:3637"
+      #   target: "_blank" # optional html tag target attribute
+      #
+  - name: "Download"
+    icon: "fa fa-code-fork"
+    items:
+      - name: "Torrent"
+        logo: "assets/transmission.png"
+        subtitle: "Transmission + VPN - torrent download"
+        tag: "dl"
+        url: "http://brownfunk.lan:9091"
+        target: "_blank" # optional html tag target attribute
+
+      - name: "Jackett"
+        logo: "assets/jackett.png"
+        subtitle: "Jackett - torrent proxy"
+        tag: "dl"
+        url: "http://brownfunk.lan:9117"
+        target: "_blank" # optional html tag target attribute
+
+      - name: "Prowlarr"
+        logo: "http://brownfunk.lan:9696/Content/Images/logo.png"
+        subtitle: "Prowlarr - Search torrent"
+        tag: "dl"
+        url: "http://brownfunk.lan:9696"
+        target: "_blank" # optional html tag target attribute
+
+      - name: "Music Download"
+        logo: "assets/lidarr.svg"
+        subtitle: "Lidarr - music download"
+        tag: "dl"
+        url: "http://brownfunk.lan:8686"
+        target: "_blank" # optional html tag target attribute
+
+      - name: "Movie Download"
+        logo: "assets/radarr.png"
+        subtitle: "Radarr - movie download"
+        tag: "dl"
+        url: "http://brownfunk.lan:7878"
+        target: "_blank" # optional html tag target attribute
+
+      - name: "Movie (French) Download"
+        logo: "assets/radarr.png"
+        subtitle: "Radarr - french movie download"
+        tag: "dl"
+        url: "http://brownfunk.lan:7879"
+        target: "_blank" # optional html tag target attribute
+
+      - name: "TV show Download"
+        logo: "assets/sonarr.png"
+        subtitle: "Sonarr - movie download"
+        tag: "dl"
+        url: "http://brownfunk.lan:8989"
+        target: "_blank" # optional html tag target attribute
+
+      - name: "Subtitle Download"
+        logo: "assets/bazarr.png"
+        subtitle: "Bazarr - subtitle download"
+        tag: "dl"
+        url: "http://brownfunk.lan:6768"
+        target: "_blank" # optional html tag target attribute
+
+      - name: "Downloader"
+        logo: "assets/pyload.png"
+        subtitle: "Pyload - download any link to server"
+        tag: "dl"
+        url: "http://brownfunk.lan:8000"
+        target: "_blank" # optional html tag target attribute
+
+      - name: "Firefox"
+        logo: "assets/firefox.png"
+        subtitle: "Firefox"
+        tag: "dl"
+        url: "http://brownfunk.lan:3008"
+        target: "_blank" # optional html tag target attribute
+
+  - name: "Server Maintenance"
+    icon: "fa fa-code-fork"
+    items:
+      - name: "Pi Hole"
+        logo: "assets/pihole.png"
+        subtitle: "Pi Hole - adblocker DNS & DHCP server"
+        tag: "geek"
+        url: "http://brownfunk.lan:455/admin"
+        target: "_blank" # optional html tag target attribute
+
+      - name: "Router"
+        logo: "assets/asusrouter.png"
+        subtitle: "Router config"
+        tag: "geek"
+        url: "http://192.168.1.1"
+        target: "_blank" # optional html tag target attribute
+
+      #      - name: "OpenMediaVault"
+      #logo: "assets/omv.png"
+      #subtitle: "OpenMediaVault - Admin"
+      #tag: "geek"
+      #url: "http://brownfunk.lan:85"
+      #        target: "_blank" # optional html tag target attribute
+
+      - name: "Glances"
+        logo: "assets/glances.png"
+        subtitle: "Glances - realtime"
+        tag: "geek"
+        url: "http://brownfunk.lan:61208"
+        target: "_blank" # optional html tag target attribute
+
+      - name: "Netdata"
+        logo: "assets/netdata.png"
+        subtitle: "Monitor - realtime"
+        tag: "geek"
+        url: "http://brownfunk.lan:19999"
+        target: "_blank" # optional html tag target attribute
+
+      - name: "Scrunity"
+        logo: "https://raw.githubusercontent.com/AnalogJ/scrutiny/master/webapp/frontend/src/assets/images/logo/scrutiny-logo-dark.png"
+        subtitle: "Monitor HDD - realtime"
+        tag: "geek"
+        url: "http://brownfunk.lan:8033"
+        target: "_blank" # optional html tag target attribute
+
+      - name: "Cockpit"
+        logo: "assets/cockpit.png"
+        subtitle: "Debian console - VM"
+        tag: "geek"
+        url: "https://brownfunk.lan:9090"
+        target: "_blank" # optional html tag target attribute
+
+      - name: "Grafana"
+        logo: "assets/grafana.png"
+        subtitle: "Grafana monitoring - admin(secret)"
+        tag: "geek"
+        url: "http://brownfunk.lan:3018"
+        target: "_blank" # optional html tag target attribute
+
+
+
+      - name: "PhpMyAdmin"
+        logo: "assets/phpmyadmin.png"
+        subtitle: "PhpMyAdmin"
+        tag: "geek"
+        url: "http://brownfunk.lan:3002"
+        target: "_blank" # optional html tag target attribute
+
+      - name: "Ebooks"
+        logo: "assets/calibre.png"
+        subtitle: "Calibre Server - Ebooks Maintenance"
+        tag: "app"
+        # Optional tagstyle
+        tagstyle: "is-success"
+        url: "https://brownfunk.lan:8181"
+        target: "_blank"
+
+      - name: "Portainer"
+        logo: "assets/portainer.png"
+        subtitle: "Portainer - docker images"
+        url: "http://brownfunk.lan:6263"
+        tag: "geek"
+        target: "_blank" # optional html tag target attribute
+
