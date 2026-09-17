@@ -77,8 +77,6 @@ services:
       - mariadb
     restart: unless-stopped
 
-     - "8465:8465"
-
   aerofoil:
     container_name: aerofoil
     image: luketanti/aerofoil:latest
