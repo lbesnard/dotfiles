@@ -21,9 +21,14 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+      # CREATE CERTS WITH FOLLOWING COMMAND
+      # openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+      #   -keyout beefunk.key -out beefunk.crt \
+      #   -subj "/CN=beefunk.local" \
+      #   -addext "subjectAltName=DNS:beefunk.local,DNS:*.beefunk.local,DNS:beefunk.home,DNS:*.beefunk.home,DNS:beefunk.lan,DNS:*.beefunk.lan"
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ~/traefik/certs:/certs:ro # mount cert folder
-      - ~/traefik/dynamic_tls.yml:/etc/traefik/dynamic_tls.yml:ro
+      - ./traefik/certs:/certs:ro # mount cert folder
+      - ./traefik/dynamic_tls.yml:/etc/traefik/dynamic_tls.yml:ro
     networks:
       - proxy
       - frontend
