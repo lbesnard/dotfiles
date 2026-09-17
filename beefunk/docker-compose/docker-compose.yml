@@ -1289,32 +1289,6 @@ services:
   #     - "traefik.http.routers.bentopdf-https3.tls=true"
   #     - "traefik.http.services.bentopdf.loadbalancer.server.port=8080"
   #
-  # filebrowserquantum:
-  #   image: gtstef/filebrowser:beta
-  #   container_name: filebrowserquantum
-  #   depends_on:
-  #     media-mount-check:
-  #       condition: service_healthy
-  #   environment:
-  #     - FILEBROWSER_CONFIG=/data/config.yaml
-  #     - FILEBROWSER_ADMIN_PASSWORD=admin
-  #     - TZ=$TZ
-  #     - WATCHTOWER_CLEANUP=true
-  #   user: "${PUID_USER}:${PGID_USER}"
-  #   ports:
-  #     - 9296:80
-  #   volumes:
-  #     - $DOCKER_CONFIG_PATH/filebrowserquantum/data:/data
-  #     - $EBOOKS_AUDIOBOOKS_PATH:/srv/ebooks_audiobooks:ro
-  #     - $MUSIC_PATH:/srv/music:ro
-  #     - $MOVIES_PATH:/srv/movies:ro
-  #     - $SELF_IMPROVEMENT_PATH:/srv/self_improvement:ro
-  #     - $GAMES_PATH:/srv/games:ro
-  #     - $SHARE_PATH:/srv/share
-  #   restart: unless-stopped
-  #   labels:
-  #     com.centurylinklabs.watchtower.enable: true
-  #
   filebrowserquantum:
     image: gtstef/filebrowser:latest
     container_name: filebrowserquantum
@@ -1324,7 +1298,7 @@ services:
         condition: service_healthy
 
     environment:
-      - FILEBROWSER_CONFIG=/data/config.yaml
+      - FILEBROWSER_CONFIG=/config/config.yaml
       - TZ=$TZ
       - WATCHTOWER_CLEANUP=true
 
@@ -1332,6 +1306,7 @@ services:
 
     volumes:
       - $DOCKER_CONFIG_PATH/filebrowserquantum/data:/data
+      - ./filebrowser/config.yaml:/config/config.yaml:ro
       - $EBOOKS_AUDIOBOOKS_PATH:/srv/media/ebooks_audiobooks:ro
       - $MUSIC_PATH:/srv/media/music:ro
       - $MOVIES_PATH:/srv/media/movies:ro
@@ -1836,7 +1811,7 @@ services:
       KIOSK_IMMICH_URL: "http://immich.beefunk.local"     
       KIOSK_IMMICH_API_KEY: $IMMICH_KIOSK_API
     volumes:
-      - $DOCKER_CONFIG_PATH/immich-kiosk/config:/config
+      - ./immich-kiosk/config:/config
     restart: always
     healthcheck:
       test: ["CMD", "/kiosk", "--healthcheck"]
@@ -1950,26 +1925,21 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=$TZ
-      - PIXELFLUX_WAYLAND=true
+      # Change to false to force stable X11 pipeline for GTK3 / Darktable
+      - PIXELFLUX_WAYLAND=false 
       - DRINODE=/dev/dri/renderD128
       - DRI_NODE=/dev/dri/renderD128
-      # Optional authentication:
-      # - CUSTOM_USER=$USER
-      # - PASSWORD=$DIGIKAM_PASSWORD
       - NO_DECOR=true
-      # - NO_GAMEPAD=true
-      # - SELKIES_IS_MANUAL_RESOLUTION_MODE=true
-      # - SELKIES_MANUAL_WIDTH=1920
-      # - SELKIES_MANUAL_HEIGHT=1080
-      # - AUTO_GPU=true
     devices:
       - /dev/dri:/dev/dri
     volumes:
       - $PICTURES_PATH/Pictures:/Pictures
-      - $PICTURES_PATH/darktable_config:/config
-    shm_size: "2gb"
+      - $PICTURES_PATH/Export:/Export
+      - $PICTURES_PATH/darktable_docker_config:/config
+    shm_size: "4gb"
     dns:
       - $BEEFUNK_LOCAL_IP
+      - 8.8.8.8
     depends_on:
       - pihole
     restart: unless-stopped
@@ -1980,28 +1950,13 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
 
-      - "traefik.http.routers.darktable-https1.rule=Host(`darktable.beefunk.lan`)"
-      - "traefik.http.routers.darktable-https1.entrypoints=websecure"
-      - "traefik.http.routers.darktable-https1.tls=true"
+      # Combined Host Router Rule
+      - "traefik.http.routers.darktable.rule=Host(`darktable.beefunk.lan`) || Host(`darktable.beefunk.home`) || Host(`darktable.beefunk.local`)"
+      - "traefik.http.routers.darktable.entrypoints=websecure"
+      - "traefik.http.routers.darktable.tls=true"
 
-      - "traefik.http.routers.darktable-https2.rule=Host(`darktable.beefunk.home`)"
-      - "traefik.http.routers.darktable-https2.entrypoints=websecure"
-      - "traefik.http.routers.darktable-https2.tls=true"
-
-      - "traefik.http.routers.darktable-https3.rule=Host(`darktable.beefunk.local`)"
-      - "traefik.http.routers.darktable-https3.entrypoints=websecure"
-      - "traefik.http.routers.darktable-https3.tls=true"
-
-      - "traefik.http.services.darktable.loadbalancer.server.port=3001"
-      - "traefik.http.services.darktable.loadbalancer.server.scheme=https"
-      - "traefik.http.services.darktable.loadbalancer.serverstransport=digikam-tls@file"
-
-      - "traefik.http.middlewares.darktable-ws.headers.customrequestheaders.Connection=upgrade"
-      - "traefik.http.middlewares.darktable-ws.headers.customrequestheaders.Upgrade=websocket"
-
-      - "traefik.http.routers.darktable-https1.middlewares=darktable-ws"
-      - "traefik.http.routers.darktable-https2.middlewares=darktable-ws"
-      - "traefik.http.routers.darktable-https3.middlewares=darktable-ws"
+      # Point Traefik to HTTP 3000 (no upstream TLS negotiation needed inside Docker)
+      - "traefik.http.services.darktable.loadbalancer.server.port=3000"
 
       - "com.centurylinklabs.watchtower.enable=true"
 

@@ -1,0 +1,72 @@
+show_time: true
+time_format: 24 # 12 or 24
+show_date: true
+date_format: YYYY-MM-DD
+clock_source: client
+
+## Kiosk behaviour
+duration: 40 # in seconds
+disable_screensaver: true # Ask browser to request a lock that prevents device screens from dimming or locking.
+optimize_images: true 
+#
+## Asset sources
+show_archived: false
+
+albums:
+  - all
+
+# Album IDs to exclude from being shown. Albums in this list will be filtered from
+# appearing in the frame even if they are included in the 'album' list.
+album_order: random 
+
+
+# UI
+disable_ui: false # this is just a shortcut for all ui elements (show_time, show_date, show_image_time, show_image_date)
+frameless: false # remove border around image and rounded corners.
+hide_cursor: false # Hide cursor/mouse via CSS.
+font_size: 100 # the base font size as a percentage. OMIT the % character
+background_blur: true # display a blurred version of image as background
+background_blur_amount: 10 # amount of blur to apply to background image (sigma)
+theme: fade # which theme to use. fade or solid
+layout: splitview # which layout to use. single | splitview | splitview-landscape | portrait | landscape
+
+# ## Sleep mode
+# sleep_start: 23 # sleep mode start time
+# sleep_end: 7 # sleep mode end time
+# sleep_dim_screen: true # dim screen when sleep mode is active (only works with Fully Kiosk Browser)
+# sleep_icon: true
+
+# Transition options
+transition: cross-fade # cross-fade, fade or none
+fade_transition_duration: 1 # in seconds
+cross_fade_transition_duration: 1 # in seconds
+
+## Image display settings
+show_progress_bar: true # display a progress bar
+image_fit: contain # none | contain | cover
+image_effect: none # none | zoom | smart-zoom
+image_effect_amount: 120
+use_original_image: false # use the original file.
+
+## Image METADATA
+show_owner: false # show the owner of the image
+show_album_name: true
+show_person_name: true
+show_person_age: true
+show_image_time: true
+image_time_format: 24 # 12 or 24
+show_image_date: true
+image_date_format: YYYY-MM-DD
+show_image_description: false
+show_image_exif: false
+show_image_location: true
+show_image_qr: false
+# hide_countries:
+#   - "country to hide"
+show_image_id: false
+show_more_info: true
+show_more_info_image_link: true
+show_more_info_qr_code: true
+
+like_button_action: favorite # album, favorite or both [album, favorite]
+hide_button_action: tag # tag, archive, or both [tag, archive]
