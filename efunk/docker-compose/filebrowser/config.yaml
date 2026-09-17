@@ -1,0 +1,19 @@
+server:
+  port: 80
+  baseURL: "/"
+  database: "/data/database.db"
+
+  sources:
+    - name: "Media"
+      path: "/srv/media"
+      config:
+        defaultEnabled: true
+        defaultUserScope: "/"
+        readOnly: true
+auth:
+  methods:
+    noauth: true
+
+frontend:
+  name: "FileBrowser Quantum"
+
