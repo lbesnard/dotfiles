@@ -1104,17 +1104,30 @@ _mount_sshfs_share () {
     -o Compression=no
 }
 
+## Specific target functions
+#mount_beefunk_pics () {
+#  _mount_sshfs_share "lbesnard@beefunk.lan:/media/lbesnard/beefunk_12tb_c/pictures" "$HOME/beefunk_pictures"
+#}
+
+## Mount only when close to efunk server
+#mount_efunknuc_pics () {
+#  _mount_sshfs_share "lbesnard@evrynucfunk.lan:/media/beefunk_12tb_1/pictures" "$HOME/beefunk_pictures"
+#}
+
 # Specific target functions
 mount_beefunk_pics () {
-  _mount_sshfs_share "lbesnard@beefunk.lan:/media/lbesnard/beefunk_12tb_c/pictures" "$HOME/beefunk_pictures"
+  mkdir -p $HOME/beefunk_pictures
+  sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr=beefunk.lan beefunk.lan:/media/lbesnard/beefunk_12tb_c/pictures "$HOME/beefunk_pictures"
 }
 
 # Mount only when close to efunk server
 mount_efunknuc_pics () {
-  _mount_sshfs_share "lbesnard@evrynucfunk.lan:/media/beefunk_12tb_1/pictures" "$HOME/beefunk_pictures"
+  mkdir -p $HOME/beefunk_pictures
+  sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr=efunknuc.lan efunknuc.lan:/media/beefunk_12tb_1/pictures "$HOME/beefunk_pictures"
 }
 
-alias sync_export_pics_beefunk_2_efunk_immich='rsync -av --progress /media/lbesnard/beefunk_12tb_c/pictures/Export efunk:/media/efunk_4tb_1/pictures_laurent_export/'
+
+alias sync_export_pics_beefunk_2_efunk_immich='rsync -av --progress --delete-after /media/lbesnard/beefunk_12tb_c/pictures/Export/ efunk:/media/efunk_4tb_1/pictures_laurent_export/'
 
 
 dask_tunnel() {

@@ -1,0 +1,21 @@
+tls:
+  certificates:
+    - certFile: /certs/beefunk.crt
+      keyFile: /certs/beefunk.key
+
+  # Optional: Forces Traefik to always default to this cert for all local hosts
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /certs/beefunk.crt
+        keyFile: /certs/beefunk.key
+#
+# tls:
+#   certificates:
+#     - certFile: /certs/beefunk.crt
+#       keyFile: /certs/beefunk.key
+#
+# http:
+#   serversTransports:
+#     digikam-tls:
+#       insecureSkipVerify: true
