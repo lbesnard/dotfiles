@@ -18,6 +18,8 @@ services:
     volumes:
       # Do not edit the next line. If you want to change the media storage location on your system, edit the value of UPLOAD_LOCATION in the .env file
       - ${UPLOAD_LOCATION}:/usr/src/app/upload
+      - $EXTERNAL_LIBRARY_LOCATION_LAURENT:/media/external_lib_laurent/Export:ro
+      - $EXTERNAL_LIBRARY_LOCATION_MAMAN:/media/external_lib_maman:ro
       - /etc/localtime:/etc/localtime:ro
     env_file:
       - .env
