@@ -77,46 +77,8 @@ services:
       - mariadb
     restart: unless-stopped
 
-  aerofoil:
-    container_name: aerofoil
-    image: luketanti/aerofoil:latest
-    environment:
-      # For write permission in config directory
-      - PUID=1000
-      - PGID=1000
-      - USER_ADMIN_NAME=admin
-      - USER_ADMIN_PASSWORD=admin
-      - USER_GUEST_NAME=guest
-      - USER_GUEST_PASSWORD=guest
-      #   # cache TTLs (seconds): use none/unset for rebuild-only
-      #   - SHOP_SECTIONS_CACHE_TTL_S=none
-      #   - MEDIA_INDEX_TTL_S=none
-    volumes:
-      - $SWITCH_PATH:/games
-      - ./config:/app/config
-      - ./data:/app/data
-    ports:
-      - "8465:8465"
-  #
-  # ownfoil:
-  #   container_name: ownfoil
-  #   image: a2ex4/ownfoil:v1
-  #   environment:
-  #     # For write permission in config directory
-  #     - PUID=1000
-  #     - PGID=1000
-  #   volumes:
-  #     - $SWITCH_PATH:/games
-  #     - $DOCKER_CONFIG_PATH/ownfoil:/app/config
-  #   ports:
-  #     - "8001:80"
-  #   networks:
-  #     frontend:
-  #   dns:
-  #     - $PIHOLE_DOCKER_SUB_IP_DNS
-  #   labels:
-  #     com.centurylinklabs.watchtower.enable: true
-  #
+     - "8465:8465"
+
   aerofoil:
     container_name: aerofoil
     image: luketanti/aerofoil:latest
@@ -167,25 +129,6 @@ services:
     labels:
       com.centurylinklabs.watchtower.enable: true
   #
-  # digikam:
-  #   image: lscr.io/linuxserver/digikam:latest
-  #   container_name: digikam
-  #   environment:
-  #     - PUID=1000
-  #     - PGID=1000
-  #     - TZ=Europe/Paris
-  #     - KEYBOARD=fr-fr-azerty
-  #     - DOCKER_MODS=linuxserver/mods:universal-package-install
-  #     - INSTALL_PACKAGES=language-pack-kde-fr
-  #   volumes:
-  #     - $DOCKER_CONFIG_PATH/digikam:/config
-  #     - $PICTURES_PATH:/pictures
-  #   #network_mode: host
-  #   ports:
-  #     - 3001:3000
-  #   restart: unless-stopped
-  #
-
   rsync-server:
     image: quentintin/rsync-server
     container_name: rsync-server
@@ -568,6 +511,13 @@ services:
       - $PIHOLE_DOCKER_SUB_IP_DNS
     networks:
       - frontend
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 80 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
 
   portforward_calibreweb:
     image: marcnuri/port-forward
