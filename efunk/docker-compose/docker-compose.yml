@@ -77,6 +77,30 @@ services:
       - mariadb
     restart: unless-stopped
 
+  immich-kiosk:
+    image: ghcr.io/damongolding/immich-kiosk:latest
+    container_name: immich-kiosk
+    tty: true
+    environment:
+      LANG: "fr"
+      TZ: "Europe/Paris"
+      KIOSK_IMMICH_URL: "http://evryfunk.home:2283"     
+      KIOSK_IMMICH_API_KEY: $IMMICH_KIOSK_API
+    ports:
+      - 3000:3000
+    volumes:
+      - ./immich-kiosk/config:/config
+      # - ./custom.css:/custom.css
+      # - ./offline-assets:/offline-assets
+    restart: always
+    # network_mode: host  # Uncomment if connection issues persist on bridge network
+    healthcheck:
+      test: ["CMD", "/kiosk", "--healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
   aerofoil:
     container_name: aerofoil
     image: luketanti/aerofoil:latest
@@ -559,63 +583,25 @@ services:
     networks:
       - frontend
 
-  filebrowser:
-    image: filebrowser/filebrowser:s6
-    container_name: filebrowser
+  filebrowserquantum:
+    image: gtstef/filebrowser:latest
+    container_name: filebrowserquantum
     environment:
-      - PUID=$PUID_USER
-      - PGID=$PGID_USER
+      - FILEBROWSER_CONFIG=/config/config.yaml
       - TZ=$TZ
-      - FB_NOAUTH=True
-      - FB_BASEURL=/filebrowser
-      - FB_DATABASE=/config/filebrowser.db
       - WATCHTOWER_CLEANUP=true
+    user: "${PUID_USER}:${PGID_USER}"
     ports:
       - 9295:80
     volumes:
-      - $DOCKER_CONFIG_PATH/filebrowser/database:/database
-      - $DOCKER_CONFIG_PATH/filebrowser/config:/config
-      - $MOVIES_PATH:/srv/movies:ro
-      - $TORRENT_PATH:/srv/torrent:ro
-      - $SHARE_PATH:/srv/share
-    restart: unless-stopped
-    labels:
-      com.centurylinklabs.watchtower.enable: true
-  #
-
-  # SWAG from duckdns
-  ####################
-  #   swag:
-  #    image: ghcr.io/linuxserver/swag
-  #    container_name: swag
-  #    cap_add:
-  #      - NET_ADMIN
-  #    dns:
-  #      - $PIHOLE_DOCKER_SUB_IP_DNS
-  #    networks:
-  #      - frontend
-  #    environment:
-  #      - PUID=$PUID_USER
-  #      - PGID=$PGID_USER
-  #      - TZ=Europe/Brussels
-  #      - URL=$DUCKDNS_DOMAIN.duckdns.org
-  #      - SUBDOMAINS=wildcard
-  #      - VALIDATION=duckdns
-  #      #- DNSPLUGIN=cloudflare
-  #      #- CERTPROVIDER= #optional
-  #      #- DNSPLUGIN= #optional
-  #      - DUCKDNSTOKEN=$DUCKDNS_TOKEN
-  #      #- EMAIL=<e-mail> #optional
-  #      - ONLY_SUBDOMAINS=false #optional
-  #      #- EXTRA_DOMAINS=brownfunk.lan #optional
-  #      - STAGING=false #optional
-  #    volumes:
-  #      - $DOCKER_CONFIG_PATH/swag:/config
-  #    ports:
-  #      - 443:443
-  #      - 555:80
-  #    restart: unless-stopped
-  # #
+      - $DOCKER_CONFIG_PATH/filebrowserquantum/data:/data
+      - ./filebrowser/config.yaml:/config/config.yaml:ro
+      - $MOVIES_PATH:/srv/media/movies:ro
+      - $PICTURES_PATH:/srv/media/pictures:ro
+      - $TORRENT_PATH:/srv/media/torrent:ro
+      - $SHARE_PATH:/srv/media/share
+      
+ 
   scrutiny:
     container_name: scrutiny
     image: ghcr.io/analogj/scrutiny:master-omnibus
@@ -638,28 +624,6 @@ services:
       - WATCHTOWER_CLEANUP=true
     labels:
       com.centurylinklabs.watchtower.enable: true
-
-  #
-  # memos:
-  #   image: neosmemo/memos:latest
-  #   container_name: memos
-  #   volumes:
-  #     - $DOCKER_CONFIG_PATH/memos/:/var/opt/memos
-  #   ports:
-  #     - 5230:5230
-  #
-  immichframe:
-    container_name: immichframe
-    image: ghcr.io/immichframe/immichframe:latest
-    restart: on-failure
-    # volumes:
-    # - $DOCKER_CONFIG_PATH/immichframe:/app/Config
-    ports:
-      - "8087:8080"
-    environment:
-      TZ: "$TZ"
-    env_file:
-      - .env
 
   lingodiary:
     container_name: lingodiary

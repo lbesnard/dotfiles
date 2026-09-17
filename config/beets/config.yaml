@@ -30,16 +30,13 @@ fetchart:
     auto: yes
     maxwidth: 1000
     cover_names: cover Cover front Front art album portada folder Folder
-    google-key:
     sources:
         - filesystem
         - coverart: release
         - itunes
-        - covertart: releasegroup
+        - coverart: releasegroup
         - amazon
         - albumart
-        - google
-        - '*'
 
 ftintitle:
     auto: yes
@@ -155,7 +152,7 @@ plugins:
     - smartplaylist
     - web
     - wlg
-    - xtractor
+    # - xtractor
 
 pluginpath:
     - ~/.config/beets/plugins/
@@ -172,18 +169,18 @@ smartplaylist:
         - name: 'New_%time{$added,%Y-%m}_$genre_no_space.m3u'
           query: 'added:2018-10..' # first month of using beet. monthly playlists will be created afterwards
 
-hook:
-  hooks:
-    # renaming the "relative_to" part of the playlist created in smartplaylist so this can be used in the airsonic docker container automatically
-    # - event: cli_exit
-      # command: "sh -c 'bash /home/lbesnard/bin/beet_playlist_management.sh'"
-    - event: import
-      command: "sh -c 'bash /home/lbesnard/bin/beet_playlist_management.sh'"
-
-
-    #- event: import
-    #  command: "sh -c 'sh /home/lbesnard/bin/airsonic_update_lib.sh'"
-
+# hook:
+#   hooks:
+#     # renaming the "relative_to" part of the playlist created in smartplaylist so this can be used in the airsonic docker container automatically
+#     # - event: cli_exit
+#       # command: "sh -c 'bash /home/lbesnard/bin/beet_playlist_management.sh'"
+#     - event: import
+#       command: "sh -c 'bash /home/lbesnard/bin/beet_playlist_management.sh'"
+#
+#
+#     #- event: import
+#     #  command: "sh -c 'sh /home/lbesnard/bin/airsonic_update_lib.sh'"
+#
 edit:
     itemfields: track title artist album albumartist genre year
     albumfields: album albumartist genre year
@@ -247,7 +244,7 @@ match:
         missing_tracks: medium
         unmatched_tracks: medium
     distance_weights:
-        source: 2.0
+        data_source: 2.0
         artist: 3.0
         album: 3.0
         media: 1.0
