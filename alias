@@ -1106,7 +1106,7 @@ _mount_sshfs_share () {
 
 ## Specific target functions
 #mount_beefunk_pics () {
-#  _mount_sshfs_share "lbesnard@beefunk.lan:/media/lbesnard/beefunk_12tb_c/pictures" "$HOME/beefunk_pictures"
+#  _mount_sshfs_share "lbesnard@beefunk.local:/media/lbesnard/beefunk_12tb_c/pictures" "$HOME/beefunk_pictures"
 #}
 
 ## Mount only when close to efunk server
@@ -1116,18 +1116,18 @@ _mount_sshfs_share () {
 
 # specific target functions
 mount_beefunk_pics () {
-    mkdir -p "$home/beefunk_pictures"
+    mkdir -p "$HOME/beefunk_pictures"
     local ip
     ip=$(getent hosts beefunk.local | awk '{print $1}')
-    sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr="$ip" beefunk.local:/media/lbesnard/beefunk_12tb_c/pictures "$home/beefunk_pictures"
+    sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,soft,timeo=30,retrans=2,addr="$ip" beefunk.local:/media/lbesnard/beefunk_12tb_c/pictures "$HOME/beefunk_pictures"
 }
 
-# mount only when close to efunk server
+# mount only when close to efunknuc server
 mount_efunknuc_pics () {
-  mkdir -p $home/beefunk_pictures
-  local ip
-  ip=$(getent hosts efunknuc.local | awk '{print $1}')
-  sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr=efunknuc.lan efunknuc.lan:/media/beefunk_12tb_1/pictures "$home/beefunk_pictures"
+    mkdir -p "$HOME/beefunk_pictures"
+    local ip
+    ip=$(getent hosts evrynucfunk.lan | awk '{print $1}')
+    sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,soft,timeo=30,retrans=2,addr="$ip" evrynucfunk.lan:/media/beefunk_12tb_1/pictures "$HOME/beefunk_pictures"
 }
 
 # ping speed choice of server to mount
@@ -1137,8 +1137,8 @@ mount_best_pics() {
     local host1="beefunk.local"
     local path1="beefunk.local:/media/lbesnard/beefunk_12tb_c/pictures"
 
-    local host2="efunknuc.local"
-    local path2="efunknuc.lan:/media/beefunk_12tb_1/pictures"
+    local host2="evrynucfunk.lan"
+    local path2="evrynucfunk.lan:/media/beefunk_12tb_1/pictures"
 
     # Get round-trip time (RTT) in ms, default to 9999 if unreachable
     local rtt1 rtt2
@@ -1166,9 +1166,8 @@ mount_best_pics() {
     ip=$(getent hosts "$target_host" | awk '{print $1}')
     
     echo "Connecting to the fastest server: $target_host ($ip)..."
-    sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr="$ip" "$target_path" "$HOME/beefunk_pictures"
+    sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,soft,timeo=30,retrans=2,addr="$ip" "$target_path" "$HOME/beefunk_pictures"
 }
-
 
 alias sync_export_pics_beefunk_2_efunk_immich='rsync -av --progress --delete-after /media/lbesnard/beefunk_12tb_c/pictures/Export/ efunk:/media/efunk_4tb_1/pictures_laurent_export/'
 
