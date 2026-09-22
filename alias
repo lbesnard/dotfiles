@@ -1114,16 +1114,59 @@ _mount_sshfs_share () {
 #  _mount_sshfs_share "lbesnard@evrynucfunk.lan:/media/beefunk_12tb_1/pictures" "$HOME/beefunk_pictures"
 #}
 
-# Specific target functions
+# specific target functions
 mount_beefunk_pics () {
-  mkdir -p $HOME/beefunk_pictures
-  sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr=beefunk.lan beefunk.lan:/media/lbesnard/beefunk_12tb_c/pictures "$HOME/beefunk_pictures"
+    mkdir -p "$home/beefunk_pictures"
+    local ip
+    ip=$(getent hosts beefunk.local | awk '{print $1}')
+    sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr="$ip" beefunk.local:/media/lbesnard/beefunk_12tb_c/pictures "$home/beefunk_pictures"
 }
 
-# Mount only when close to efunk server
+# mount only when close to efunk server
 mount_efunknuc_pics () {
-  mkdir -p $HOME/beefunk_pictures
-  sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr=efunknuc.lan efunknuc.lan:/media/beefunk_12tb_1/pictures "$HOME/beefunk_pictures"
+  mkdir -p $home/beefunk_pictures
+  local ip
+  ip=$(getent hosts efunknuc.local | awk '{print $1}')
+  sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr=efunknuc.lan efunknuc.lan:/media/beefunk_12tb_1/pictures "$home/beefunk_pictures"
+}
+
+# ping speed choice of server to mount
+mount_best_pics() {
+    mkdir -p "$HOME/beefunk_pictures"
+
+    local host1="beefunk.local"
+    local path1="beefunk.local:/media/lbesnard/beefunk_12tb_c/pictures"
+
+    local host2="efunknuc.local"
+    local path2="efunknuc.lan:/media/beefunk_12tb_1/pictures"
+
+    # Get round-trip time (RTT) in ms, default to 9999 if unreachable
+    local rtt1 rtt2
+    rtt1=$(ping -c 1 -W 1 "$host1" 2>/dev/null | awk -F'/' 'END {print $5}')
+    rtt1=${rtt1:-9999}
+
+    rtt2=$(ping -c 1 -W 1 "$host2" 2>/dev/null | awk -F'/' 'END {print $5}')
+    rtt2=${rtt2:-9999}
+
+    # Pick the one with the lowest ping
+    local target_host target_path
+    local faster
+    faster=$(awk -v r1="$rtt1" -v r2="$rtt2" 'BEGIN {if (r1+0 < r2+0) print "1"; else print "2"}')
+
+    if [[ "$faster" == "1" ]]; then
+        target_host="$host1"
+        target_path="$path1"
+    else
+        target_host="$host2"
+        target_path="$path2"
+    fi
+
+    # Resolve IP and mount
+    local ip
+    ip=$(getent hosts "$target_host" | awk '{print $1}')
+    
+    echo "Connecting to the fastest server: $target_host ($ip)..."
+    sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr="$ip" "$target_path" "$HOME/beefunk_pictures"
 }
 
 
