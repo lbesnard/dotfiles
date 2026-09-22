@@ -70,3 +70,10 @@ show_more_info_qr_code: true
 
 like_button_action: favorite # album, favorite or both [album, favorite]
 hide_button_action: tag # tag, archive, or both [tag, archive]
+
+
+excluded_people:
+  - 8c16ed0e-faf9-4efc-bbd5-206592005aa9  # Margaret Wingard
+  - e8b8863d-dba3-457c-a8c3-972bc0ec30b3 # liz oh
+  - 507efa36-511d-41d8-aa6b-5b333b820a0e # Shelly
+  - 1b0b946c-eb2c-410b-ac30-bd7cb05539a9 # Vic
