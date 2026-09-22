@@ -20,6 +20,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    dns:
+      - $BEEFUNK_LOCAL_IP
     volumes:
       # CREATE CERTS WITH FOLLOWING COMMAND
       # openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
@@ -145,38 +147,17 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"
-
-      # HTTP routers
-      - "traefik.http.routers.homer-http1.rule=Host(`home.beefunk.lan`)"
-      - "traefik.http.routers.homer-http1.entrypoints=web"
-      - "traefik.http.routers.homer-http1.tls=false"
-
-      - "traefik.http.routers.homer-http2.rule=Host(`home.beefunk.home`)"
-      - "traefik.http.routers.homer-http2.entrypoints=web"
-      - "traefik.http.routers.homer-http2.tls=false"
-
-      - "traefik.http.routers.homer-http3.rule=Host(`home.beefunk.local`)"
-      - "traefik.http.routers.homer-http3.entrypoints=web"
-      - "traefik.http.routers.homer-http3.tls=false"
-
-      # HTTPS routers
-      - "traefik.http.routers.homer-https1.rule=Host(`home.beefunk.lan`)"
-      - "traefik.http.routers.homer-https1.entrypoints=websecure"
-      - "traefik.http.routers.homer-https1.tls=true"
-
-      - "traefik.http.routers.homer-https2.rule=Host(`home.beefunk.home`)"
-      - "traefik.http.routers.homer-https2.entrypoints=websecure"
-      - "traefik.http.routers.homer-https2.tls=true"
-
-      - "traefik.http.routers.homer-https3.rule=Host(`home.beefunk.local`)"
-      - "traefik.http.routers.homer-https3.entrypoints=websecure"
-      - "traefik.http.routers.homer-https3.tls=true"
+      - "traefik.http.routers.homer.rule=Host(`home.beefunk.lan`) || Host(`home.beefunk.home`) || Host(`home.beefunk.local`)"
+      - "traefik.http.routers.homer.entrypoints=web"
+      - "traefik.http.services.homer.loadbalancer.server.port=8080"
+      - "com.centurylinklabs.watchtower.enable=true"
 
       # Watchtower
       - "com.centurylinklabs.watchtower.enable=true"
     depends_on:
       - pihole
       - traefik
+
   media-mount-check:
     image: busybox:latest
     container_name: media-mount-check
@@ -294,15 +275,8 @@ services:
 
     labels:
       - "traefik.enable=true"
-      # HTTP Routers
-      - "traefik.http.routers.romm-http.rule=Host(`romm.beefunk.local`)"
-      - "traefik.http.routers.romm-http.entrypoints=web"
-      - "traefik.http.routers.romm-http.tls=false"
-      # HTTPS Routers
-      - "traefik.http.routers.romm-https.rule=Host(`romm.beefunk.local`)"
-      - "traefik.http.routers.romm-https.entrypoints=websecure"
-      - "traefik.http.routers.romm-https.tls=true"
-      # Service Port
+      - "traefik.http.routers.romm.rule=Host(`romm.beefunk.lan`) || Host(`romm.beefunk.home`) || Host(`romm.beefunk.local`)"
+      - "traefik.http.routers.romm.entrypoints=web"
       - "traefik.http.services.romm.loadbalancer.server.port=8080"
       - "com.centurylinklabs.watchtower.enable=true"
 
@@ -377,16 +351,8 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"
-
-      - "traefik.http.routers.pyload-http1.rule=Host(`pyload.beefunk.local`)"
-      - "traefik.http.routers.pyload-http1.entrypoints=web"
-      - "traefik.http.routers.pyload-http1.tls=false"
-
-
-      - "traefik.http.routers.pyload-https1.rule=Host(`pyload.beefunk.local`)"
-      - "traefik.http.routers.pyload-https1.entrypoints=websecure"
-      - "traefik.http.routers.pyload-https1.tls=true"
-
+      - "traefik.http.routers.pyload.rule=Host(`pyload.beefunk.lan`) || Host(`pyload.beefunk.home`) || Host(`pyload.beefunk.local`)"
+      - "traefik.http.routers.pyload.entrypoints=web"
       - "traefik.http.services.pyload.loadbalancer.server.port=8000"
       - "com.centurylinklabs.watchtower.enable=true"
     restart: unless-stopped
@@ -462,28 +428,10 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"
-      # HTTP routers
-      - "traefik.http.routers.jellyfin-http1.rule=Host(`jellyfin.beefunk.lan`)"
-      - "traefik.http.routers.jellyfin-http1.entrypoints=web"
-      - "traefik.http.routers.jellyfin-http1.tls=false"
-      - "traefik.http.routers.jellyfin-http2.rule=Host(`jellyfin.beefunk.home`)"
-      - "traefik.http.routers.jellyfin-http2.entrypoints=web"
-      - "traefik.http.routers.jellyfin-http2.tls=false"
-      - "traefik.http.routers.jellyfin-http3.rule=Host(`jellyfin.beefunk.local`)"
-      - "traefik.http.routers.jellyfin-http3.entrypoints=web"
-      - "traefik.http.routers.jellyfin-http3.tls=false"
-      # HTTPS routers
-      - "traefik.http.routers.jellyfin-https1.rule=Host(`jellyfin.beefunk.lan`)"
-      - "traefik.http.routers.jellyfin-https1.entrypoints=websecure"
-      - "traefik.http.routers.jellyfin-https1.tls=true"
-      - "traefik.http.routers.jellyfin-https2.rule=Host(`jellyfin.beefunk.home`)"
-      - "traefik.http.routers.jellyfin-https2.entrypoints=websecure"
-      - "traefik.http.routers.jellyfin-https2.tls=true"
-      - "traefik.http.routers.jellyfin-https3.rule=Host(`jellyfin.beefunk.local`)"
-      - "traefik.http.routers.jellyfin-https3.entrypoints=websecure"
-      - "traefik.http.routers.jellyfin-https3.tls=true"
-      # Backend
+      - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.beefunk.lan`) || Host(`jellyfin.beefunk.home`) || Host(`jellyfin.beefunk.local`)"
+      - "traefik.http.routers.jellyfin.entrypoints=web"
       - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
+      - "com.centurylinklabs.watchtower.enable=true"
   ###########################
   navidrome:
     image: deluan/navidrome
@@ -503,36 +451,10 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # HTTP routers
-      - "traefik.http.routers.navidrome-http1.rule=Host(`navidrome.beefunk.lan`)"
-      - "traefik.http.routers.navidrome-http1.entrypoints=web"
-      - "traefik.http.routers.navidrome-http1.tls=false"
-
-      - "traefik.http.routers.navidrome-http2.rule=Host(`navidrome.beefunk.home`)"
-      - "traefik.http.routers.navidrome-http2.entrypoints=web"
-      - "traefik.http.routers.navidrome-http2.tls=false"
-
-      - "traefik.http.routers.navidrome-http3.rule=Host(`navidrome.beefunk.local`)"
-      - "traefik.http.routers.navidrome-http3.entrypoints=web"
-      - "traefik.http.routers.navidrome-http3.tls=false"
-
-      # HTTPS routers
-      - "traefik.http.routers.navidrome-https1.rule=Host(`navidrome.beefunk.lan`)"
-      - "traefik.http.routers.navidrome-https1.entrypoints=websecure"
-      - "traefik.http.routers.navidrome-https1.tls=true"
-
-      - "traefik.http.routers.navidrome-https2.rule=Host(`navidrome.beefunk.home`)"
-      - "traefik.http.routers.navidrome-https2.entrypoints=websecure"
-      - "traefik.http.routers.navidrome-https2.tls=true"
-
-      - "traefik.http.routers.navidrome-https3.rule=Host(`navidrome.beefunk.local`)"
-      - "traefik.http.routers.navidrome-https3.entrypoints=websecure"
-      - "traefik.http.routers.navidrome-https3.tls=true"
-
-      # Backend service port
+      - "traefik.http.routers.navidrome.rule=Host(`navidrome.beefunk.lan`) || Host(`navidrome.beefunk.home`) || Host(`navidrome.beefunk.local`)"
+      - "traefik.http.routers.navidrome.entrypoints=web"
+      - "traefik.http.services.navidrome.loadbalancer.server.port=8096"
       - "traefik.http.services.navidrome.loadbalancer.server.port=4533"
-
-      # Existing watchtower label
       - "com.centurylinklabs.watchtower.enable=true"
     environment:
       # Optional: put your config options customization here. Examples:
@@ -575,52 +497,6 @@ services:
       retries: 3
       start_period: 5s
 
-  # sshfs-moode-mpd:
-  #   image: pschmitt/sshfs
-  #   container_name: sshfs-moode-mpd
-  #   cap_add:
-  #     - SYS_ADMIN
-  #   devices:
-  #     - /dev/fuse:/dev/fuse
-  #   security_opt:
-  #     - apparmor:unconfined
-  #   environment:
-  #     - UID=1000
-  #     - GID=1000
-  #   volumes:
-  #     - ~/.ssh/id_moode_sshfs:/config/id_rsa:ro
-  #     - ${DOCKER_CONFIG_PATH}/moode_mpd:/mount:shared
-  #   command: >
-  #     root@192.168.8.136:/var/lib/mpd/
-  #   # restart: unless-stopped
-  #   depends_on:
-  #     moode-check:
-  #       condition: service_healthy
-  #   restart: "no"
-  #
-  # sshfs-moode-mnt:
-  #   image: pschmitt/sshfs
-  #   container_name: sshfs-moode-mnt
-  #   cap_add:
-  #     - SYS_ADMIN
-  #   devices:
-  #     - /dev/fuse:/dev/fuse
-  #   security_opt:
-  #     - apparmor:unconfined
-  #   environment:
-  #     - UID=1000
-  #     - GID=1000
-  #   volumes:
-  #     - ~/.ssh/id_moode_sshfs:/config/id_rsa:ro
-  #     - ${DOCKER_CONFIG_PATH}/moode_mount:/mount:shared
-  #   command: >
-  #     root@192.168.8.136:/mnt/
-  #   # restart: unless-stopped
-  #   depends_on:
-  #     moode-check:
-  #       condition: service_healthy
-  #   restart: "no"
-  #
   mympd:
     image: ghcr.io/jcorporation/mympd/mympd
     container_name: mympd
@@ -997,75 +873,6 @@ services:
       - "$DOCKER_CONFIG_PATH/photoprism/storage:/photoprism/storage"
     labels:
       com.centurylinklabs.watchtower.enable: true
-  #
-  ######################################
-  ###
-  #####################################
-  #  nextcloud:
-  #image: linuxserver/nextcloud
-  #container_name: nextcloud
-  #environment:
-  #- WATCHTOWER_CLEANUP=true
-  #- PUID=$PUID_USER
-  #- PGID=$PGID_USER
-  #- TZ=$TZ
-  #labels:
-  #- com.centurylinklabs.watchtower.enable=true
-  #volumes:
-  #- $DOCKER_CONFIG_PATH/nextcloud:/config
-  #- $NEXTCLOUD_DATA_PATH:/data
-  #ports:
-  #- 9393:443
-  #restart: unless-stopped
-  ###################
-  #
-  #  reverse-proxy:
-  ## The official v2 Traefik docker image
-  #image: traefik:latest
-  #container_name: traefik
-  ## Enables the web UI and tells Traefik to listen to docker
-  #security_opt:
-  #- no-new-privileges:true
-  #restart: always
-  #command:
-  #- --api.dashboard=true
-  #- --providers.docker=true
-  ##- --providers.docker.exposedbydefault=false
-  #- --providers.docker.network=proxy
-  #- --entrypoints.webinsecure.address=:80
-  #- --entrypoints.webinsecure.http.redirections.entrypoint.to=websecure
-  #- --entrypoints.webinsecure.http.redirections.entrypoint.scheme=https
-  #- --entrypoints.websecure.address=:443
-  #- --api.insecure=true
-  #ports:
-  ## The HTTP port
-  #- "80:80"
-  #- 443:443
-  ## The Web UI (enabled by --api.insecure=true)
-  #- "8087:8080"
-  #volumes:
-  ## So that Traefik can listen to the Docker events
-  #- /var/run/docker.sock:/var/run/docker.sock
-  #labels:
-  #- traefik.enable=true
-  #- traefik.docker.network=web
-  #- traefik.http.routers.traefik.rule=Host(`$SERVER_IP`)
-  #- traefik.http.routers.traefik.service=api@internal
-  #- traefik.http.routers.traefik.tls=true
-  #- traefik.http.routers.traefik.entrypoints=websecure
-  ##
-  #  ldap-auth:
-  #image: lscr.io/linuxserver/ldap-auth
-  #container_name: ldap-auth
-  #environment:
-  #- TZ=$TZ
-  ##- F#ERNETKEY= #optional
-  ##- CERTFILE= #optional
-  ##- KEYFILE= #optional
-  #ports:
-  #- 8899:8888
-  #- 9900:9000
-  #    restart: unless-stopped
   ##########
   portainer:
     image: portainer/portainer-ce
@@ -1164,25 +971,6 @@ services:
       - "traefik.http.routers.komga-https3.tls=true"
       - "traefik.http.services.komga.loadbalancer.server.port=25600"
       - "com.centurylinklabs.watchtower.enable=true"
-  ##################
-  #  tubesync:
-  #image: ghcr.io/meeb/tubesync:latest
-  #container_name: tubesync
-  #restart: unless-stopped
-  #ports:
-  #- 4848:4848
-  #volumes:
-  #- $DOCKER_CONFIG_PATH/tubesync-config:/config
-  #- $TV_SHOWS_PATH/tubesync-downloads:/downloads
-  #environment:
-  #- TZ=$TZ
-  #- PUID=$PUID_USER
-  #- PGID=$PGID_USER
-  #- WATCHTOWER_CLEANUP=true
-  #- DATABASE_CONNECTION=mysql://${DB_TUBESYNC_USER}:${DB_TUBESYNC_PASS}@${DB_HOST}:${DB_PORT}/${DB_TUBESYNC_SCHEMA}
-  #labels:
-  #      com.centurylinklabs.watchtower.enable: true
-  #########################
   ######################
   # rsync server
   rsync-server:
@@ -1355,56 +1143,6 @@ services:
 
       - "com.centurylinklabs.watchtower.enable=true"
 
-  filebrowser:
-    image: filebrowser/filebrowser
-    container_name: filebrowser
-    depends_on:
-      media-mount-check:
-        condition: service_healthy
-    environment:
-      - PUID=$PUID_USER
-      - PGID=$PGID_USER
-      - TZ=$TZ
-      - FB_NOAUTH=False
-      - FB_BASEURL=/filebrowser
-      - FB_DATABASE=/config/filebrowser.db
-      - WATCHTOWER_CLEANUP=true
-    #    ports:
-    #      - 9295:80
-    volumes:
-      - $DOCKER_CONFIG_PATH/filebrowser/database:/database
-      - $DOCKER_CONFIG_PATH/filebrowser/config:/config
-      - $EBOOKS_AUDIOBOOKS_PATH:/srv/ebooks_audiobooks:ro
-      - $MUSIC_PATH:/srv/music:ro
-      - $MOVIES_PATH:/srv/movies:ro
-      - $SELF_IMPROVEMENT_PATH:/srv/self_improvement:ro
-      - $GAMES_PATH:/srv/games:ro
-      - $SHARE_PATH:/srv/share
-    restart: unless-stopped
-    networks:
-      - proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.filebrowser-http1.rule=Host(`filebrowser.beefunk.lan`)"
-      - "traefik.http.routers.filebrowser-http1.entrypoints=web"
-      - "traefik.http.routers.filebrowser-http1.tls=false"
-      - "traefik.http.routers.filebrowser-http2.rule=Host(`filebrowser.beefunk.home`)"
-      - "traefik.http.routers.filebrowser-http2.entrypoints=web"
-      - "traefik.http.routers.filebrowser-http2.tls=false"
-      - "traefik.http.routers.filebrowser-http3.rule=Host(`filebrowser.beefunk.local`)"
-      - "traefik.http.routers.filebrowser-http3.entrypoints=web"
-      - "traefik.http.routers.filebrowser-http3.tls=false"
-      - "traefik.http.routers.filebrowser-https1.rule=Host(`filebrowser.beefunk.lan`)"
-      - "traefik.http.routers.filebrowser-https1.entrypoints=websecure"
-      - "traefik.http.routers.filebrowser-https1.tls=true"
-      - "traefik.http.routers.filebrowser-https2.rule=Host(`filebrowser.beefunk.home`)"
-      - "traefik.http.routers.filebrowser-https2.entrypoints=websecure"
-      - "traefik.http.routers.filebrowser-https2.tls=true"
-      - "traefik.http.routers.filebrowser-https3.rule=Host(`filebrowser.beefunk.local`)"
-      - "traefik.http.routers.filebrowser-https3.entrypoints=websecure"
-      - "traefik.http.routers.filebrowser-https3.tls=true"
-      - "traefik.http.services.filebrowser.loadbalancer.server.port=80"
-      - "com.centurylinklabs.watchtower.enable=true"
   #######################
   memos:
     image: neosmemo/memos:latest
@@ -1496,127 +1234,7 @@ services:
       - "traefik.http.routers.aerofoil-https3.tls=true"
       # Service Port
       - "traefik.http.services.aerofoil.loadbalancer.server.port=8465"
-  # ownfoil:
-  #   container_name: ownfoil
-  #   image: a1ex4/ownfoil
-  #   depends_on:
-  #     media-mount-check:
-  #       condition: service_healthy
-  #   dns:
-  #     - $BEEFUNK_LOCAL_IP
-  #     - 8.8.8.8
-  #   volumes:
-  #     - $SWITCH_PATH:/games
-  #     - ./config:/app/config
-  #     # Uncomment if you want to edit and persist the app configuration
-  #     #- $DOCKER_CONFIG_PATH/ownfoil2/app:/app
-  #     #- $DOCKER_CONFIG_PATH/ownfoil2/nginx:/etc/nginx
-  #     # - ./app:/app
-  #     # Uncomment to setup basic auth
-  #     #- ./nginx:/etc/nginx
-  #   environment:
-  #     - USER_ADMIN_NAME=$OWNFOIL_USERNAME
-  #     - USER_ADMIN_PASSWORD=$OWNFOIL_PASSWORD
-  #     - SAVE_ENABLED=true
-  #   restart: unless-stopped
-  #   #    ports:
-  #   #      - "8465:8465"
-  #   networks:
-  #     - proxy
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.ownfoil-http1.rule=Host(`ownfoil.beefunk.lan`)"
-  #     - "traefik.http.routers.ownfoil-http1.entrypoints=web"
-  #     - "traefik.http.routers.ownfoil-http1.tls=false"
-  #     - "traefik.http.routers.ownfoil-http2.rule=Host(`ownfoil.beefunk.home`)"
-  #     - "traefik.http.routers.ownfoil-http2.entrypoints=web"
-  #     - "traefik.http.routers.ownfoil-http2.tls=false"
-  #     - "traefik.http.routers.ownfoil-http3.rule=Host(`ownfoil.beefunk.local`)"
-  #     - "traefik.http.routers.ownfoil-http3.entrypoints=web"
-  #     - "traefik.http.routers.ownfoil-http3.tls=false"
-  #     - "traefik.http.routers.ownfoil-https1.rule=Host(`ownfoil.beefunk.lan`)"
-  #     - "traefik.http.routers.ownfoil-https1.entrypoints=websecure"
-  #     - "traefik.http.routers.ownfoil-https1.tls=true"
-  #     - "traefik.http.routers.ownfoil-https2.rule=Host(`ownfoil.beefunk.home`)"
-  #     - "traefik.http.routers.ownfoil-https2.entrypoints=websecure"
-  #     - "traefik.http.routers.ownfoil-https2.tls=true"
-  #     - "traefik.http.routers.ownfoil-https3.rule=Host(`ownfoil.beefunk.local`)"
-  #     - "traefik.http.routers.ownfoil-https3.entrypoints=websecure"
-  #     - "traefik.http.routers.ownfoil-https3.tls=true"
-  #     - "traefik.http.services.ownfoil.loadbalancer.server.port=8465"
-  # ownfoil_v1:
-  #   container_name: ownfoil_v1
-  #   image: a1ex4/ownfoil:v1
-  #   depends_on:
-  #     media-mount-check:
-  #       condition: service_healthy
-  #   environment:
-  #     # For write permission in config directory
-  #     - PUID=1000
-  #     - PGID=1000
-  #   volumes:
-  #     - $SWITCH_PATH:/games
-  #     - $DOCKER_CONFIG_PATH/ownfoil_v1:/app/config
-  #   #    ports:
-  #   #      - "8000:80"
-  #   restart: unless-stopped
-  #   networks:
-  #     - proxy
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.ownfoil_v1-http1.rule=Host(`ownfoil_v1.beefunk.lan`)"
-  #     - "traefik.http.routers.ownfoil_v1-http1.entrypoints=web"
-  #     - "traefik.http.routers.ownfoil_v1-http1.tls=false"
-  #     - "traefik.http.routers.ownfoil_v1-http2.rule=Host(`ownfoil_v1.beefunk.home`)"
-  #     - "traefik.http.routers.ownfoil_v1-http2.entrypoints=web"
-  #     - "traefik.http.routers.ownfoil_v1-http2.tls=false"
-  #     - "traefik.http.routers.ownfoil_v1-http3.rule=Host(`ownfoil_v1.beefunk.local`)"
-  #     - "traefik.http.routers.ownfoil_v1-http3.entrypoints=web"
-  #     - "traefik.http.routers.ownfoil_v1-http3.tls=false"
-  #     - "traefik.http.routers.ownfoil_v1-https1.rule=Host(`ownfoil_v1.beefunk.beefunk.lan`)"
-  #     - "traefik.http.routers.ownfoil_v1-https1.entrypoints=websecure"
-  #     - "traefik.http.routers.ownfoil_v1-https1.tls=true"
-  #     - "traefik.http.routers.ownfoil_v1-https2.rule=Host(`ownfoil_v1.beefunk.home`)"
-  #     - "traefik.http.routers.ownfoil_v1-https2.entrypoints=websecure"
-  #     - "traefik.http.routers.ownfoil_v1-https2.tls=true"
-  #     - "traefik.http.routers.ownfoil_v1-https3.rule=Host(`ownfoil_v1.beefunk.local`)"
-  #     - "traefik.http.routers.ownfoil_v1-https3.entrypoints=websecure"
-  #     - "traefik.http.routers.ownfoil_v1-https3.tls=true"
-  #     - "traefik.http.services.ownfoil_v1.loadbalancer.server.port=80"
-  #
-  # playerr:
-  #   image: maikboarder/playerr:latest
-  #   container_name: playerr
-  #   #    ports:
-  #   #      - "2727:2727"
-  #   volumes:
-  #     - $DOCKER_CONFIG_PATH/playerr/config:/app/config
-  #     - $SWITCH_PATH:/media:ro
-  #   restart: unless-stopped
-  #   networks:
-  #     - proxy
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.playerr-http1.rule=Host(`playerr.beefunk.lan`)"
-  #     - "traefik.http.routers.playerr-http1.entrypoints=web"
-  #     - "traefik.http.routers.playerr-http1.tls=false"
-  #     - "traefik.http.routers.playerr-http2.rule=Host(`playerr.beefunk.home`)"
-  #     - "traefik.http.routers.playerr-http2.entrypoints=web"
-  #     - "traefik.http.routers.playerr-http2.tls=false"
-  #     - "traefik.http.routers.playerr-http3.rule=Host(`playerr.beefunk.local`)"
-  #     - "traefik.http.routers.playerr-http3.entrypoints=web"
-  #     - "traefik.http.routers.playerr-http3.tls=false"
-  #     - "traefik.http.routers.playerr-https1.rule=Host(`playerr.beefunk.lan`)"
-  #     - "traefik.http.routers.playerr-https1.entrypoints=websecure"
-  #     - "traefik.http.routers.playerr-https1.tls=true"
-  #     - "traefik.http.routers.playerr-https2.rule=Host(`playerr.beefunk.home`)"
-  #     - "traefik.http.routers.playerr-https2.entrypoints=websecure"
-  #     - "traefik.http.routers.playerr-https2.tls=true"
-  #     - "traefik.http.routers.playerr-https3.rule=Host(`playerr.beefunk.local`)"
-  #     - "traefik.http.routers.playerr-https3.entrypoints=websecure"
-  #     - "traefik.http.routers.playerr-https3.tls=true"
-  #     - "traefik.http.services.playerr.loadbalancer.server.port=2727"
-  #
+
   syncthing:
     image: lscr.io/linuxserver/syncthing:latest
     container_name: syncthing
@@ -1628,6 +1246,7 @@ services:
     volumes:
       - /opt/docker_config/syncthing/config:/config
       - $SYNCTHING_DATA_PATH/game_saves:/game_saves
+      - $PICTURES_PATH/syncthing_sd_to_server:/sync/pictures_sd_to_server
       # - /path/to/data2:/data2
     ports:
       # - 8384:8384
@@ -1675,33 +1294,7 @@ services:
       # Syncthing Web UI
       - "traefik.http.services.syncthing.loadbalancer.server.port=8384"
 
-  #######################
-  #### jupyterlab
-  #  jupyter:
-  #container_name: jupyter
-  #image: jupyter/minimal-notebook
-  #volumes:
-  #- $DOCKER_CONFIG_PATH/jupyter:/jupyter
-  #ports:
-  #      - 1002:8888
-  #######################
-  # code-server:
-  #   image: lscr.io/linuxserver/code-server:latest
-  #   container_name: code-server
-  #   environment:
-  #     - PUID=1000
-  #     - PGID=1000
-  #     - TZ=$TZ
-  #     - SUDO_PASSWORD=password
-  #     - PASSWORD=$CODE_SERVER_PASSWORD
-  #     - DOCKER_MODS=linuxserver/mods:code-server-python3|linuxserver/mods:code-server-zsh
-  #   volumes:
-  #     - $DOCKER_CONFIG_PATH/code-server/config:/config
-  #     - $DOCKER_CONFIG_PATH/code-server/code:/code
-  #   ports:
-  #     - 8443:8443
-  #   restart: unless-stopped
-  #
+ #
   scrutiny:
     container_name: scrutiny
     image: ghcr.io/analogj/scrutiny:master-omnibus
@@ -1766,42 +1359,6 @@ services:
       - $DOCKER_CONFIG_PATH/duckdns:/config #optional
     restart: always
   #
-
-  portforward_immich:
-    image: marcnuri/port-forward
-    container_name: portforward_immich
-    environment:
-      - REMOTE_HOST=$EFUNK_IP
-      - REMOTE_PORT=2283
-      - LOCAL_PORT=80
-    #    ports:
-    #      - 2283:80
-    dns:
-      - $PIHOLE_DOCKER_SUB_IP_DNS
-    networks:
-      - proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.immich-http1.rule=Host(`immich.beefunk.lan`)"
-      - "traefik.http.routers.immich-http1.entrypoints=web"
-      - "traefik.http.routers.immich-http1.tls=false"
-      - "traefik.http.routers.immich-http2.rule=Host(`immich.beefunk.home`)"
-      - "traefik.http.routers.immich-http2.entrypoints=web"
-      - "traefik.http.routers.immich-http2.tls=false"
-      - "traefik.http.routers.immich-http3.rule=Host(`immich.beefunk.local`)"
-      - "traefik.http.routers.immich-http3.entrypoints=web"
-      - "traefik.http.routers.immich-http3.tls=false"
-      - "traefik.http.routers.immich-https1.rule=Host(`immich.beefunk.lan`)"
-      - "traefik.http.routers.immich-https1.entrypoints=websecure"
-      - "traefik.http.routers.immich-https1.tls=true"
-      - "traefik.http.routers.immich-https2.rule=Host(`immich.beefunk.home`)"
-      - "traefik.http.routers.immich-https2.entrypoints=websecure"
-      - "traefik.http.routers.immich-https2.tls=true"
-      - "traefik.http.routers.immich-https3.rule=Host(`immich.beefunk.local`)"
-      - "traefik.http.routers.immich-https3.entrypoints=websecure"
-      - "traefik.http.routers.immich-https3.tls=true"
-      - "traefik.http.services.immich.loadbalancer.server.port=80"
-    restart: unless-stopped
 
   immich-kiosk:
     container_name: immich-kiosk
@@ -1965,186 +1522,6 @@ services:
 
       - "com.centurylinklabs.watchtower.enable=true"
 
-  portforward_lingodiary:
-    image: marcnuri/port-forward
-    container_name: portforward_lingodiary
-    environment:
-      - REMOTE_HOST=$EFUNK_IP
-      - REMOTE_PORT=8084
-      - LOCAL_PORT=80
-    #    ports:
-    #      - 8084:80
-    dns:
-      - $PIHOLE_DOCKER_SUB_IP_DNS
-    networks:
-      - proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.lingodiary-http1.rule=Host(`lingodiary.beefunk.lan`)"
-      - "traefik.http.routers.lingodiary-http1.entrypoints=web"
-      - "traefik.http.routers.lingodiary-http1.tls=false"
-      - "traefik.http.routers.lingodiary-http2.rule=Host(`lingodiary.beefunk.home`)"
-      - "traefik.http.routers.lingodiary-http2.entrypoints=web"
-      - "traefik.http.routers.lingodiary-http2.tls=false"
-      - "traefik.http.routers.lingodiary-http3.rule=Host(`lingodiary.beefunk.local`)"
-      - "traefik.http.routers.lingodiary-http3.entrypoints=web"
-      - "traefik.http.routers.lingodiary-http3.tls=false"
-      - "traefik.http.routers.lingodiary-https1.rule=Host(`lingodiary.beefunk.lan`)"
-      - "traefik.http.routers.lingodiary-https1.entrypoints=websecure"
-      - "traefik.http.routers.lingodiary-https1.tls=true"
-      - "traefik.http.routers.lingodiary-https2.rule=Host(`lingodiary.beefunk.home`)"
-      - "traefik.http.routers.lingodiary-https2.entrypoints=websecure"
-      - "traefik.http.routers.lingodiary-https2.tls=true"
-      - "traefik.http.routers.lingodiary-https3.rule=Host(`lingodiary.beefunk.local`)"
-      - "traefik.http.routers.lingodiary-https3.entrypoints=websecure"
-      - "traefik.http.routers.lingodiary-https3.tls=true"
-      - "traefik.http.services.lingodiary.loadbalancer.server.port=80"
-    restart: unless-stopped
-
-  portforward_sonarr:
-    image: marcnuri/port-forward
-    container_name: portforward_sonarr
-    environment:
-      - REMOTE_HOST=$BFUNK_IP
-      - REMOTE_PORT=8989
-      - LOCAL_PORT=80
-    #    ports:
-    #      - 8989:80
-    dns:
-      - $PIHOLE_DOCKER_SUB_IP_DNS
-    networks:
-      - proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.sonarr-http1.rule=Host(`sonarr.beefunk.lan`)"
-      - "traefik.http.routers.sonarr-http1.entrypoints=web"
-      - "traefik.http.routers.sonarr-http1.tls=false"
-      - "traefik.http.routers.sonarr-http2.rule=Host(`sonarr.beefunk.home`)"
-      - "traefik.http.routers.sonarr-http2.entrypoints=web"
-      - "traefik.http.routers.sonarr-http2.tls=false"
-      - "traefik.http.routers.sonarr-http3.rule=Host(`sonarr.beefunk.local`)"
-      - "traefik.http.routers.sonarr-http3.entrypoints=web"
-      - "traefik.http.routers.sonarr-http3.tls=false"
-      - "traefik.http.routers.sonarr-https1.rule=Host(`sonarr.beefunk.lan`)"
-      - "traefik.http.routers.sonarr-https1.entrypoints=websecure"
-      - "traefik.http.routers.sonarr-https1.tls=true"
-      - "traefik.http.routers.sonarr-https2.rule=Host(`sonarr.beefunk.home`)"
-      - "traefik.http.routers.sonarr-https2.entrypoints=websecure"
-      - "traefik.http.routers.sonarr-https2.tls=true"
-      - "traefik.http.routers.sonarr-https3.rule=Host(`sonarr.beefunk.local`)"
-      - "traefik.http.routers.sonarr-https3.entrypoints=websecure"
-      - "traefik.http.routers.sonarr-https3.tls=true"
-      - "traefik.http.services.sonarr.loadbalancer.server.port=80"
-    restart: unless-stopped
-
-  portforward_radarr:
-    image: marcnuri/port-forward
-    container_name: portforward_radarr
-    environment:
-      - REMOTE_HOST=$BFUNK_IP
-      - REMOTE_PORT=7878
-      - LOCAL_PORT=80
-    #    ports:
-    #      - 7878:80
-    dns:
-      - $PIHOLE_DOCKER_SUB_IP_DNS
-    networks:
-      - proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.radarr-http1.rule=Host(`radarr.beefunk.lan`)"
-      - "traefik.http.routers.radarr-http1.entrypoints=web"
-      - "traefik.http.routers.radarr-http1.tls=false"
-      - "traefik.http.routers.radarr-http2.rule=Host(`radarr.beefunk.home`)"
-      - "traefik.http.routers.radarr-http2.entrypoints=web"
-      - "traefik.http.routers.radarr-http2.tls=false"
-      - "traefik.http.routers.radarr-http3.rule=Host(`radarr.beefunk.local`)"
-      - "traefik.http.routers.radarr-http3.entrypoints=web"
-      - "traefik.http.routers.radarr-http3.tls=false"
-      - "traefik.http.routers.radarr-https1.rule=Host(`radarr.beefunk.lan`)"
-      - "traefik.http.routers.radarr-https1.entrypoints=websecure"
-      - "traefik.http.routers.radarr-https1.tls=true"
-      - "traefik.http.routers.radarr-https2.rule=Host(`radarr.beefunk.home`)"
-      - "traefik.http.routers.radarr-https2.entrypoints=websecure"
-      - "traefik.http.routers.radarr-https2.tls=true"
-      - "traefik.http.routers.radarr-https3.rule=Host(`radarr.beefunk.local`)"
-      - "traefik.http.routers.radarr-https3.entrypoints=websecure"
-      - "traefik.http.routers.radarr-https3.tls=true"
-      - "traefik.http.services.radarr.loadbalancer.server.port=80"
-    restart: unless-stopped
-
-  portforward_transmission:
-    image: marcnuri/port-forward
-    container_name: portforward_transmission
-    environment:
-      - REMOTE_HOST=$BFUNK_IP
-      - REMOTE_PORT=9091
-      - LOCAL_PORT=80
-    #    ports:
-    #      - 9091:80
-    dns:
-      - $PIHOLE_DOCKER_SUB_IP_DNS
-    networks:
-      - proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.transmission-http1.rule=Host(`transmission.beefunk.lan`)"
-      - "traefik.http.routers.transmission-http1.entrypoints=web"
-      - "traefik.http.routers.transmission-http1.tls=false"
-      - "traefik.http.routers.transmission-http2.rule=Host(`transmission.beefunk.home`)"
-      - "traefik.http.routers.transmission-http2.entrypoints=web"
-      - "traefik.http.routers.transmission-http2.tls=false"
-      - "traefik.http.routers.transmission-http3.rule=Host(`transmission.beefunk.local`)"
-      - "traefik.http.routers.transmission-http3.entrypoints=web"
-      - "traefik.http.routers.transmission-http3.tls=false"
-      - "traefik.http.routers.transmission-https1.rule=Host(`transmission.beefunk.lan`)"
-      - "traefik.http.routers.transmission-https1.entrypoints=websecure"
-      - "traefik.http.routers.transmission-https1.tls=true"
-      - "traefik.http.routers.transmission-https2.rule=Host(`transmission.beefunk.home`)"
-      - "traefik.http.routers.transmission-https2.entrypoints=websecure"
-      - "traefik.http.routers.transmission-https2.tls=true"
-      - "traefik.http.routers.transmission-https3.rule=Host(`transmission.beefunk.local`)"
-      - "traefik.http.routers.transmission-https3.entrypoints=websecure"
-      - "traefik.http.routers.transmission-https3.tls=true"
-      - "traefik.http.services.transmission.loadbalancer.server.port=80"
-    restart: unless-stopped
-
-  portforward_jackett:
-    image: marcnuri/port-forward
-    container_name: portforward_jackett
-    environment:
-      - REMOTE_HOST=$BFUNK_IP
-      - REMOTE_PORT=9117
-      - LOCAL_PORT=80
-    #    ports:
-    #      - 9117:80
-    dns:
-      - $PIHOLE_DOCKER_SUB_IP_DNS
-    networks:
-      - proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.jackett-http1.rule=Host(`jackett.beefunk.lan`)"
-      - "traefik.http.routers.jackett-http1.entrypoints=web"
-      - "traefik.http.routers.jackett-http1.tls=false"
-      - "traefik.http.routers.jackett-http2.rule=Host(`jackett.beefunk.home`)"
-      - "traefik.http.routers.jackett-http2.entrypoints=web"
-      - "traefik.http.routers.jackett-http2.tls=false"
-      - "traefik.http.routers.jackett-http3.rule=Host(`jackett.beefunk.local`)"
-      - "traefik.http.routers.jackett-http3.entrypoints=web"
-      - "traefik.http.routers.jackett-http3.tls=false"
-      - "traefik.http.routers.jackett-https1.rule=Host(`jackett.beefunk.lan`)"
-      - "traefik.http.routers.jackett-https1.entrypoints=websecure"
-      - "traefik.http.routers.jackett-https1.tls=true"
-      - "traefik.http.routers.jackett-https2.rule=Host(`jackett.beefunk.home`)"
-      - "traefik.http.routers.jackett-https2.entrypoints=websecure"
-      - "traefik.http.routers.jackett-https2.tls=true"
-      - "traefik.http.routers.jackett-https3.rule=Host(`jackett.beefunk.local`)"
-      - "traefik.http.routers.jackett-https3.entrypoints=websecure"
-      - "traefik.http.routers.jackett-https3.tls=true"
-      - "traefik.http.services.jackett.loadbalancer.server.port=80"
-    restart: unless-stopped
-
   prowlarr:
     image: lscr.io/linuxserver/prowlarr
     #container_name: prowlarr
@@ -2168,24 +1545,8 @@ services:
       - frontend
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.prowlarr-http1.rule=Host(`prowlarr.beefunk.lan`)"
-      - "traefik.http.routers.prowlarr-http1.entrypoints=web"
-      - "traefik.http.routers.prowlarr-http1.tls=false"
-      - "traefik.http.routers.prowlarr-http2.rule=Host(`prowlarr.beefunk.home`)"
-      - "traefik.http.routers.prowlarr-http2.entrypoints=web"
-      - "traefik.http.routers.prowlarr-http2.tls=false"
-      - "traefik.http.routers.prowlarr-http3.rule=Host(`prowlarr.beefunk.local`)"
-      - "traefik.http.routers.prowlarr-http3.entrypoints=web"
-      - "traefik.http.routers.prowlarr-http3.tls=false"
-      - "traefik.http.routers.prowlarr-https1.rule=Host(`prowlarr.beefunk.lan`)"
-      - "traefik.http.routers.prowlarr-https1.entrypoints=websecure"
-      - "traefik.http.routers.prowlarr-https1.tls=true"
-      - "traefik.http.routers.prowlarr-https2.rule=Host(`prowlarr.beefunk.home`)"
-      - "traefik.http.routers.prowlarr-https2.entrypoints=websecure"
-      - "traefik.http.routers.prowlarr-https2.tls=true"
-      - "traefik.http.routers.prowlarr-https3.rule=Host(`prowlarr.beefunk.local`)"
-      - "traefik.http.routers.prowlarr-https3.entrypoints=websecure"
-      - "traefik.http.routers.prowlarr-https3.tls=true"
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.beefunk.lan`) || Host(`prowlarr.beefunk.home`) || Host(`prowlarr.beefunk.local`)"
+      - "traefik.http.routers.prowlarr.entrypoints=web"
       - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
       - "com.centurylinklabs.watchtower.enable=true"
 

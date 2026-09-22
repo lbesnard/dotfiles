@@ -9,12 +9,80 @@ tls:
       defaultCertificate:
         certFile: /certs/beefunk.crt
         keyFile: /certs/beefunk.key
-#
-# tls:
-#   certificates:
-#     - certFile: /certs/beefunk.crt
-#       keyFile: /certs/beefunk.key
-#
+
+http:
+  routers:
+    immich-secure:
+      rule: "Host(`immich.beefunk.lan`) || Host(`immich.beefunk.home`) || Host(`immich.beefunk.local`)"
+      # the commented lines are for https but we need to do a letsencrypt certificated
+      # entryPoints:
+      #   - "websecure"
+      # tls: {}
+      entryPoints:
+        - "web"
+      service: immich-remote
+
+    lingodiary-http:
+      rule: "Host(`lingodiary.beefunk.lan`) || Host(`lingodiary.beefunk.home`) || Host(`lingodiary.beefunk.local`)"
+      entryPoints:
+        - "web"
+      service: lingodiary-remote
+
+    sonarr-http:
+      rule: "Host(`sonarr.beefunk.lan`) || Host(`sonarr.beefunk.home`) || Host(`sonarr.beefunk.local`)"
+      entryPoints:
+        - "web"
+      service: sonarr-remote
+
+    radarr-http:
+      rule: "Host(`radarr.beefunk.lan`) || Host(`radarr.beefunk.home`) || Host(`radarr.beefunk.local`)"
+      entryPoints:
+        - "web"
+      service: radarr-remote
+
+    transmission-http:
+      rule: "Host(`transmission.beefunk.lan`) || Host(`transmission.beefunk.home`) || Host(`transmission.beefunk.local`)"
+      entryPoints:
+        - "web"
+      service: transmission-remote
+
+    jackett-http:
+      rule: "Host(`jackett.beefunk.lan`) || Host(`jackett.beefunk.home`) || Host(`jackett.beefunk.local`)"
+      entryPoints:
+        - "web"
+      service: jackett-remote
+
+  services:
+    immich-remote:
+      loadBalancer:
+        servers:
+          - url: "http://evryfunk.home:2283"
+
+    lingodiary-remote:
+      loadBalancer:
+        servers:
+          - url: "http://evryfunk.home:8084"
+
+    sonarr-remote:
+      loadBalancer:
+        servers:
+          - url: "http://brownfunk.lan:8989"
+
+    radarr-remote:
+      loadBalancer:
+        servers:
+          - url: "http://brownfunk.lan:7878"
+
+    transmission-remote:
+      loadBalancer:
+        servers:
+          - url: "http://brownfunk.lan:9091"
+
+    jackett-remote:
+      loadBalancer:
+        servers:
+          - url: "http://brownfunk.lan:9117"
+
 # http:
 #   serversTransports:
 #     digikam-tls:

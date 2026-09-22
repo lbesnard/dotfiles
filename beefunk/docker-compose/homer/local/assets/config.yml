@@ -325,7 +325,7 @@ services:
         subtitle: "Link downloader"
         tag: "dl"
         tagstyle: "is-dark"
-        url: "http://brownfunk.local:8000"
+        url: "http://pyload.beefunk.local"
         target: "_.local"
 
   - name: "Server Maintenance & Tools"
