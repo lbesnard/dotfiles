@@ -83,7 +83,8 @@ http:
         servers:
           - url: "http://brownfunk.lan:9117"
 
-# http:
-#   serversTransports:
-#     digikam-tls:
-#       insecureSkipVerify: true
+  serversTransports:
+    digikam-tls:
+      insecureSkipVerify: true
+    darktable-tls:
+      insecureSkipVerify: true
