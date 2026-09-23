@@ -50,7 +50,7 @@ colors:
 message:
   style: "is-warning"
   title: "Welcome to Beefunk!"
-  content: '<a href="http://home.beefunk.local">http://home.beefunk.local</a> <br> Find more information about this media server at <a href="http://beefunk:3000/s/H1tA_LShH" target="_.local">Server How to</a>'
+  content: '<a href="http://home.funkybeefunk.duckdns.org">http://home.funkybeefunk.duckdns.org</a> <br> Find more information about this media server at <a href="http://beefunk:3000/s/H1tA_LShH" target="_.local">Server How to</a>'
 
 links:
   - name: "Server Howto"
@@ -65,17 +65,17 @@ services:
       - name: "Mealie"
         logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/mealie.png"
         subtitle: "Recipes & meal planning"
-        url: "http://mealie.beefunk.local"
+        url: "http://mealie.funkybeefunk.duckdns.org"
         target: "_.local"
         tag: "app"
         tagstyle: "is-info"
 
       - name: "LingoDiary"
-        logo: "http://lingodiary.beefunk.local/static/icon_reduced.png"
+        logo: "http://lingodiary.funkybeefunk.duckdns.org/static/icon_reduced.png"
         subtitle: "Language learning"
         tag: "app"
         tagstyle: "is-info"
-        url: "http://lingodiary.beefunk.local"
+        url: "http://lingodiary.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "Blog - El Camino Loco"
@@ -102,7 +102,7 @@ services:
         subtitle: "Media streaming"
         tag: "media"
         tagstyle: "is-success"
-        url: "http://jellyfin.beefunk.local"
+        url: "http://jellyfin.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "Audiobookshelf"
@@ -110,7 +110,7 @@ services:
         subtitle: "Audiobook streaming"
         tag: "media"
         tagstyle: "is-success"
-        url: "http://audiobookshelf.beefunk.local"
+        url: "http://audiobookshelf.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "Navidrome"
@@ -118,7 +118,7 @@ services:
         subtitle: "Music streaming"
         tag: "media"
         tagstyle: "is-success"
-        url: "http://navidrome.beefunk.local"
+        url: "http://navidrome.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "myMPD"
@@ -126,7 +126,7 @@ services:
         subtitle: "MPD client"
         tag: "media"
         tagstyle: "is-success"
-        url: "http://mympd.beefunk.local"
+        url: "http://mympd.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "Moode"
@@ -142,7 +142,7 @@ services:
         subtitle: "Comics streaming"
         tag: "media"
         tagstyle: "is-success"
-        url: "http://komga.beefunk.local"
+        url: "http://komga.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "Calibre Web"
@@ -150,7 +150,7 @@ services:
         subtitle: "Ebooks download"
         tag: "media"
         tagstyle: "is-success"
-        url: "http://calibre-web.beefunk.local"
+        url: "http://calibre-web.funkybeefunk.duckdns.org"
         target: "_.local"
 
   - name: "Photos & Gallery"
@@ -161,7 +161,7 @@ services:
         subtitle: "Pictures management"
         tag: "photos"
         tagstyle: "is-warning"
-        url: "http://immich.beefunk.local"
+        url: "http://immich.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "Immich-Kiosk"
@@ -169,7 +169,7 @@ services:
         subtitle: "Slideshow"
         tag: "photos"
         tagstyle: "is-warning"
-        url: "http://immich-kiosk.beefunk.local"
+        url: "http://immich-kiosk.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "Digikam"
@@ -177,35 +177,32 @@ services:
         subtitle: "Photo Management"
         tag: "photos"
         tagstyle: "is-warning"
-        url: "https://digikam.beefunk.local"
+        url: "https://digikam.funkybeefunk.duckdns.org"
         target: "_.local"
-
 
       - name: "Darktable"
         logo: "https://upload.wikimedia.org/wikipedia/commons/7/7b/Darktable_icon.svg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original"
         subtitle: "Photo Raw Editor"
         tag: "photos"
         tagstyle: "is-warning"
-        url: "https://darktable.beefunk.local"
+        url: "https://darktable.funkybeefunk.duckdns.org"
         target: "_.local"
-
-
 
       - name: "Piwigo"
         logo: "assets/lens.png"
         subtitle: "Picture gallery"
         tag: "photos"
         tagstyle: "is-warning"
-        url: "http://piwigo.beefunk.local"
+        url: "http://piwigo.funkybeefunk.duckdns.org"
         target: "_.local"
 
-      - name: "Photoprism"
-        logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/photoprism.png"
-        subtitle: "Picture gallery"
-        tag: "photos"
-        tagstyle: "is-warning"
-        url: "http://beefunk:2342"
-        target: "_.local"
+      # - name: "Photoprism"
+      #   logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/photoprism.png"
+      #   subtitle: "Picture gallery"
+      #   tag: "photos"
+      #   tagstyle: "is-warning"
+      #   url: "http://beefunk:2342"
+      #   target: "_.local"
 
   - name: "Gaming & Emulation"
     icon: "fas fa-gamepad"
@@ -215,7 +212,7 @@ services:
         subtitle: "ROM manager"
         tag: "games"
         tagstyle: "is-danger"
-        url: "http://romm.beefunk.local"
+        url: "http://romm.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "Aerofoil"
@@ -223,7 +220,7 @@ services:
         subtitle: "Switch games"
         tag: "games"
         tagstyle: "is-danger"
-        url: "http://aerofoil.beefunk.local"
+        url: "http://aerofoil.funkybeefunk.duckdns.org"
         target: "_.local"
 
   - name: "Cloud & Sync"
@@ -242,7 +239,7 @@ services:
         subtitle: "Sync data between devices"
         tag: "cloud"
         tagstyle: "is-primary"
-        url: "https://syncthing.beefunk.local"
+        url: "https://syncthing.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "File Browser"
@@ -250,7 +247,7 @@ services:
         subtitle: "Explore server files"
         tag: "tools"
         tagstyle: "is-primary"
-        url: "http://filebrowserquantum.beefunk.local"
+        url: "http://filebrowserquantum.funkybeefunk.duckdns.org"
         target: "_.local"
 
   - name: "Downloads & Indexers"
@@ -261,7 +258,7 @@ services:
         subtitle: "Torrent + VPN"
         tag: "dl"
         tagstyle: "is-dark"
-        url: "http://transmission.beefunk.local"
+        url: "http://transmission.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "Prowlarr"
@@ -269,7 +266,7 @@ services:
         subtitle: "Indexer search"
         tag: "dl"
         tagstyle: "is-dark"
-        url: "http://prowlarr.beefunk.local"
+        url: "http://prowlarr.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "Jackett"
@@ -277,7 +274,7 @@ services:
         subtitle: "Torrent proxy"
         tag: "dl"
         tagstyle: "is-dark"
-        url: "http://jackett.beefunk.local"
+        url: "http://jackett.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "Radarr"
@@ -285,7 +282,7 @@ services:
         subtitle: "Movie download"
         tag: "dl"
         tagstyle: "is-dark"
-        url: "http://radarr.beefunk.local"
+        url: "http://radarr.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "Radarr (French)"
@@ -301,7 +298,7 @@ services:
         subtitle: "TV show download"
         tag: "dl"
         tagstyle: "is-dark"
-        url: "http://sonarr.beefunk.local"
+        url: "http://sonarr.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "Lidarr"
@@ -325,7 +322,7 @@ services:
         subtitle: "Link downloader"
         tag: "dl"
         tagstyle: "is-dark"
-        url: "http://pyload.beefunk.local"
+        url: "http://pyload.funkybeefunk.duckdns.org"
         target: "_.local"
 
   - name: "Server Maintenance & Tools"
@@ -334,7 +331,7 @@ services:
       - name: "Portainer"
         logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/portainer.png"
         subtitle: "Docker management"
-        url: "http://portainer.beefunk.local"
+        url: "http://portainer.funkybeefunk.duckdns.org"
         tag: "geek"
         tagstyle: "is-light"
         target: "_.local"
@@ -344,7 +341,7 @@ services:
         subtitle: "Linux console VM"
         tag: "geek"
         tagstyle: "is-light"
-        url: "https://beefunk.local:9090"
+        url: "https://funkybeefunk.duckdns.org:9090"
         target: "_.local"
 
       - name: "Pi-hole"
@@ -352,7 +349,7 @@ services:
         subtitle: "DNS & DHCP server"
         tag: "geek"
         tagstyle: "is-light"
-        url: "http://pihole.beefunk.local/admin"
+        url: "http://pihole.funkybeefunk.duckdns.org/admin"
         target: "_.local"
 
       - name: "Router"
@@ -384,15 +381,15 @@ services:
         subtitle: "Ebooks Maintenance"
         tag: "app"
         tagstyle: "is-info"
-        url: "http://beefunk:8081"
+        url: "http://calibre.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "Unmanic"
-        logo: "http://unmanic.beefunk.local/unmanic/img/unmanic-logo-white.a3277864.png"
+        logo: "http://unmanic.funkybeefunk.duckdns.org/unmanic/img/unmanic-logo-white.a3277864.png"
         subtitle: "Video converter"
         tag: "app"
         tagstyle: "is-info"
-        url: "http://unmanic.beefunk.local"
+        url: "http://unmanic.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "Firefox"
@@ -400,5 +397,5 @@ services:
         subtitle: "Remote browser"
         tag: "tools"
         tagstyle: "is-light"
-        url: "https://beefunk:3009"
+        url: "https://firefox.funkybeefunk.duckdns.org/"
         target: "_.local"
