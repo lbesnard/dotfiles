@@ -10,46 +10,55 @@ tls:
         certFile: /certs/beefunk.crt
         keyFile: /certs/beefunk.key
 
+# One router per remote service, serving both the .lan/.home/.local names and the
+# <name>.funkybeefunk.duckdns.org name on HTTPS. Plain HTTP is handled globally by
+# the web -> websecure redirect configured on the traefik entrypoint.
+# Routers only set `tls: {}`: traefik picks the matching cert from its store - the
+# Let's Encrypt wildcard for *.funkybeefunk.duckdns.org, or the self-signed default
+# above for the .local names. Do not add a certResolver here; the wildcard is
+# requested once by the traefik-dashboard router in docker-compose.yml.
 http:
   routers:
-    immich-secure:
-      rule: "Host(`immich.beefunk.lan`) || Host(`immich.beefunk.home`) || Host(`immich.beefunk.local`)"
-      # the commented lines are for https but we need to do a letsencrypt certificated
-      # entryPoints:
-      #   - "websecure"
-      # tls: {}
+    immich:
+      rule: "Host(`immich.beefunk.lan`) || Host(`immich.beefunk.home`) || Host(`immich.beefunk.local`) || Host(`immich.funkybeefunk.duckdns.org`)"
       entryPoints:
-        - "web"
+        - "websecure"
+      tls: {}
       service: immich-remote
 
-    lingodiary-http:
-      rule: "Host(`lingodiary.beefunk.lan`) || Host(`lingodiary.beefunk.home`) || Host(`lingodiary.beefunk.local`)"
+    lingodiary:
+      rule: "Host(`lingodiary.beefunk.lan`) || Host(`lingodiary.beefunk.home`) || Host(`lingodiary.beefunk.local`) || Host(`lingodiary.funkybeefunk.duckdns.org`)"
       entryPoints:
-        - "web"
+        - "websecure"
+      tls: {}
       service: lingodiary-remote
 
-    sonarr-http:
-      rule: "Host(`sonarr.beefunk.lan`) || Host(`sonarr.beefunk.home`) || Host(`sonarr.beefunk.local`)"
+    sonarr:
+      rule: "Host(`sonarr.beefunk.lan`) || Host(`sonarr.beefunk.home`) || Host(`sonarr.beefunk.local`) || Host(`sonarr.funkybeefunk.duckdns.org`)"
       entryPoints:
-        - "web"
+        - "websecure"
+      tls: {}
       service: sonarr-remote
 
-    radarr-http:
-      rule: "Host(`radarr.beefunk.lan`) || Host(`radarr.beefunk.home`) || Host(`radarr.beefunk.local`)"
+    radarr:
+      rule: "Host(`radarr.beefunk.lan`) || Host(`radarr.beefunk.home`) || Host(`radarr.beefunk.local`) || Host(`radarr.funkybeefunk.duckdns.org`)"
       entryPoints:
-        - "web"
+        - "websecure"
+      tls: {}
       service: radarr-remote
 
-    transmission-http:
-      rule: "Host(`transmission.beefunk.lan`) || Host(`transmission.beefunk.home`) || Host(`transmission.beefunk.local`)"
+    transmission:
+      rule: "Host(`transmission.beefunk.lan`) || Host(`transmission.beefunk.home`) || Host(`transmission.beefunk.local`) || Host(`transmission.funkybeefunk.duckdns.org`)"
       entryPoints:
-        - "web"
+        - "websecure"
+      tls: {}
       service: transmission-remote
 
-    jackett-http:
-      rule: "Host(`jackett.beefunk.lan`) || Host(`jackett.beefunk.home`) || Host(`jackett.beefunk.local`)"
+    jackett:
+      rule: "Host(`jackett.beefunk.lan`) || Host(`jackett.beefunk.home`) || Host(`jackett.beefunk.local`) || Host(`jackett.funkybeefunk.duckdns.org`)"
       entryPoints:
-        - "web"
+        - "websecure"
+      tls: {}
       service: jackett-remote
 
   services:
@@ -88,3 +97,4 @@ http:
       insecureSkipVerify: true
     darktable-tls:
       insecureSkipVerify: true
+
