@@ -117,7 +117,6 @@ services:
       - "traefik.http.routers.pihole.tls=true"
       - "traefik.http.services.pihole.loadbalancer.server.port=80" # <--- internal port
 
-
     networks:
       proxy: {}
       frontend:
@@ -195,11 +194,7 @@ services:
       - /proc:/host-proc:ro
     command: ["sh", "-c", "while true; do sleep 30; done"]
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "grep -q ' $MOUNT_CHECK ' /host-proc/1/mountinfo"
-        ]
+      test: ["CMD-SHELL", "grep -q ' $MOUNT_CHECK ' /host-proc/1/mountinfo"]
       interval: 5s
       timeout: 2s
       retries: 3
@@ -302,7 +297,6 @@ services:
       - ${GAMES_PATH}/emulation/Nintendo/3DS/N3DS/:/romm/library/new-nintendo-3ds/roms
       - ${GAMES_PATH}/emulation/Nintendo/Switch/:/romm/library/switch/roms
 
-
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.romm.rule=Host(`romm.beefunk.lan`) || Host(`romm.beefunk.home`) || Host(`romm.beefunk.local`) || Host(`romm.$DUCKDNS_DOMAIN.duckdns.org`)"
@@ -395,10 +389,9 @@ services:
       - "com.centurylinklabs.watchtower.enable=true"
     restart: unless-stopped
 
-
     # ports:
-      # - 8000:8000
-      # - 9666:9666 #optional
+    # - 8000:8000
+    # - 9666:9666 #optional
   unmanic:
     container_name: unmanic
     image: josh5/unmanic:latest
@@ -416,7 +409,7 @@ services:
       - $TV_SHOWS_PATH:/library_shows
       - /tmp/unmanic:/tmp/unmanic
     # ports:
-      # - 8877:8888
+    # - 8877:8888
     networks:
       - proxy
     labels:
@@ -542,8 +535,8 @@ services:
       # MYMPD_MYMPD_URI: http://beefunk:8097
       MYMPD_LOGLEVEL: 7
     # depends_on:
-      # - sshfs-moode-mpd
-      # - sshfs-moode-mnt
+    # - sshfs-moode-mpd
+    # - sshfs-moode-mnt
     volumes:
       - /run/mpd:/run/mpd
       - moode_mpd_nfs:/var/lib/mpd:ro
@@ -1008,7 +1001,7 @@ services:
       - 22000:22000/udp
       - 21027:21027/udp
     restart: unless-stopped
-    
+
     dns:
       - $BEEFUNK_LOCAL_IP
       - 8.8.8.8
@@ -1081,7 +1074,7 @@ services:
     environment:
       LANG: "en_GB"
       TZ: "Europe/London"
-      KIOSK_IMMICH_URL: "http://immich.beefunk.local"     
+      KIOSK_IMMICH_URL: "https://immich.$DUCKDNS_DOMAIN.duckdns.org"
       KIOSK_IMMICH_API_KEY: $IMMICH_KIOSK_API
     volumes:
       - ./immich-kiosk/config:/config
@@ -1125,7 +1118,7 @@ services:
       - $PICTURES_PATH/Digikam_linuxserver:/config
       - $PICTURES_PATH/Pictures:/photos
     # ports:
-      # - "3001:3001"
+    # - "3001:3001"
     shm_size: "2gb"
     dns:
       - $BEEFUNK_LOCAL_IP
@@ -1142,16 +1135,15 @@ services:
       - "traefik.http.routers.digikam.rule=Host(`digikam.beefunk.lan`) || Host(`digikam.beefunk.home`) || Host(`digikam.beefunk.local`) || Host(`digikam.$DUCKDNS_DOMAIN.duckdns.org`)"
       - "traefik.http.routers.digikam.entrypoints=websecure"
       - "traefik.http.routers.digikam.tls=true"
-      - "traefik.http.routers.digikam.middlewares=digikam-ws"
-
+      # - "traefik.http.routers.digikam.middlewares=digikam-ws"
 
       # - "traefik.http.services.digikam.loadbalancer.server.port=3000"
-      - "traefik.http.services.digikam.loadbalancer.server.port=3001"
-      - "traefik.http.services.digikam.loadbalancer.server.scheme=https"
-      - "traefik.http.services.digikam.loadbalancer.serverstransport=digikam-tls@file"
+      - "traefik.http.services.digikam.loadbalancer.server.port=3000"
+      # - "traefik.http.services.digikam.loadbalancer.server.scheme=https"
+      # - "traefik.http.services.digikam.loadbalancer.serverstransport=digikam-tls@file"
 
-      - "traefik.http.middlewares.digikam-ws.headers.customrequestheaders.Connection=upgrade"
-      - "traefik.http.middlewares.digikam-ws.headers.customrequestheaders.Upgrade=websocket"
+      # - "traefik.http.middlewares.digikam-ws.headers.customrequestheaders.Connection=upgrade"
+      # - "traefik.http.middlewares.digikam-ws.headers.customrequestheaders.Upgrade=websocket"
 
       - "com.centurylinklabs.watchtower.enable=true"
 
@@ -1163,7 +1155,7 @@ services:
       - PGID=1000
       - TZ=$TZ
       # Change to false to force stable X11 pipeline for GTK3 / Darktable
-      - PIXELFLUX_WAYLAND=false 
+      - PIXELFLUX_WAYLAND=false
       - DRINODE=/dev/dri/renderD128
       - DRI_NODE=/dev/dri/renderD128
       - NO_DECOR=true
@@ -1190,11 +1182,9 @@ services:
       - "traefik.http.routers.darktable.rule=Host(`darktable.beefunk.lan`) || Host(`darktable.beefunk.home`) || Host(`darktable.beefunk.local`) || Host(`darktable.$DUCKDNS_DOMAIN.duckdns.org`)"
       - "traefik.http.routers.darktable.entrypoints=websecure"
       - "traefik.http.routers.darktable.tls=true"
-
-
       - "traefik.http.services.darktable.loadbalancer.server.port=3000"
-      - "traefik.http.services.darktable.loadbalancer.server.scheme=https"
-      - "traefik.http.services.darktable.loadbalancer.serverstransport=darktable-tls@file"
+      # - "traefik.http.services.darktable.loadbalancer.server.scheme=https"
+      # - "traefik.http.services.darktable.loadbalancer.serverstransport=darktable-tls@file"
 
       - "com.centurylinklabs.watchtower.enable=true"
 
@@ -1296,11 +1286,11 @@ volumes:
   netdatalib:
   netdatacache:
   moode_mnt_nfs:
-      driver: local
-      driver_opts:
-        type: nfs
-        o: "addr=${MOODE_AUDIO_LOCAL_IP},nfsvers=4,rw,nolock,soft,timeo=10"
-        device: ":/mnt/"
+    driver: local
+    driver_opts:
+      type: nfs
+      o: "addr=${MOODE_AUDIO_LOCAL_IP},nfsvers=4,rw,nolock,soft,timeo=10"
+      device: ":/mnt/"
 
   moode_mpd_nfs:
     driver: local
