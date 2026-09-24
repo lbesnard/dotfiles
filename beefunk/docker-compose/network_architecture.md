@@ -110,4 +110,4 @@ To see if Dnsmasq is properly intercepting your wildcard domains:
 
 docker logs -f pihole | grep dnsmasq
 
-```gg
+```
