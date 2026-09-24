@@ -242,6 +242,16 @@ services:
         url: "https://syncthing.funkybeefunk.duckdns.org"
         target: "_.local"
 
+      - name: "Privatebin"
+        logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/privatebin.png"
+        subtitle: "Paste bin "
+        tag: "cloud"
+        tagstyle: "is-primary"
+        url: "https://privatebin.funkybeefunk.duckdns.org"
+        target: "_.local"
+
+
+
       - name: "File Browser"
         logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/filebrowser.png"
         subtitle: "Explore server files"
