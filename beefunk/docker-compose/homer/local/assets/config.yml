@@ -91,7 +91,7 @@ services:
         subtitle: "Sheet music collection"
         tag: "docs"
         tagstyle: "is-light"
-        url: "http://brownfunk.local:3000/s/BW3Tx522S#"
+        url: "http://brownfunk.lan:3000/s/BW3Tx522S#"
         target: "_.local"
 
   - name: "Media Streaming"
@@ -231,7 +231,7 @@ services:
         subtitle: "Cloud storage"
         tag: "cloud"
         tagstyle: "is-primary"
-        url: "https://brownfunk.local:9393"
+        url: "https://brownfunk.lan:9393"
         target: "_.local"
 
       - name: "Syncthing"
@@ -300,7 +300,7 @@ services:
         subtitle: "French movies"
         tag: "dl"
         tagstyle: "is-dark"
-        url: "http://brownfunk.local:7879"
+        url: "http://brownfunk.lan:7879"
         target: "_.local"
 
       - name: "Sonarr"
@@ -316,7 +316,7 @@ services:
         subtitle: "Music download"
         tag: "dl"
         tagstyle: "is-dark"
-        url: "http://lidarr.brownfunk.local"
+        url: "http://lidarr.brownfunk.lan"
         target: "_.local"
 
       - name: "Bazarr"
@@ -324,7 +324,7 @@ services:
         subtitle: "Subtitle download"
         tag: "dl"
         tagstyle: "is-dark"
-        url: "http://brownfunk.local:6768"
+        url: "http://brownfunk.lan:6768"
         target: "_.local"
 
       - name: "Pyload"
@@ -375,7 +375,7 @@ services:
         subtitle: "HDD real-time monitoring"
         tag: "geek"
         tagstyle: "is-light"
-        url: "http://beefunk:8033"
+        url: "http://scrutiny.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "Grafana"
@@ -383,7 +383,7 @@ services:
         subtitle: "Metrics & monitoring"
         tag: "geek"
         tagstyle: "is-light"
-        url: "http://beefunk:3005"
+        url: "http://grafana.funkybeefunk.duckdns.org"
         target: "_.local"
 
       - name: "Calibre Server"
