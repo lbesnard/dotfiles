@@ -1,0 +1,17 @@
+tls:
+  certificates:
+    - certFile: /certs/brownfunk.crt
+      keyFile: /certs/brownfunk.key
+
+  # Optional: Forces Traefik to always default to this cert for all local hosts
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /certs/brownfunk.crt
+        keyFile: /certs/brownfunk.key
+
+# Local services use defaultRule from docker-compose traefik config + labels.
+# Add routers here for remote services on other machines if needed.
+http:
+  routers: {}
+  services: {}
