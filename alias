@@ -1116,15 +1116,15 @@ _mount_sshfs_share () {
 
 # specific target functions
 mount_beefunk_pics () {
-    mkdir -p "$home/beefunk_pictures"
+    mkdir -p "$HOME/beefunk_pictures"
     local ip
     ip=$(getent hosts beefunk.local | awk '{print $1}')
-    sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr="$ip" beefunk.local:/media/lbesnard/beefunk_12tb_c/pictures "$home/beefunk_pictures"
+    sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr="$ip" "$ip".local:/media/lbesnard/beefunk_12tb_c/pictures "$home/beefunk_pictures"
 }
 
 # mount only when close to efunk server
 mount_efunknuc_pics () {
-  mkdir -p $home/beefunk_pictures
+  mkdir -p $HOME/beefunk_pictures
   local ip
   ip=$(getent hosts efunknuc.local | awk '{print $1}')
   sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr=efunknuc.lan efunknuc.lan:/media/beefunk_12tb_1/pictures "$home/beefunk_pictures"
@@ -1135,10 +1135,12 @@ mount_best_pics() {
     mkdir -p "$HOME/beefunk_pictures"
 
     local host1="beefunk.local"
-    local path1="beefunk.local:/media/lbesnard/beefunk_12tb_c/pictures"
+    local ip1=$(getent hosts $host1| awk '{print $1}')
+    local path1="$ip1:/media/lbesnard/beefunk_12tb_c/pictures"
 
     local host2="efunknuc.local"
-    local path2="efunknuc.lan:/media/beefunk_12tb_1/pictures"
+    local ip2=$(getent hosts $host2| awk '{print $1}')
+    local path2="$ip2:/media/beefunk_12tb_1/pictures"
 
     # Get round-trip time (RTT) in ms, default to 9999 if unreachable
     local rtt1 rtt2
