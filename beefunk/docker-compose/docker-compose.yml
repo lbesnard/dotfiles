@@ -1,5 +1,6 @@
 networks:
   proxy:
+    name: proxy
     driver: bridge # created auto my docker
     # external: true
   frontend:
@@ -434,6 +435,7 @@ services:
       - UMASK=022 #optional
       - DOCKER_MODS=linuxserver/mods:jellyfin-opencl-intel
       - WATCHTOWER_CLEANUP=true
+      - JELLYFIN_PublishedServerUrl=https://jellyfin.${DUCKDNS_DOMAIN}.duckdns.org
     volumes:
       - $DOCKER_CONFIG_PATH/jellyfin:/config
       - ${TV_SHOWS_PATH}:/data/tvshows:ro
@@ -457,6 +459,9 @@ services:
       - "traefik.http.routers.jellyfin.entrypoints=websecure"
       - "traefik.http.routers.jellyfin.tls=true"
       - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
+      # for yatse
+      - "traefik.http.middlewares.jellyfin-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.jellyfin.middlewares=jellyfin-headers"
       - "com.centurylinklabs.watchtower.enable=true"
   ###########################
   navidrome:
@@ -812,7 +817,7 @@ services:
     network_mode: "host"
     privileged: true
     environment:
-      - NFS_EXPORT_0={PICTURES_PATH} *(rw,async,no_subtree_check,no_root_squash)
+      - NFS_EXPORT_0=${PICTURES_PATH} *(rw,async,no_subtree_check,no_root_squash)
     volumes:
       - ${PICTURES_PATH}:${PICTURES_PATH}
     ports:
@@ -1004,9 +1009,9 @@ services:
     image: ghcr.io/analogj/scrutiny:master-omnibus
     cap_add:
       - SYS_RAWIO
-    ports:
-      - "8033:8080" # webapp
-      - "8086:8086" # influxDB admin
+    # ports:
+      # - "8033:8080" # webapp
+      # - "8086:8086" # influxDB admin
     volumes:
       - /run/udev:/run/udev:ro
       - $DOCKER_CONFIG_PATH/scrutiny/config:/opt/scrutiny/config
@@ -1025,9 +1030,10 @@ services:
     networks:
       - proxy
     labels:
-      # - "traefik.enable=true"
-      # - "traefik.http.services.scrutiny-webapp.loadbalancer.server.port=8080"
-      # - "traefik.http.services.scrutiny-influx.loadbalancer.server.port=8086"
+      - "traefik.enable=true"
+      - "traefik.http.routers.scrutiny.entrypoints=websecure"
+      - "traefik.http.routers.scrutiny.tls=true"
+      - "traefik.http.services.scrutiny.loadbalancer.server.port=8080"
       - "com.centurylinklabs.watchtower.enable=true"
 
   # Disabled: the DuckDNS A record is now set once, by hand, to the Tailscale IP.
@@ -1149,7 +1155,7 @@ services:
       - $PICTURES_PATH/Pictures:/Pictures
       - $PICTURES_PATH/Export:/Export
       - $PICTURES_PATH/darktable_docker_config:/config
-    shm_size: "4gb"
+    shm_size: "6gb"
     dns:
       - $SERVER_LAN_IP
       - 8.8.8.8
@@ -1288,7 +1294,6 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"
-      # - "traefik.http.routers.netdata.rule=Host(`netdata.${SERVER_DOMAIN}.lan`) || Host(`netdata.${SERVER_DOMAIN}.home`) || Host(`netdata.${SERVER_DOMAIN}.local`) || Host(`netdata.${DUCKDNS_DOMAIN}.duckdns.org`)"
       - "traefik.http.routers.netdata.entrypoints=websecure"
       - "traefik.http.routers.netdata.tls=true"
       - "traefik.http.services.netdata.loadbalancer.server.port=19999"

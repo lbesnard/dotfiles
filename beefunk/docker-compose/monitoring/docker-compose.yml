@@ -5,13 +5,23 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     restart: unless-stopped
-    ports:
-      - "3005:3000"
+    # ports:
+      # - "3005:3000"
+
+    networks:
+      - default   # Allows communication with prometheus & loki
+      - proxy     # Allows communication with Traefik
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: secret
     volumes:
       - grafana-data:/var/lib/grafana
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls=true"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+      - "com.centurylinklabs.watchtower.enable=true"
     depends_on:
       - prometheus
       - loki
@@ -86,3 +96,8 @@ volumes:
   grafana-data:
   prometheus-data:
   loki-data:
+
+networks:
+  proxy:
+    name: proxy
+    external: true
