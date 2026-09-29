@@ -6,25 +6,38 @@ networks:
     ipam:
       config:
       - subnet: $DOCKER_SUBNET_1
+
 services:
   traefik:
     image: traefik:v3.6
     container_name: traefik
     command:
+    - --api.dashboard=true
+    - --log.level=DEBUG
     - --providers.docker=true
+    - --providers.docker.exposedbydefault=false
     - --providers.docker.defaultRule=Host(`{{ index .Labels "com.docker.compose.service"
       }}.${SERVER_DOMAIN}.lan`) || Host(`{{ index .Labels "com.docker.compose.service"
       }}.${SERVER_DOMAIN}.home`) || Host(`{{ index .Labels "com.docker.compose.service"
       }}.${SERVER_DOMAIN}.local`) || Host(`{{ index .Labels "com.docker.compose.service"
       }}.${DUCKDNS_DOMAIN}.duckdns.org`)
     - --entrypoints.web.address=:80
-    - --providers.docker.exposedbydefault=false
     - --entrypoints.websecure.address=:443
+    - --serversTransport.insecureSkipVerify=true # for nextcloud
+
+    # Keep global HTTP -> HTTPS redirect
     - --entrypoints.web.http.redirections.entrypoint.to=websecure
     - --entrypoints.web.http.redirections.entrypoint.scheme=https
     - --entrypoints.web.http.redirections.entrypoint.permanent=true
+
     - --providers.file.filename=/etc/traefik/dynamic_tls.yml
-    - --api.dashboard=true
+
+    # Bind DuckDNS certresolver to all HTTPS routers by default
+    - --entrypoints.websecure.http.tls.certresolver=duckdns
+    - --entrypoints.websecure.http.tls.domains[0].main=${DUCKDNS_DOMAIN}.duckdns.org
+    - --entrypoints.websecure.http.tls.domains[0].sans=*.${DUCKDNS_DOMAIN}.duckdns.org
+
+    # ACME CONFIGURATION
     - --certificatesresolvers.duckdns.acme.dnschallenge=true
     - --certificatesresolvers.duckdns.acme.dnschallenge.provider=duckdns
     - --certificatesresolvers.duckdns.acme.dnschallenge.disablepropagationcheck=true
@@ -56,6 +69,7 @@ services:
     - traefik.http.routers.traefik-dashboard.tls.certresolver=duckdns
     - traefik.http.routers.traefik-dashboard.tls.domains[0].main=${DUCKDNS_DOMAIN}.duckdns.org
     - traefik.http.routers.traefik-dashboard.tls.domains[0].sans=*.${DUCKDNS_DOMAIN}.duckdns.org
+
   pihole:
     container_name: pihole
     image: pihole/pihole:latest
@@ -85,6 +99,7 @@ services:
     - traefik.http.routers.pihole.entrypoints=websecure
     - traefik.http.routers.pihole.tls=true
     - traefik.http.services.pihole.loadbalancer.server.port=80
+
   crowdsec:
     image: docker.io/crowdsecurity/crowdsec:latest
     container_name: crowdsec
@@ -111,6 +126,7 @@ services:
       traefik.http.routers.crowdsec.entrypoints: websecure
       traefik.http.routers.crowdsec.tls: 'true'
       traefik.http.services.crowdsec.loadbalancer.server.port: '8080'
+
   mariadb:
     image: lscr.io/linuxserver/mariadb:latest
     environment:
@@ -128,7 +144,9 @@ services:
     restart: always
     networks:
       frontend: null
+
   phpmyadmin:
+    container_name: phpmyadmin
     image: lscr.io/linuxserver/phpmyadmin:latest
     environment:
     - PUID=$PUID_USER
@@ -150,6 +168,7 @@ services:
       traefik.http.routers.phpmyadmin.entrypoints: websecure
       traefik.http.routers.phpmyadmin.tls: 'true'
       traefik.http.services.phpmyadmin.loadbalancer.server.port: '80'
+
   watchtower:
     image: containrrr/watchtower
     container_name: watchtower
@@ -162,6 +181,7 @@ services:
     command: --interval 3600
     labels:
       com.centurylinklabs.watchtower.enable: true
+
   unmanic:
     container_name: unmanic
     image: josh5/unmanic:latest
@@ -181,6 +201,7 @@ services:
       traefik.http.services.unmanic.loadbalancer.server.port: '8888'
     networks:
       proxy: null
+
   jellyfin:
     image: linuxserver/jellyfin
     container_name: jellyfin
@@ -215,7 +236,9 @@ services:
     networks:
     - proxy
     - frontend
+
   navidrome:
+    container_name: navidrome
     image: deluan/navidrome
     user: $PUID_USER:$PGID_USER
     ports:
@@ -252,6 +275,7 @@ services:
       traefik.http.routers.navidrome.entrypoints: websecure
       traefik.http.routers.navidrome.tls: 'true'
       traefik.http.services.navidrome.loadbalancer.server.port: '4533'
+
   calibre:
     image: linuxserver/calibre
     environment:
@@ -279,7 +303,9 @@ services:
       traefik.http.services.calibre.loadbalancer.server.port: '8080'
     networks:
       proxy: null
+
   calibre-web:
+    container_name: calibre-web
     image: linuxserver/calibre-web
     environment:
     - PUID=$PUID_USER
@@ -301,8 +327,37 @@ services:
       traefik.http.services.calibre-web.loadbalancer.server.port: '8083'
     networks:
       proxy: null
+
+  homer-lan:
+    image: b4bz/homer:latest
+    container_name: homer-lan
+    environment:
+    - PUID=$PUID_USER
+    - PGID=$PGID_USER
+    - TZ=${TZ}
+    - WATCHTOWER_CLEANUP=true
+    volumes:
+    - ./homer-lan/config.yml:/www/config.yml
+    - ./homer-lan/local/assets/:/www/assets
+    ports:
+    - 8080:8080
+    restart: unless-stopped
+    labels:
+    - traefik.enable=true
+    - traefik.http.routers.homer-lan.rule=Host(`home-lan.${SERVER_DOMAIN}.lan`) || Host(`home-lan.${SERVER_DOMAIN}.home`) || Host(`home-lan.${SERVER_DOMAIN}.local`) 
+    - traefik.http.routers.homer-lan.entrypoints=websecure
+    - traefik.http.routers.homer-lan.tls=true
+    - traefik.http.services.homer-lan.loadbalancer.server.port=8080
+    networks:
+    - proxy
+    - frontend
+    depends_on:
+    - pihole
+    - tecmint-web
+
   homer:
     image: b4bz/homer:latest
+    container_name: homer
     environment:
     - PUID=$PUID_USER
     - PGID=$PGID_USER
@@ -311,8 +366,8 @@ services:
     volumes:
     - ./homer/config.yml:/www/config.yml
     - ./homer/local/assets/:/www/assets
-    ports:
-    - 8080:8080
+    # ports:
+    # - 8080:8080
     restart: unless-stopped
     labels:
     - traefik.enable=true
@@ -320,12 +375,18 @@ services:
     - traefik.http.routers.homer.entrypoints=websecure
     - traefik.http.routers.homer.tls=true
     - traefik.http.services.homer.loadbalancer.server.port=8080
+    # --- ADD NO-CACHE MIDDLEWARE ---
+    - traefik.http.middlewares.homer-no-cache.headers.customResponseHeaders.Cache-Control=no-cache, no-store, must-revalidate
+    - traefik.http.middlewares.homer-no-cache.headers.customResponseHeaders.Pragma=no-cache
+    - traefik.http.routers.homer.middlewares=homer-no-cache
     networks:
     - proxy
     - frontend
     depends_on:
     - pihole
     - tecmint-web
+
+
   nextcloud:
     image: lscr.io/linuxserver/nextcloud:34.0.0-ls435
     container_name: nextcloud
@@ -338,9 +399,11 @@ services:
     - INSTALL_PACKAGES=ffmpeg
     labels:
       traefik.enable: 'true'
+      traefik.docker.network: proxy
       traefik.http.routers.nextcloud.entrypoints: websecure
       traefik.http.routers.nextcloud.tls: 'true'
       traefik.http.services.nextcloud.loadbalancer.server.port: '443'
+      traefik.http.services.nextcloud.loadbalancer.server.scheme: https
     volumes:
     - $DOCKER_CONFIG_PATH/nextcloud:/config
     - $NEXTCLOUD_DATA_PATH:/data
@@ -362,8 +425,10 @@ services:
       start_period: 10m
       timeout: 5s
     restart: unless-stopped
+
   piwigo:
     image: linuxserver/piwigo
+    container_name: piwigo
     environment:
     - WATCHTOWER_CLEANUP=true
     - PUID=$PUID_USER
@@ -387,8 +452,10 @@ services:
       traefik.http.routers.piwigo.entrypoints: websecure
       traefik.http.routers.piwigo.tls: 'true'
       traefik.http.services.piwigo.loadbalancer.server.port: '80'
+
   radarr:
     image: linuxserver/radarr
+    container_name: radarr
     environment:
     - PUID=$PUID_USER
     - PGID=$PGID_USER
@@ -416,7 +483,9 @@ services:
       traefik.http.routers.radarr.entrypoints: websecure
       traefik.http.routers.radarr.tls: 'true'
       traefik.http.services.radarr.loadbalancer.server.port: '7878'
+
   radarr_fr:
+    container_name: radarr-fr
     image: linuxserver/radarr
     environment:
     - PUID=$PUID_USER
@@ -444,6 +513,7 @@ services:
       traefik.http.routers.radarr_fr.entrypoints: websecure
       traefik.http.routers.radarr_fr.tls: 'true'
       traefik.http.services.radarr_fr.loadbalancer.server.port: '7878'
+
   decluttarr:
     image: ghcr.io/manimatter/decluttarr:latest
     container_name: decluttarr
@@ -462,8 +532,10 @@ services:
     - frontend
     depends_on:
     - pihole
+
   sonarr:
     image: linuxserver/sonarr:4.0.14
+    container_name: sonarr
     environment:
     - PUID=$PUID_USER
     - PGID=$PGID_USER
@@ -490,8 +562,10 @@ services:
       traefik.http.routers.sonarr.entrypoints: websecure
       traefik.http.routers.sonarr.tls: 'true'
       traefik.http.services.sonarr.loadbalancer.server.port: '8989'
+      
   jackett:
     image: linuxserver/jackett
+    container_name: jackett
     environment:
     - PUID=$PUID_USER
     - PGID=$PGID_USER
@@ -518,7 +592,9 @@ services:
       traefik.http.routers.jackett.entrypoints: websecure
       traefik.http.routers.jackett.tls: 'true'
       traefik.http.services.jackett.loadbalancer.server.port: '9117'
+
   prowlarr:
+    container_name: prowlarr
     image: lscr.io/linuxserver/prowlarr
     environment:
     - PUID=1000
@@ -545,6 +621,7 @@ services:
       traefik.http.routers.prowlarr.tls: 'true'
       traefik.http.services.prowlarr.loadbalancer.server.port: '9696'
     restart: unless-stopped
+
   flaresolverr:
     container_name: flaresolverr
     image: ghcr.io/flaresolverr/flaresolverr:latest
@@ -566,9 +643,12 @@ services:
     restart: unless-stopped
     labels:
       com.centurylinklabs.watchtower.enable: true
+
   gluetun:
     image: qmcgaw/gluetun
     container_name: gluetun
+    ## line above must be uncommented to allow external containers to connect.
+    # See https://github.com/qdm12/gluetun-wiki/blob/main/setup/connect-a-container-to-gluetun.md#external-container-to-gluetun
     cap_add:
     - NET_ADMIN
     dns:
@@ -576,6 +656,9 @@ services:
     - 8.8.8.8
     devices:
     - /dev/net/tun:/dev/net/tun
+    # --- ATTACH TO TRAEFIK NETWORK ---
+    networks:
+      - proxy
     ports:
     - 8888:8888/tcp
     - 8388:8388/tcp
@@ -587,17 +670,36 @@ services:
     volumes:
     - $DOCKER_CONFIG_PATH/gluetun:/gluetun
     environment:
+            # See https://github.com/qdm12/gluetun-wiki/tree/main/setup#setup
     - VPN_PORT_FORWARDING=true
     - VPN_PORT_FORWARDING_PROVIDER="private internet access"
     - VPN_SERVICE_PROVIDER=pia
     - VPN_TYPE=openvpn
+    # OpenVPN:
     - OPENVPN_USER=$PIA_USERNAME
     - OPENVPN_PASSWORD=$PIA_PASSWORD
+    # - SERVER_REGIONS=Switzerland,Cambodia,Egypt,France,Norway,Singapore, # https://github.com/Lars-/PIA-servers/tree/master/regions
+    # AU Adelaide, AU Brisbane, AU Melbourne, AU Perth, AU Sydney, Albania, Algeria, Andorra, Argentina, Armenia, Australia Streaming Optimized, Austria, Bahamas, Bangladesh, Belgium, Bolivia, Bosnia and Herzegovina, Brazil, Bulgaria, CA Montreal, CA Ontario, CA Ontario Streaming Optimized, CA Toronto, CA Vancouver, Cambodia, Chile, China, Colombia, Costa Rica, Croatia, Cyprus, Czech Republic, DE Berlin, DE Frankfurt, DE Germany Streaming Optimized, DK Copenhagen, DK Streaming Optimized, ES Madrid, ES Valencia, Ecuador, Egypt, Estonia, FI Helsinki, FI Streaming Optimized, France, Georgia, Greece, Greenland, Guatemala, Hong Kong, Hungary, IT Milano, IT Streaming Optimized, Iceland, India, Indonesia, Ireland, Isle of Man, Israel, JP Streaming Optimized, JP Tokyo, Kazakhstan, Latvia, Liechtenstein, Lithuania, Luxembourg, Macao, Malaysia, Malta, Mexico, Moldova, Monaco, Mongolia, Montenegro, Morocco, NL Netherlands Streaming Optimized, Nepal, Netherlands, New Zealand, Nigeria, North Macedonia, Norway, Panama, Peru, Philippines, Poland, Portugal, Qatar, Romania, SE Stockholm, SE Streaming Optimized, Saudi Arabia, Serbia, Singapore, Slovakia, Slovenia, South Africa, South Korea, Sri Lanka, Switzerland, Taiwan, Turkey, UK London, UK Manchester, UK Southampton, UK Streaming Optimized, US Alabama, US Alaska, US Arkansas, US Atlanta, US Baltimore, US California, US Chicago, US Connecticut, US Denver, US East, US East Streaming Optimized, US Florida, US Honolulu, US Houston, US Idaho, US Indiana, US Iowa, US Kansas, US Kentucky, US Las Vegas, US Louisiana, US Maine, US Massachusetts, US Michigan, US Minnesota, US Mississippi, US Missouri, US Montana, US Nebraska, US New Hampshire, US New Mexico, US New York, US North Carolina, US North Dakota, US Ohio, US Oklahoma, US Oregon, US Pennsylvania, US Rhode Island, US Salt Lake City, US Seattle, US Silicon Valley, US South Carolina, US South Dakota, US Tennessee, US Texas, US Vermont, US Virginia, US Washington DC, US West, US West Streaming Optimized, US West Virginia, US Wilmington, US Wisconsin, US Wyoming, Ukraine, United Arab Emirates, Uruguay, Venezuela, Vietnam
+    # - SERVER_REGIONS=India # https://github.com/Lars-/PIA-servers/tree/master/regions
+    # - SERVER_REGIONS=Netherlands # https://github.com/Lars-/PIA-servers/tree/master/regions
     - SERVER_REGIONS=Netherlands,Germany,Switzerland
-    - VPN_PORT_FORWARDING_UP_COMMAND=/bin/sh -c "/gluetun/set-transmission-port.sh
-      {{PORT}}"
+    - VPN_PORT_FORWARDING_UP_COMMAND=/bin/sh -c "/gluetun/set-transmission-port.sh {{PORT}}"
+    # Timezone for accurate log times
     - TZ=$TZ
+    # Server list updater
+    # See https://github.com/qdm12/gluetun-wiki/blob/main/setup/servers.md#update-the-vpn-servers-list
     - UPDATER_PERIOD=24h
+    # --- ALLOW TRAEFIK / DOCKER SUBNETS THROUGH GLUETUN FIREWALL ---
+    # - FIREWALL_OUTBOUND_SUBNETS=172.16.0.0/12,192.168.0.0/16,10.0.0.0/8
+    labels:
+      com.centurylinklabs.watchtower.enable: true
+      traefik.enable: 'true'
+      traefik.http.routers.gluetun.rule: Host(`transmission.${SERVER_DOMAIN}.lan`) || Host(`transmission.${SERVER_DOMAIN}.home`) || Host(`transmission.${SERVER_DOMAIN}.local`) || Host(`transmission.${DUCKDNS_DOMAIN}.duckdns.org`)
+      traefik.http.routers.gluetun.entrypoints: websecure
+      traefik.http.routers.gluetun.tls: 'true'
+      traefik.http.services.gluetun.loadbalancer.server.port: '9091'
+ 
+
   transmission:
     image: lscr.io/linuxserver/transmission:latest
     container_name: transmission
@@ -607,13 +709,16 @@ services:
     - PGID=1000
     - TZ=Etc/UTC
     - DOCKER_MODS=linuxserver/mods:transmission-trguing
+    # ports are taken over by gluetun
     volumes:
     - $TORRENT_PATH/downloads:/downloads
     - $TORRENT_PATH/data:/data
     - $TORRENT_PATH/config:/config
     - $TORRENT_PATH/watch:/watch
     restart: unless-stopped
+
   tecmint-web:
+    container_name: tecmint-web
     image: httpd:2.4
     ports:
     - 1021:80
@@ -627,7 +732,9 @@ services:
       traefik.http.services.tecmint-web.loadbalancer.server.port: '80'
     networks:
       proxy: null
+
   hedgedoc:
+    container_name: hedgedoc
     image: ghcr.io/linuxserver/hedgedoc:latest
     volumes:
     - $DOCKER_CONFIG_PATH/codimd:/config
@@ -658,6 +765,7 @@ services:
       traefik.http.routers.hedgedoc.entrypoints: websecure
       traefik.http.routers.hedgedoc.tls: 'true'
       traefik.http.services.hedgedoc.loadbalancer.server.port: '3000'
+
   duckdns:
     image: linuxserver/duckdns
     dns: 1.1.1.1
@@ -665,7 +773,7 @@ services:
     - PUID=$PUID_USER
     - PGID=$PGID_USER
     - TZ=$TZ
-    - SUBDOMAINS=$DUCKDNS_DOMAIN
+    - SUBDOMAINS=${DUCKDNS_DOMAIN}-wg # used for wireguard only!
     - TOKEN=$DUCKDNS_TOKEN
     - LOG_FILE=false
     volumes:
@@ -713,7 +821,9 @@ services:
     - TZ=$TZ
     labels:
       com.centurylinklabs.watchtower.enable: true
+
   portainer:
+    container_name: portainer
     image: portainer/portainer-ce
     environment:
     - WATCHTOWER_CLEANUP=true
@@ -730,10 +840,13 @@ services:
       traefik.enable: 'true'
       traefik.http.routers.portainer.entrypoints: websecure
       traefik.http.routers.portainer.tls: 'true'
-      traefik.http.services.portainer.loadbalancer.server.port: '8000'
+      traefik.http.services.portainer.loadbalancer.server.port: '9000'
     networks:
       proxy: null
+
+
   wordpress:
+    container_name: wordpress
     image: wordpress:5-php7.4-apache
     ports:
     - 5555:80
@@ -760,7 +873,9 @@ services:
       traefik.http.routers.wordpress.entrypoints: websecure
       traefik.http.routers.wordpress.tls: 'true'
       traefik.http.services.wordpress.loadbalancer.server.port: '80'
+
   wordpress_diary:
+    container_name: diary
     image: wordpress:6.2.0-php8.2-apache
     ports:
     - 5556:80
@@ -787,7 +902,9 @@ services:
       traefik.http.routers.wordpress_diary.entrypoints: websecure
       traefik.http.routers.wordpress_diary.tls: 'true'
       traefik.http.services.wordpress_diary.loadbalancer.server.port: '80'
+
   bazarr:
+    container_name: bazarr
     image: linuxserver/bazarr
     environment:
     - PUID=$PUID_USER
@@ -815,7 +932,9 @@ services:
       frontend: null
       proxy: null
     restart: unless-stopped
+
   komga:
+    container_name: komga
     image: gotson/komga
     volumes:
     - type: bind
@@ -851,6 +970,7 @@ services:
       traefik.http.routers.komga.entrypoints: websecure
       traefik.http.routers.komga.tls: 'true'
       traefik.http.services.komga.loadbalancer.server.port: '25600'
+
   wireguard:
     image: linuxserver/wireguard
     cap_add:
@@ -860,7 +980,7 @@ services:
     - PUID=$PUID_USER
     - PGID=$PGID_USER
     - TZ=$TZ
-    - SERVERURL=${DUCKDNS_DOMAIN}.duckdns.org
+    - SERVERURL=${DUCKDNS_DOMAIN}-wg.duckdns.org
     - SERVERPORT=51820
     - PEERS=$WG2_PEERS
     - PEERDNS=auto
@@ -874,6 +994,7 @@ services:
     restart: always
     depends_on:
     - duckdns
+
   wireguard2:
     image: linuxserver/wireguard
     cap_add:
@@ -883,7 +1004,7 @@ services:
     - PUID=$PUID_USER
     - PGID=$PGID_USER
     - TZ=$TZ
-    - SERVERURL=${DUCKDNS_DOMAIN}.duckdns.org
+    - SERVERURL=${DUCKDNS_DOMAIN}-wg.duckdns.org
     - SERVERPORT=51821
     - PEERS=$WG2_PEERS
     - PEERDNS=$PIHOLE_DOCKER_SUB_IP_DNS
@@ -900,6 +1021,7 @@ services:
     networks:
     - frontend
     restart: always
+  
   rsync-server:
     image: quentintin/rsync-server
     volumes:
@@ -930,6 +1052,7 @@ services:
     ports:
     - '9000:22'
     restart: always
+
   samba:
     image: dperson/samba
     container_name: samba
@@ -1017,8 +1140,10 @@ services:
     networks:
     - proxy
     - frontend
+
   firefox:
     image: lscr.io/linuxserver/firefox:latest
+    container_name: firefox
     security_opt:
     - seccomp:unconfined
     environment:
@@ -1039,6 +1164,7 @@ services:
       traefik.http.services.firefox.loadbalancer.server.port: '3000'
     networks:
       proxy: null
+
   taskchampion:
     image: ghcr.io/gothenburgbitfactory/taskchampion-sync-server:0.7.1
     container_name: taskchampion
@@ -1056,7 +1182,9 @@ services:
       traefik.http.services.taskchampion.loadbalancer.server.port: '9000'
     networks:
       proxy: null
+
   scrutiny:
+    container_name: scrutiny
     image: ghcr.io/analogj/scrutiny:master-omnibus
     cap_add:
     - SYS_RAWIO
@@ -1069,6 +1197,8 @@ services:
     - $DOCKER_CONFIG_PATH/scrutiny/influxdb:/opt/scrutiny/influxdb
     devices:
     - /dev/sdc
+    - /dev/sda
+    - /dev/sdf
     - /dev/sdd
     - /dev/sde
     - /dev/sdb
