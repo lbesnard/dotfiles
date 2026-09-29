@@ -19,8 +19,8 @@ nvim_is_new_enough() {
   local major minor
   major=$(echo "$version" | cut -d. -f1)
   minor=$(echo "$version" | cut -d. -f2)
-  if [[ "$major" -gt "$NVIM_MIN_MAJOR" ]] || \
-     [[ "$major" -eq "$NVIM_MIN_MAJOR" && "$minor" -ge "$NVIM_MIN_MINOR" ]]; then
+  if [[ "$major" -gt "$NVIM_MIN_MAJOR" ]] ||
+    [[ "$major" -eq "$NVIM_MIN_MAJOR" && "$minor" -ge "$NVIM_MIN_MINOR" ]]; then
     return 0
   fi
   return 1

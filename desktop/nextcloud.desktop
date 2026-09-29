@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Nextcloud
+Comment=Cloud storage client
+Exec=/home/lbesnard/bin/Nextcloud.AppImage
+Terminal=false
+Icon=nextcloud
+Categories=Utility;
+StartupNotify=true

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=DigiKam
+Comment=Photo manager and organizer
+Exec=/home/lbesnard/bin/digiKam.AppImage
+Terminal=false
+Icon=digikam
+Categories=Graphics;Photography;
+StartupNotify=true
