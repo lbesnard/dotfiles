@@ -195,7 +195,7 @@ services:
         # logo: "assets/nextcloud.png"
         subtitle: "Nextcloud - cloud storage"
         tag: "cloud"
-        url: "https://nextcoud.funkybrownfunk.duckdns.org"
+        url: "https://nextcloud.funkybrownfunk.duckdns.org"
         target: "_blank" # optional html tag target attribute
 
       - name: "Notes"
@@ -219,7 +219,7 @@ services:
         logo: "assets/transmission.png"
         subtitle: "Transmission + VPN - torrent download"
         tag: "dl"
-        url: "http://torrent.funkybrownfunk.duckdns.org"
+        url: "http://transmission.funkybrownfunk.duckdns.org"
         target: "_blank" # optional html tag target attribute
 
       - name: "Jackett"
