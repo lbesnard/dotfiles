@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Joplin
+Comment=Note taking application
+Exec=/home/lbesnard/bin/Joplin.AppImage
+Terminal=false
+Icon=joplin
+Categories=Utility;
+StartupNotify=true
