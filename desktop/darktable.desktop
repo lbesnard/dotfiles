@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Darktable
+Comment=Photo editor and organizer
+Exec=/home/lbesnard/bin/Darktable.AppImage
+Terminal=false
+Icon=darktable
+Categories=Graphics;Photography;
+StartupNotify=true

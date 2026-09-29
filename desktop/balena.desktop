@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Etcher
+Comment=USB image writer
+Exec=/home/lbesnard/bin/balenaEtcher.AppImage
+Terminal=false
+Icon=balena-etcher
+Categories=Utility;
+StartupNotify=true

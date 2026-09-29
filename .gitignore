@@ -24,6 +24,7 @@ bin/cache/*
 zsh_alias/_gh
 config/gh/hosts.yml
 *.AppImage
+*.appimage
 bin/tldr
 mobac/mapsources/*.jar
 aws/cli/cache/*
