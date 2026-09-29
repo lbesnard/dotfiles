@@ -37,12 +37,12 @@ bindsym $mod+Return exec "if ! command -v ghostty > /dev/null; then i3-sensible-
 #bindsym $mod+Return exec i3-sensible-terminal
 
 # start window manager pcmanfm
-bindsym $mod+q exec pcmanfm
+bindsym $mod+t exec pcmanfm
 
-bindsym $mod+i exec firefox
+bindsym $mod+w exec firefox
 
 # kill focused window
-bindsym $mod+Shift+q kill
+bindsym $mod+q kill
 
 # Start rofi program launcher
 bindsym $mod+d exec --no-startup-id i3-dmenu-desktop
@@ -259,7 +259,7 @@ bindsym $mod+Shift+r restart
 bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -b 'Yes, exit i3' 'i3-msg exit'"
 
 # Lock screen
-bindsym Control+Mod1+l exec ~/.config/i3/scripts/blur_lock.sh
+bindsym $mod+Shift+l exec ~/.config/i3/scripts/blur_lock.sh
 exec --no-startup-id xss-lock -- ~/.config/i3/scripts/blur_lock.sh
 bindsym $mod+p exec --no-startup-id ~/.config/i3/scripts/display.sh
 

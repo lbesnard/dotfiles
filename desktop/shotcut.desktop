@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Shotcut
+Comment=Video editor
+Exec=/home/lbesnard/bin/Shotcut.AppImage
+Terminal=false
+Icon=shotcut
+Categories=AudioVideo;
+StartupNotify=true
