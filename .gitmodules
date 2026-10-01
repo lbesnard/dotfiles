@@ -40,3 +40,6 @@
 [submodule "bfunk/docker-compose/homer/local/assets/icons/homer-icons"]
 	path = bfunk/docker-compose/homer/local/assets/icons/homer-icons
 	url = https://github.com/NX211/homer-icons.git
+[submodule "bfunk/docker-compose/homer-lan/local/assets/icons/homer-icons"]
+	path = bfunk/docker-compose/homer-lan/local/assets/icons/homer-icons
+	url = https://github.com/NX211/homer-icons.git
