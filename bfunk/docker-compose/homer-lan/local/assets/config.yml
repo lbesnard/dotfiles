@@ -87,11 +87,11 @@ services:
         url: "http://brownfunk.lan:3000/s/H1tA_LShH"
         target: "_blank" # optional html tag target attribute
 
-      - name: "SearX"
-        subtitle: "Self-hosted search engine"
-        logo: "assets/searx.png"
-        url: "https://searx.funkybrownfunk.duckdns.org/search"
-        target: "_blank" # optional html tag target attribute
+      # - name: "SearX"
+      #   subtitle: "Self-hosted search engine"
+      #   logo: "assets/searx.png"
+      #   url: "https://searx.funkybrownfunk.duckdns.org/search"
+      #   target: "_blank" # optional html tag target attribute
 
   - name: "Media Streaming"
     icon: "fa fa-code-fork"
