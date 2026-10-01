@@ -5,29 +5,59 @@ networks:
       config:
         - subnet: $DOCKER_SUBNET_1
 services:
-  pihole:
-    container_name: pihole
-    image: pihole/pihole:2024.07.0
-    hostname: ubuntu
+  # pihole:
+  #   container_name: pihole
+  #   image: pihole/pihole:2024.07.0
+  #   hostname: ubuntu
+  #   ports:
+  #     - "5353:53/tcp"
+  #     - "5353:53/udp"
+  #     - "67:67/udp"
+  #     - "455:80/tcp"
+  #   environment:
+  #     TZ: $TZ
+  #     WEBPASSWORD: $PIHOLE_PWD
+  #   volumes:
+  #     - $DOCKER_CONFIG_PATH/pihole/etc/pihole/:/etc/pihole/
+  #     - $DOCKER_CONFIG_PATH/pihole/etc-dnsmasq.d/:/etc/dnsmasq.d/
+  #   # Recommended but not required (DHCP needs NET_ADMIN)
+  #   #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+  #   cap_add:
+  #     - NET_ADMIN
+  #   networks:
+  #     frontend:
+  #       ipv4_address: $PIHOLE_DOCKER_SUB_IP_DNS
+  #   restart: always
+  #
+  pihole_v6:
+    container_name: pihole_v6
+    image: pihole/pihole:latest
+    hostname: pihole
     ports:
       - "5353:53/tcp"
       - "5353:53/udp"
-      - "67:67/udp"
+      # for tailscale dns resolution
+      - "100.65.194.124:53:53/udp"
+      - "100.65.194.124:53:53/tcp"
+      # - "67:67/udp"
       - "455:80/tcp"
     environment:
       TZ: $TZ
-      WEBPASSWORD: $PIHOLE_PWD
+      FTLCONF_dns_listeningMode: "all"
+      FTLCONF_webserver_api_password: $PIHOLE_PWD
     volumes:
-      - $DOCKER_CONFIG_PATH/pihole/etc/pihole/:/etc/pihole/
-      - $DOCKER_CONFIG_PATH/pihole/etc-dnsmasq.d/:/etc/dnsmasq.d/
+      - $DOCKER_CONFIG_PATH/pihole_v6/etc/pihole/:/etc/pihole/
+      - $DOCKER_CONFIG_PATH/pihole_v6/etc-dnsmasq.d/:/etc/dnsmasq.d/
     # Recommended but not required (DHCP needs NET_ADMIN)
     #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
     cap_add:
-      - NET_ADMIN
+      - SYS_NICE
     networks:
       frontend:
         ipv4_address: $PIHOLE_DOCKER_SUB_IP_DNS
     restart: always
+
+
 
   keeweb:
     image: antelle/keeweb
@@ -188,7 +218,7 @@ services:
     networks:
       - frontend
     depends_on:
-      - pihole
+      - pihole_v6
     labels:
       com.centurylinklabs.watchtower.enable: true
     restart: unless-stopped
@@ -256,7 +286,7 @@ services:
     networks:
       - frontend
     depends_on:
-      - pihole
+      - pihole_v6
       - flaresolverr
     restart: unless-stopped
     labels:
@@ -279,7 +309,7 @@ services:
     networks:
       - frontend
     depends_on:
-      - pihole
+      - pihole_v6
     ports:
       - 8191:8191
     restart: unless-stopped
@@ -345,7 +375,7 @@ services:
       #traefik.http.routers.home.entrypoints: web
       #traefik.http.services.home.loadbalancer.server.port: 80
     depends_on:
-      - pihole
+      - pihole_v6
   #
   #### wireguard
   wireguard:
@@ -376,89 +406,89 @@ services:
     #- net.ipv4.conf.all.src_valid_mark=1
     depends_on:
       - duckdns
-      - pihole
+      - pihole_v6
     restart: always
 
-  photoprism:
-    ## Use photoprism/photoprism:preview for testing preview builds:
-    container_name: photoprism
-    image: photoprism/photoprism:latest
-    restart: unless-stopped
-    depends_on:
-      - pihole
-      - mariadb_photoprism
-    ## Don't enable automatic restarts until PhotoPrism has been properly configured and tested!
-    ## If the service gets stuck in a restart loop, this points to a memory, filesystem, network, or database issue:
-    ## https://docs.photoprism.app/getting-started/troubleshooting/#fatal-server-errors
-    # restart: unless-stopped
-    security_opt:
-      - seccomp:unconfined
-      - apparmor:unconfined
-    ports:
-      - "2342:2342" # HTTP port (host:container)
-    dns:
-      - $PIHOLE_DOCKER_SUB_IP_DNS
-    networks:
-      - frontend
-    environment:
-      PHOTOPRISM_ADMIN_PASSWORD: $PHOTOPRISM_ADMIN_PASSWORD # INITIAL PASSWORD FOR "admin" USER, MINIMUM 8 CHARACTERS
-      PHOTOPRISM_AUTH_MODE: "password" # authentication mode (public, password)
-      PHOTOPRISM_SITE_URL: "http://$SERVER_URL:2342/" # public server URL incl http:// or https:// and /path, :port is optional
-      PHOTOPRISM_ORIGINALS_LIMIT: 5000 # file size limit for originals in MB (increase for high-res video)
-      PHOTOPRISM_HTTP_COMPRESSION: "gzip" # improves transfer speed and bandwidth utilization (none or gzip)
-      PHOTOPRISM_LOG_LEVEL: "info" # log level: trace, debug, info, warning, error, fatal, or panic
-      PHOTOPRISM_READONLY: "false" # do not modify originals directory (reduced functionality)
-      PHOTOPRISM_EXPERIMENTAL: "false" # enables experimental features
-      PHOTOPRISM_DISABLE_CHOWN: "false" # disables updating storage permissions via chmod and chown on startup
-      PHOTOPRISM_DISABLE_WEBDAV: "false" # disables built-in WebDAV server
-      PHOTOPRISM_DISABLE_SETTINGS: "false" # disables settings UI and API
-      PHOTOPRISM_DISABLE_TENSORFLOW: "false" # disables all features depending on TensorFlow
-      PHOTOPRISM_DISABLE_FACES: "false" # disables face detection and recognition (requires TensorFlow)
-      PHOTOPRISM_DISABLE_CLASSIFICATION: "false" # disables image classification (requires TensorFlow)
-      PHOTOPRISM_DISABLE_RAW: "false" # disables indexing and conversion of RAW files
-      PHOTOPRISM_RAW_PRESETS: "false" # enables applying user presets when converting RAW files (reduces performance)
-      PHOTOPRISM_JPEG_QUALITY: 85 # a higher value increases the quality and file size of JPEG images and thumbnails (25-100)
-      PHOTOPRISM_DETECT_NSFW: "false" # automatically flags photos as private that MAY be offensive (requires TensorFlow)
-      PHOTOPRISM_UPLOAD_NSFW: "true" # allows uploads that MAY be offensive (no effect without TensorFlow)
-      # PHOTOPRISM_DATABASE_DRIVER: "sqlite"         # SQLite is an embedded database that doesn't require a server
-      PHOTOPRISM_DATABASE_DRIVER: "mysql" # use MariaDB 10.5+ or MySQL 8+ instead of SQLite for improved performance
-      PHOTOPRISM_DATABASE_SERVER: $SERVER_URL:3307 # MariaDB or MySQL database server (hostname:port)
-      PHOTOPRISM_DATABASE_NAME: "photoprism" # MariaDB or MySQL database schema name
-      PHOTOPRISM_DATABASE_USER: "photoprism" # MariaDB or MySQL database user name
-      PHOTOPRISM_DATABASE_PASSWORD: $PHOTOPRISM_MARIADB_PASSWORD # MariaDB or MySQL database user password
-      PHOTOPRISM_SITE_CAPTION: "AI-Powered Photos App"
-      PHOTOPRISM_SITE_DESCRIPTION: "" # meta site description
-      PHOTOPRISM_SITE_AUTHOR: "" # meta site author
-      ## Run/install on first startup (options: update gpu tensorflow davfs clitools clean):
-      # PHOTOPRISM_INIT: "gpu tensorflow"
-      ## Hardware Video Transcoding (for sponsors only due to high maintenance and support costs):
-      # PHOTOPRISM_FFMPEG_ENCODER: "software"        # FFmpeg encoder ("software", "intel", "nvidia", "apple", "raspberry")
-      # PHOTOPRISM_FFMPEG_BITRATE: "32"              # FFmpeg encoding bitrate limit in Mbit/s (default: 50)
-      ## Run as a non-root user after initialization (supported: 0, 33, 50-99, 500-600, and 900-1200):
-      # PHOTOPRISM_UID: 1000
-      # PHOTOPRISM_GID: 1000
-      # PHOTOPRISM_UMASK: 0000
-    ## Start as non-root user before initialization (supported: 0, 33, 50-99, 500-600, and 900-1200):
-    # user: "1000:1000"
-    ## Share hardware devices with FFmpeg and TensorFlow (optional):
-    devices:
-      - "/dev/dri:/dev/dri" # Intel QSV
-    #  - "/dev/nvidia0:/dev/nvidia0"                 # Nvidia CUDA
-    #  - "/dev/nvidiactl:/dev/nvidiactl"
-    #  - "/dev/nvidia-modeset:/dev/nvidia-modeset"
-    #  - "/dev/nvidia-nvswitchctl:/dev/nvidia-nvswitchctl"
-    #  - "/dev/nvidia-uvm:/dev/nvidia-uvm"
-    #  - "/dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools"
-    #  - "/dev/video11:/dev/video11"                 # Video4Linux Video Encode Device (h264_v4l2m2m)
-    working_dir: "/photoprism" # do not change or remove
-    ## Storage Folders: "~" is a shortcut for your home directory, "." for the current directory
-    volumes:
-      # "/host/folder:/photoprism/folder"                # Example
-      - "photoprism-originals:/photoprism/originals" # Original media files (DO NOT REMOVE)
-      # - "/example/family:/photoprism/originals/family" # *Additional* media folders can be mounted like this
-      # - "~/Import:/photoprism/import"                  # *Optional* base folder from which files can be imported to originals
-      - "$PHOTOPRISM_STORAGE_DIR:/photoprism/storage" # *Writable* storage folder for cache, database, and sidecar files (DO NOT REMOVE)
-
+  # photoprism:
+  #   ## Use photoprism/photoprism:preview for testing preview builds:
+  #   container_name: photoprism
+  #   image: photoprism/photoprism:latest
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - pihole_v6
+  #     - mariadb_photoprism
+  #   ## Don't enable automatic restarts until PhotoPrism has been properly configured and tested!
+  #   ## If the service gets stuck in a restart loop, this points to a memory, filesystem, network, or database issue:
+  #   ## https://docs.photoprism.app/getting-started/troubleshooting/#fatal-server-errors
+  #   # restart: unless-stopped
+  #   security_opt:
+  #     - seccomp:unconfined
+  #     - apparmor:unconfined
+  #   ports:
+  #     - "2342:2342" # HTTP port (host:container)
+  #   dns:
+  #     - $PIHOLE_DOCKER_SUB_IP_DNS
+  #   networks:
+  #     - frontend
+  #   environment:
+  #     PHOTOPRISM_ADMIN_PASSWORD: $PHOTOPRISM_ADMIN_PASSWORD # INITIAL PASSWORD FOR "admin" USER, MINIMUM 8 CHARACTERS
+  #     PHOTOPRISM_AUTH_MODE: "password" # authentication mode (public, password)
+  #     PHOTOPRISM_SITE_URL: "http://$SERVER_URL:2342/" # public server URL incl http:// or https:// and /path, :port is optional
+  #     PHOTOPRISM_ORIGINALS_LIMIT: 5000 # file size limit for originals in MB (increase for high-res video)
+  #     PHOTOPRISM_HTTP_COMPRESSION: "gzip" # improves transfer speed and bandwidth utilization (none or gzip)
+  #     PHOTOPRISM_LOG_LEVEL: "info" # log level: trace, debug, info, warning, error, fatal, or panic
+  #     PHOTOPRISM_READONLY: "false" # do not modify originals directory (reduced functionality)
+  #     PHOTOPRISM_EXPERIMENTAL: "false" # enables experimental features
+  #     PHOTOPRISM_DISABLE_CHOWN: "false" # disables updating storage permissions via chmod and chown on startup
+  #     PHOTOPRISM_DISABLE_WEBDAV: "false" # disables built-in WebDAV server
+  #     PHOTOPRISM_DISABLE_SETTINGS: "false" # disables settings UI and API
+  #     PHOTOPRISM_DISABLE_TENSORFLOW: "false" # disables all features depending on TensorFlow
+  #     PHOTOPRISM_DISABLE_FACES: "false" # disables face detection and recognition (requires TensorFlow)
+  #     PHOTOPRISM_DISABLE_CLASSIFICATION: "false" # disables image classification (requires TensorFlow)
+  #     PHOTOPRISM_DISABLE_RAW: "false" # disables indexing and conversion of RAW files
+  #     PHOTOPRISM_RAW_PRESETS: "false" # enables applying user presets when converting RAW files (reduces performance)
+  #     PHOTOPRISM_JPEG_QUALITY: 85 # a higher value increases the quality and file size of JPEG images and thumbnails (25-100)
+  #     PHOTOPRISM_DETECT_NSFW: "false" # automatically flags photos as private that MAY be offensive (requires TensorFlow)
+  #     PHOTOPRISM_UPLOAD_NSFW: "true" # allows uploads that MAY be offensive (no effect without TensorFlow)
+  #     # PHOTOPRISM_DATABASE_DRIVER: "sqlite"         # SQLite is an embedded database that doesn't require a server
+  #     PHOTOPRISM_DATABASE_DRIVER: "mysql" # use MariaDB 10.5+ or MySQL 8+ instead of SQLite for improved performance
+  #     PHOTOPRISM_DATABASE_SERVER: $SERVER_URL:3307 # MariaDB or MySQL database server (hostname:port)
+  #     PHOTOPRISM_DATABASE_NAME: "photoprism" # MariaDB or MySQL database schema name
+  #     PHOTOPRISM_DATABASE_USER: "photoprism" # MariaDB or MySQL database user name
+  #     PHOTOPRISM_DATABASE_PASSWORD: $PHOTOPRISM_MARIADB_PASSWORD # MariaDB or MySQL database user password
+  #     PHOTOPRISM_SITE_CAPTION: "AI-Powered Photos App"
+  #     PHOTOPRISM_SITE_DESCRIPTION: "" # meta site description
+  #     PHOTOPRISM_SITE_AUTHOR: "" # meta site author
+  #     ## Run/install on first startup (options: update gpu tensorflow davfs clitools clean):
+  #     # PHOTOPRISM_INIT: "gpu tensorflow"
+  #     ## Hardware Video Transcoding (for sponsors only due to high maintenance and support costs):
+  #     # PHOTOPRISM_FFMPEG_ENCODER: "software"        # FFmpeg encoder ("software", "intel", "nvidia", "apple", "raspberry")
+  #     # PHOTOPRISM_FFMPEG_BITRATE: "32"              # FFmpeg encoding bitrate limit in Mbit/s (default: 50)
+  #     ## Run as a non-root user after initialization (supported: 0, 33, 50-99, 500-600, and 900-1200):
+  #     # PHOTOPRISM_UID: 1000
+  #     # PHOTOPRISM_GID: 1000
+  #     # PHOTOPRISM_UMASK: 0000
+  #   ## Start as non-root user before initialization (supported: 0, 33, 50-99, 500-600, and 900-1200):
+  #   # user: "1000:1000"
+  #   ## Share hardware devices with FFmpeg and TensorFlow (optional):
+  #   devices:
+  #     - "/dev/dri:/dev/dri" # Intel QSV
+  #   #  - "/dev/nvidia0:/dev/nvidia0"                 # Nvidia CUDA
+  #   #  - "/dev/nvidiactl:/dev/nvidiactl"
+  #   #  - "/dev/nvidia-modeset:/dev/nvidia-modeset"
+  #   #  - "/dev/nvidia-nvswitchctl:/dev/nvidia-nvswitchctl"
+  #   #  - "/dev/nvidia-uvm:/dev/nvidia-uvm"
+  #   #  - "/dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools"
+  #   #  - "/dev/video11:/dev/video11"                 # Video4Linux Video Encode Device (h264_v4l2m2m)
+  #   working_dir: "/photoprism" # do not change or remove
+  #   ## Storage Folders: "~" is a shortcut for your home directory, "." for the current directory
+  #   volumes:
+  #     # "/host/folder:/photoprism/folder"                # Example
+  #     - "photoprism-originals:/photoprism/originals" # Original media files (DO NOT REMOVE)
+  #     # - "/example/family:/photoprism/originals/family" # *Additional* media folders can be mounted like this
+  #     # - "~/Import:/photoprism/import"                  # *Optional* base folder from which files can be imported to originals
+  #     - "$PHOTOPRISM_STORAGE_DIR:/photoprism/storage" # *Writable* storage folder for cache, database, and sidecar files (DO NOT REMOVE)
+  #
   ## Database Server (recommended)
   ## see https://docs.photoprism.app/getting-started/faq/#should-i-use-sqlite-mariadb-or-mysql
   mariadb_photoprism:
