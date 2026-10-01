@@ -1,0 +1,4 @@
+# acme.json holds private keys - never commit it.
+# This file keeps the directory tracked so the bind mount target exists.
+*
+!.gitignore

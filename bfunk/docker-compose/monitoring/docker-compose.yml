@@ -15,6 +15,13 @@ services:
     depends_on:
       - prometheus
       - loki
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls=true"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+      - "com.centurylinklabs.watchtower.enable=true"
+
 
   prometheus:
     image: prom/prometheus:latest
@@ -86,3 +93,8 @@ volumes:
   grafana-data:
   prometheus-data:
   loki-data:
+
+networks:
+  proxy:
+    name: proxy
+    external: true
