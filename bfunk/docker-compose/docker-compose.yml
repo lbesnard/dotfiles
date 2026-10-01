@@ -107,7 +107,7 @@ services:
     - GID="${GID-1000}"
     - COLLECTIONS=crowdsecurity/nginx crowdsecurity/http-cve crowdsecurity/whitelist-good-actors
       crowdsecurity/linux
-    - CUSTOM_HOSTNAME=brownfunk
+    - CUSTOM_HOSTNAME=${SERVER_DOMAIN}
     volumes:
     - ./crowdsec/acquis.yaml:/etc/crowdsec/acquis.yaml
     - $DOCKER_CONFIG_PATH/crowdsec2/data:/var/lib/crowdsec/data/
@@ -709,7 +709,18 @@ services:
     - PGID=1000
     - TZ=Etc/UTC
     - DOCKER_MODS=linuxserver/mods:transmission-trguing
+          # - TRANSMISSION_WEB_HOME= #optional
+      # - USER= #optional
+      # - PASS= #optional
+      # - WHITELIST= #optional
+      # - PEERPORT= #optional
+      # - HOST_WHITELIST= #optional
     # ports are taken over by gluetun
+    #    # ports:
+      # - 9091:9091
+    # - 51413:51413
+    # - 29051:29051
+    # - 51413:51413/udp
     volumes:
     - $TORRENT_PATH/downloads:/downloads
     - $TORRENT_PATH/data:/data
@@ -718,6 +729,7 @@ services:
     restart: unless-stopped
 
   tecmint-web:
+      # to store icons for help page
     container_name: tecmint-web
     image: httpd:2.4
     ports:
@@ -779,6 +791,7 @@ services:
     volumes:
     - $DOCKER_CONFIG_PATH/duckdns:/config
     restart: always
+    
   # swag: disabled - superseded by Traefik (v3.6, above), which now handles
   # reverse-proxying + Let's Encrypt for all services. Kept here for reference
   # in case swag-specific features (e.g. crowdsec bouncer mod) are needed again.
@@ -809,6 +822,7 @@ services:
   #   - 443:443
   #   - 555:80
   #   restart: unless-stopped
+
   redis:
     image: redis:alpine
     ports:
@@ -1217,3 +1231,227 @@ services:
     restart: unless-stopped
     networks:
       proxy: null
+
+  
+  # lingodiary:
+  #   image: lozzaroo/lingodiary
+  #   ports:
+  #     - 8083:8084
+  #   volumes:
+  #     - /media/lbesnard/bfunk_10tb_4/lingoDiary/data:/app/.venv # 👈 bind mount replaces named volume
+  #     - /media/lbesnard/bfunk_10tb_4/lingoDiary/config:/app/.config/lingoDiary # 👈 bind mount replaces named volume
+  #   environment:
+  #     # CONFIG_PATH: /app/.config/lingoDiary/config.yaml # Update path to reflect /app location
+  #     SECRET_KEY: "bceac54fc00cbdfee69e3f10905b73ec550eb9bf6779a9476471171170493962" # python -c "import secrets; print(secrets.token_hex(32))"
+  #     # CONFIG_ROOT: /app/.config/lingoDiary # Update path to reflect /app location
+  #
+ #
+ #  ############################
+  # # doc on https://github.com/kylemanna/docker-openvpn/blob/master/docs/docker-compose.md
+  # openvpn:
+  #   cap_add:
+  #     - NET_ADMIN
+  #   image: kylemanna/openvpn
+  #   #container_name: openvpn
+  #   ports:
+  #     - "1194:1194/udp"
+  #   restart: always
+  #   volumes:
+  #     - $DOCKER_CONFIG_PATH/openvpn-data/conf:/etc/openvpn
+  #
+  #   ####################
+  # ### Wallabag
+  # wallabag:
+  #   image: wallabag/wallabag
+  #   #container_name: wallabag
+  #   dns:
+  #     - $PIHOLE_DOCKER_SUB_IP_DNS
+  #   networks:
+  #     - frontend
+  #   depends_on:
+  #     - pihole
+  #     - redis
+  #     - mariadb
+  #   ports:
+  #     - 3637:80
+  #   volumes:
+  #     - $DOCKER_CONFIG_PATH/wallabag/var/www/wallabag/data:/var/www/wallabag/data
+  #     - $DOCKER_CONFIG_PATH/wallabag/opt/wallabag/images:/var/www/wallabag/web/assets/images
+  #   restart: unless-stopped
+  #   environment:
+  #     - PUID=$PUID_USER
+  #     - PGID=$PGID_USER
+  #     - TZ=$TZ
+  #     - WATCHTOWER_CLEANUP=true
+  #     - SYMFONY__ENV__DOMAIN_NAME=$SERVER_URL:3637
+  #     #- SYMFONY__ENV__DATABASE_HOST=172.20.0.17
+  #   links:
+  #     - redis
+  #   labels:
+  #     com.centurylinklabs.watchtower.enable: true
+  #
+  #       #########
+  #  apaxy:
+  #image: apaxy
+  #container_name: apaxy
+  #build:
+  #context: apaxy
+  #args:
+  #apaxyPath: ''
+  #ports:
+  #- '3321:8080'
+  #volumes:
+  #- $SERVER_PATH:/usr/local/apache2/htdocs/share/:ro
+  #    restart: unless-stopped
+  #      #################
+  #syncthing:
+  #image: ghcr.io/linuxserver/syncthing
+  #container_name: syncthing
+  #hostname: syncthing #optional
+  #environment:
+  #- PUID=$PUID_USER
+  #- PGID=$PGID_USER
+  #- TZ=Europe/London
+  #volumes:
+  #- $DOCKER_CONFIG_PATH/syncthing:/config
+  #- /export/share/share:/data1
+  #ports:
+  #- 8384:8384
+  #- 22000:22000/tcp
+  #- 22000:22000/udp
+  #- 21027:21027/udp
+  #restart: unless-stopped
+  ##
+  #
+  # pyload:
+  #   image: lscr.io/linuxserver/pyload-ng:latest
+  #   #container_name: pyload
+  #   environment:
+  #     - PUID=$PUID_USER
+  #     - PGID=$PGID_USER
+  #     - TZ=$TZ
+  #     - WATCHTOWER_CLEANUP=true
+  #   volumes:
+  #     - $DOCKER_CONFIG_PATH/pyload:/config
+  #     - $PYLOAD_PATH/PYLOAD:/downloads
+  #   ports:
+  #     - 8000:8000
+  #     - 7227:7227 #optional
+  #   restart: unless-stopped
+  #   labels:
+  #     com.centurylinklabs.watchtower.enable: true
+ #
+ #  # byparr:
+  #   image: ghcr.io/thephaseless/byparr:latest
+  #   restart: unless-stopped
+  #   init: true
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8192:8191"
+  #   dns:
+  #     - $PIHOLE_DOCKER_SUB_IP_DNS
+  #   networks:
+  #     - frontend
+  #   depends_on:
+  #     - pihole
+  ####################
+  #
+  #  # ###################
+  # php_piwigo_slideshow:
+  #   #container_name: php_piwigo_slideshow
+  #   image: php:7.4-apache
+  #   ports:
+  #     - 5671:80
+  #   environment:
+  #     - WATCHTOWER_CLEANUP=true
+  #     - PUID=$PUID_USER
+  #     - PGID=$PGID_USER
+  #     - TZ=$TZ
+  #   volumes:
+  #     - $DOCKER_CONFIG_PATH/php_piwigo_slideshow:/var/www/html/
+  #   dns:
+  #     - $PIHOLE_DOCKER_SUB_IP_DNS
+  #   networks:
+  #     - frontend
+  #   depends_on:
+  #     - pihole
+  #   restart: unless-stopped
+  ###############
+  # lidarr:
+  #   image: linuxserver/lidarr
+  #   #container_name: lidarr
+  #   environment:
+  #     - PUID=$PUID_USER
+  #     - PGID=$PGID_USER
+  #     - TZ=$TZ
+  #     - UMASK_SET=022 #optional
+  #     - WATCHTOWER_CLEANUP=true
+  #   volumes:
+  #     - $DOCKER_CONFIG_PATH/lidarr:/config
+  #     - $MUSIC_PATH:/music
+  #     - $TORRENT_PATH:/data
+  #     - $TORRENT_PATH/LIDARR_DL:/data/LIDARR_DL
+  #   ports:
+  #     - 8686:8686
+  #   dns:
+  #     - $PIHOLE_DOCKER_SUB_IP_DNS
+  #   networks:
+  #     - frontend
+  #   depends_on:
+  #     - pihole
+  #   restart: "no"
+  #   labels:
+  #     com.centurylinklabs.watchtower.enable: true
+  # #############
+  #
+  #  # beets:
+  #   image: lscr.io/linuxserver/beets:latest
+  #   container_name: beets
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=$TZ
+  #
+  #     # linuxserver mods
+  #     - DOCKER_MODS=linuxserver/mods:universal-package-install
+  #
+  #     # system deps
+  #     - INSTALL_PACKAGES=ffmpeg|git
+  #
+  #     # python deps
+  #     - INSTALL_PIP_PACKAGES=beets[complete]|beets-autogenre|essentia
+  #
+  #   volumes:
+  #     - $HOME/.config/beets:/config
+  #     - $MUSIC_PATH/:/music
+  #     # - /TO_BE_DEFINED/import:/downloads
+  #
+  #     # Essentia models (SVMs)
+  #     # - /media/lbesnard/bfunk_12tb_1/essentia-models:/var/lib/essentia:ro
+  #
+  #   ports:
+  #     - 8337:8337
+  #
+  #   restart: unless-stopped
+  # ##################
+  # Audiobooks
+  # audiobookshelf:
+  #   #container_name: audiobookshelf
+  #   image: ghcr.io/advplyr/audiobookshelf:latest
+  #   ports:
+  #     - 4040:80
+  #   volumes:
+  #     - $AUDIOBOOKS_PATH:/audiobooks
+  #     - $PODCASTS_PATH:/podcasts
+  #     - $DOCKER_CONFIG_PATH/audiobookshelf/config>:/config
+  #     - $DOCKER_CONFIG_PATH/audiobookshelf/metadata>:/metadata
+  #   environment:
+  #     - TZ
+  #     - PUID=$PUID_USER
+  #     - PGID=$PGID_USER
+  #     - WATCHTOWER_CLEANUP=true
+  #   labels:
+  #     com.centurylinklabs.watchtower.enable: true
+  #
