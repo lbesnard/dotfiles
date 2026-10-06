@@ -100,33 +100,33 @@ services:
     - traefik.http.routers.pihole.tls=true
     - traefik.http.services.pihole.loadbalancer.server.port=80
 
-  crowdsec:
-    image: docker.io/crowdsecurity/crowdsec:latest
-    container_name: crowdsec
-    environment:
-    - GID="${GID-1000}"
-    - COLLECTIONS=crowdsecurity/nginx crowdsecurity/http-cve crowdsecurity/whitelist-good-actors
-      crowdsecurity/linux
-    - CUSTOM_HOSTNAME=${SERVER_DOMAIN}
-    volumes:
-    - ./crowdsec/acquis.yaml:/etc/crowdsec/acquis.yaml
-    - $DOCKER_CONFIG_PATH/crowdsec2/data:/var/lib/crowdsec/data/
-    - /var/log:/var/log:ro
-    networks:
-      frontend: null
-      proxy: null
-    ports:
-    - 8890:8080
-    - 8891:6060
-    restart: unless-stopped
-    security_opt:
-    - no-new-privileges=true
-    labels:
-      traefik.enable: 'true'
-      traefik.http.routers.crowdsec.entrypoints: websecure
-      traefik.http.routers.crowdsec.tls: 'true'
-      traefik.http.services.crowdsec.loadbalancer.server.port: '8080'
-
+  # crowdsec:
+  #   image: docker.io/crowdsecurity/crowdsec:latest
+  #   container_name: crowdsec
+  #   environment:
+  #   - GID="${GID-1000}"
+  #   - COLLECTIONS=crowdsecurity/nginx crowdsecurity/http-cve crowdsecurity/whitelist-good-actors
+  #     crowdsecurity/linux
+  #   - CUSTOM_HOSTNAME=${SERVER_DOMAIN}
+  #   volumes:
+  #   - ./crowdsec/acquis.yaml:/etc/crowdsec/acquis.yaml
+  #   - $DOCKER_CONFIG_PATH/crowdsec2/data:/var/lib/crowdsec/data/
+  #   - /var/log:/var/log:ro
+  #   networks:
+  #     frontend: null
+  #     proxy: null
+  #   ports:
+  #   - 8890:8080
+  #   - 8891:6060
+  #   restart: unless-stopped
+  #   security_opt:
+  #   - no-new-privileges=true
+  #   labels:
+  #     traefik.enable: 'true'
+  #     traefik.http.routers.crowdsec.entrypoints: websecure
+  #     traefik.http.routers.crowdsec.tls: 'true'
+  #     traefik.http.services.crowdsec.loadbalancer.server.port: '8080'
+  #
   mariadb:
     image: lscr.io/linuxserver/mariadb:latest
     environment:
@@ -426,32 +426,32 @@ services:
       timeout: 5s
     restart: unless-stopped
 
-  piwigo:
-    image: linuxserver/piwigo
-    container_name: piwigo
-    environment:
-    - WATCHTOWER_CLEANUP=true
-    - PUID=$PUID_USER
-    - PGID=$PGID_USER
-    - TZ=$TZ
-    - DOCKER_MODS=linuxserver/mods:universal-package-install
-    - INSTALL_PACKAGES=ffmpeg
-    volumes:
-    - $PIWIGO_CONFIG_PATH/piwigo:/config
-    ports:
-    - 8282:80
-    dns:
-    - $PIHOLE_DOCKER_SUB_IP_DNS
-    networks:
-      frontend: null
-      proxy: null
-    restart: unless-stopped
-    labels:
-      com.centurylinklabs.watchtower.enable: true
-      traefik.enable: 'true'
-      traefik.http.routers.piwigo.entrypoints: websecure
-      traefik.http.routers.piwigo.tls: 'true'
-      traefik.http.services.piwigo.loadbalancer.server.port: '80'
+  # piwigo:
+  #   image: linuxserver/piwigo
+  #   container_name: piwigo
+  #   environment:
+  #   - WATCHTOWER_CLEANUP=true
+  #   - PUID=$PUID_USER
+  #   - PGID=$PGID_USER
+  #   - TZ=$TZ
+  #   - DOCKER_MODS=linuxserver/mods:universal-package-install
+  #   - INSTALL_PACKAGES=ffmpeg
+  #   volumes:
+  #   - $PIWIGO_CONFIG_PATH/piwigo:/config
+  #   ports:
+  #   - 8282:80
+  #   dns:
+  #   - $PIHOLE_DOCKER_SUB_IP_DNS
+  #   networks:
+  #     frontend: null
+  #     proxy: null
+  #   restart: unless-stopped
+  #   labels:
+  #     com.centurylinklabs.watchtower.enable: true
+  #     traefik.enable: 'true'
+  #     traefik.http.routers.piwigo.entrypoints: websecure
+  #     traefik.http.routers.piwigo.tls: 'true'
+  #     traefik.http.services.piwigo.loadbalancer.server.port: '80'
 
   radarr:
     image: linuxserver/radarr
