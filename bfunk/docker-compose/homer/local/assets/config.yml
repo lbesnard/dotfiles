@@ -58,7 +58,7 @@ message:
   # url: "https://<my-api-endpoint>" # Can fetch information from an endpoint to override value below.
   style: "is-warning"
   title: "Welcome to Brownfunk!!"
-  content: '<a href="http://home.funkybrownfunk.duckdns.org">http://home.funkybrownfunk.duckdns.org</a> <br> Find more information about this media server at <a href="http://brownfunk.lan:3000/s/H1tA_LShH" target="_blank">Server How to</a>'
+  content: '<a href="http://home.funkybrownfunk.duckdns.org">Brownfunk Homepage</a> <br> <a href="http://home.funkybeefunk.duckdns.org">Beefunk Homepage</a>'
   #content: "http://funkybrownfunk.duckdns.org"
 
 # Optional navbar
@@ -368,4 +368,12 @@ services:
         url: "http://portainer.funkybrownfunk.duckdns.org"
         tag: "geek"
         target: "_blank" # optional html tag target attribute
+
+      - name: "Traefik"
+        logo: "assets/icons/homer-icons/png/traefik.png"
+        subtitle: "Load Balancer"
+        url: "http://traefik.funkybrownfunk.duckdns.org"
+        tag: "geek"
+        target: "_blank" # optional html tag target attribute
+
 
