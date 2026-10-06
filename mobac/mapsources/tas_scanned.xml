@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customMapSource>
+ <name>Taslist_scanned</name>
+ <minZoom>6</minZoom>
+ <maxZoom>16</maxZoom>
+ <tileType>jpg</tileType>
+ <tileUpdate>IfNoneMatch</tileUpdate>
+ <url>https://services.thelist.tas.gov.au/arcgis/rest/services/Basemaps/TasmapRaster/MapServer/tile/{$z}/{$y}/{$x}</url>
+ <backgroundColor>#000000</backgroundColor>
+</customMapSource>
