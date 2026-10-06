@@ -28,35 +28,21 @@ appConfig:
   defaultOpeningMethod: newtab
   language: en
 
-widgets:
-  - type: clock
-    options:
-      timeZone: Australia/Hobart
-      format: en-AU
-      customCityName: Hobart
-  
-  - type: public-holidays
-    options:
-      country: AU
-      region: TAS
-  
-  - type: chuck-norris-quote
-  
-  - type: astronomy-picture
-  
-  - type: glances
-    options:
-      hostname: glances
-  
-  - type: disk-space
-  
-  - type: network-interfaces
-  
-  - type: cpu-usage-per-core
-
 sections:
   - name: Daily & Productivity
     icon: fas fa-star
+    sectionWidgets:
+      - type: clock
+        options:
+          timeZone: Australia/Hobart
+          format: en-AU
+          customCityName: Hobart
+      - type: public-holidays
+        options:
+          country: AU
+          region: TAS
+      - type: chuck-norris-quote
+      - type: astronomy-picture
     items:
       - title: Mealie
         description: Recipes & meal planning
@@ -84,6 +70,13 @@ sections:
 
   - name: Media Streaming
     icon: fas fa-film
+    sectionWidgets:
+      - type: glances
+        options:
+          hostname: glances
+      - type: disk-space
+      - type: network-interfaces
+      - type: cpu-usage-per-core
     items:
       - title: Jellyfin
         description: Media streaming
