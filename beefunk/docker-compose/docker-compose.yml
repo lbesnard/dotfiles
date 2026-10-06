@@ -190,6 +190,53 @@ services:
       - pihole
       - traefik
 
+  dashy:
+    image: lissy93/dashy:latest
+    container_name: dashy
+    environment:
+      - PUID=$PUID_USER
+      - PGID=$PGID_USER
+      - TZ=${TZ}
+    volumes:
+      - ./dashy:/app/user-data
+    restart: unless-stopped
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashy.rule=Host(`dashy.${SERVER_DOMAIN}.lan`) || Host(`dashy.${SERVER_DOMAIN}.home`) || Host(`dashy.${SERVER_DOMAIN}.local`) || Host(`dashy.${DUCKDNS_DOMAIN}.duckdns.org`)"
+      - "traefik.http.routers.dashy.entrypoints=websecure"
+      - "traefik.http.routers.dashy.tls=true"
+      - "traefik.http.services.dashy.loadbalancer.server.port=8080"
+    depends_on:
+      - pihole
+      - traefik
+
+  glances:
+    image: nicolargo/glances:latest-full
+    container_name: glances
+    pid: host
+    environment:
+      - PUID=$PUID_USER
+      - PGID=$PGID_USER
+      - TZ=${TZ}
+      - GLANCES_OPT=-w
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/os-release:/etc/os-release:ro
+    restart: unless-stopped
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.glances.rule=Host(`glances.${SERVER_DOMAIN}.lan`) || Host(`glances.${SERVER_DOMAIN}.home`) || Host(`glances.${SERVER_DOMAIN}.local`) || Host(`glances.${DUCKDNS_DOMAIN}.duckdns.org`)"
+      - "traefik.http.routers.glances.entrypoints=websecure"
+      - "traefik.http.routers.glances.tls=true"
+      - "traefik.http.services.glances.loadbalancer.server.port=61208"
+    depends_on:
+      - pihole
+      - traefik
+
   media-mount-check:
     image: busybox:latest
     container_name: media-mount-check
