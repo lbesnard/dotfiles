@@ -31,7 +31,7 @@ appConfig:
 sections:
   - name: Daily & Productivity
     icon: fas fa-star
-    sectionWidgets:
+    widgets:
       - type: clock
         options:
           timeZone: Australia/Hobart
@@ -70,7 +70,7 @@ sections:
 
   - name: Media Streaming
     icon: fas fa-film
-    sectionWidgets:
+    widgets:
       - type: glances
         options:
           hostname: glances
