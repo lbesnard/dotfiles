@@ -20,29 +20,43 @@ pageInfo:
 appConfig:
   theme: dark
   statusCheck: true
-  statusCheckInterval: 20
+  statusCheckInterval: 100
   statusCheckAccessibility: true
   pingCheckEnabled: true
-  pingCheckInterval: 5
+  pingCheckInterval: 100
   pingCheckAccessibility: true
   defaultOpeningMethod: newtab
   language: en
 
 sections:
-  - name: Daily & Productivity
-    icon: fas fa-star
+
+  - name: home-widgets
     widgets:
+      - type: 'custom-search'
+        options:
+          placeholder: Search for something using the buttons below
+          engines:
+          - title: Quant
+            url: https://www.qwant.com/?q=
       - type: clock
         options:
-          timeZone: Australia/Hobart
-          format: en-AU
-          customCityName: Hobart
+          timezone: Australia/Hobart
+
       - type: public-holidays
         options:
           country: AU
-          region: TAS
-      - type: chuck-norris-quote
-      - type: astronomy-picture
+          state: TAS 
+          holidayType: all
+          monthsToShow: 2
+          lang: en
+      - type: xkcd-comic
+        options:
+          comic: latest
+      - type: chucknorris
+      - type: apod
+
+  - name: Daily & Productivity
+    icon: fas fa-star
     items:
       - title: Mealie
         description: Recipes & meal planning
@@ -70,13 +84,6 @@ sections:
 
   - name: Media Streaming
     icon: fas fa-film
-    widgets:
-      - type: glances
-        options:
-          hostname: https://glances.funkybeefunk.duckdns.org
-      - type: disk-space
-      - type: network-interfaces
-      - type: cpu-usage-per-core
     items:
       - title: Jellyfin
         description: Media streaming
@@ -320,3 +327,16 @@ sections:
         icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/firefox.png
         url: https://firefox.funkybeefunk.duckdns.org/
         tags: [tools]
+
+  - name: monitoring
+    widgets:
+    - type: gl-disk-space
+      options:
+        hostname: https://glances.funkybeefunk.duckdns.org
+    - type: gl-current-cpu
+      options:
+        hostname: https://glances.funkybeefunk.duckdns.org
+    - type: gl-network-interfaces
+      options:
+        hostname: https://glances.funkybeefunk.duckdns.org
+
