@@ -202,6 +202,8 @@ services:
     restart: unless-stopped
     networks:
       - proxy
+    dns:
+      - $SERVER_LAN_IP
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.dashy.rule=Host(`dashy.${SERVER_DOMAIN}.lan`) || Host(`dashy.${SERVER_DOMAIN}.home`) || Host(`dashy.${SERVER_DOMAIN}.local`) || Host(`dashy.${DUCKDNS_DOMAIN}.duckdns.org`)"

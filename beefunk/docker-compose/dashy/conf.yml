@@ -73,7 +73,7 @@ sections:
     widgets:
       - type: glances
         options:
-          hostname: glances
+          hostname: https://glances.funkybeefunk.duckdns.org
       - type: disk-space
       - type: network-interfaces
       - type: cpu-usage-per-core
