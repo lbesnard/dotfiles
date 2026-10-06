@@ -299,6 +299,11 @@ alias musescore_dl='npx msdl'
 alias path_env_path="echo $PATH | tr ':' '\n' | fzf"
 [[ -s "$HOMEBREW_PREFIX/etc/grc.zsh" ]] && alias tail='grc tail'
 
+if [ -f $HOME/Mobac/start.sh ]; then
+    chmod +x  $HOME/Mobac/start.sh
+    alias mobac='(cd  $HOME/Mobac && ./start.sh)'
+fi
+
 if command -v cheat-linux-amd64 > /dev/null; then
     alias cheat=cheat-linux-amd64
 fi
