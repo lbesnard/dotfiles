@@ -1,0 +1,329 @@
+# Dashy Configuration - Converted from Homer config
+# Full docs here: https://dashy.to/docs/configuring
+
+pageInfo:
+  title: Beefunk Dashboard
+  description: Local Services & Infrastructure
+  navLinks:
+    - title: Server Howto
+      path: http://beefunk:3000/s/H1tA_LShH
+      target: newtab
+    - title: Brownfunk Homepage
+      path: http://home.funkybrownfunk.duckdns.org
+      target: newtab
+    - title: Beefunk Homepage
+      path: http://home.funkybeefunk.duckdns.org
+      target: newtab
+  footer: |
+    Created with ❤️ | <a href="http://beefunk:3000/s/H1tA_LShH" target="_blank">Server Howto</a>
+
+appConfig:
+  theme: dark
+  statusCheck: true
+  statusCheckInterval: 20
+  statusCheckAccessibility: true
+  pingCheckEnabled: true
+  pingCheckInterval: 5
+  pingCheckAccessibility: true
+  defaultOpeningMethod: newtab
+  language: en
+
+widgets:
+  - type: clock
+    options:
+      timeZone: Australia/Hobart
+      format: en-AU
+      customCityName: Hobart
+  
+  - type: public-holidays
+    options:
+      country: AU
+      region: TAS
+  
+  - type: chuck-norris-quote
+  
+  - type: astronomy-picture
+  
+  - type: glances
+    options:
+      hostname: glances
+  
+  - type: disk-space
+  
+  - type: network-interfaces
+  
+  - type: cpu-usage-per-core
+
+sections:
+  - name: Daily & Productivity
+    icon: fas fa-star
+    items:
+      - title: Mealie
+        description: Recipes & meal planning
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/mealie.png
+        url: http://mealie.funkybeefunk.duckdns.org
+        tags: [app]
+
+      - title: LingoDiary
+        description: Language learning
+        icon: http://lingodiary.funkybeefunk.duckdns.org/static/icon_reduced.png
+        url: http://lingodiary.funkybeefunk.duckdns.org
+        tags: [app]
+
+      - title: Blog - El Camino Loco
+        description: Wordpress blog
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/wordpress.png
+        url: http://beefunk:5555
+        tags: [blog]
+
+      - title: Music Sheet
+        description: Sheet music collection
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/musicbrainz.png
+        url: http://brownfunk.lan:3000/s/BW3Tx522S
+        tags: [docs]
+
+  - name: Media Streaming
+    icon: fas fa-film
+    items:
+      - title: Jellyfin
+        description: Media streaming
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/jellyfin.png
+        url: http://jellyfin.funkybeefunk.duckdns.org
+        tags: [media]
+
+      - title: Audiobookshelf
+        description: Audiobook streaming
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/audiobookshelf.png
+        url: http://audiobookshelf.funkybeefunk.duckdns.org
+        tags: [media]
+
+      - title: Navidrome
+        description: Music streaming
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/navidrome.png
+        url: http://navidrome.funkybeefunk.duckdns.org
+        tags: [media]
+
+      - title: myMPD
+        description: MPD client
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/mympd.png
+        url: http://mympd.funkybeefunk.duckdns.org
+        tags: [media]
+
+      - title: Moode
+        description: MPD Moode Server
+        icon: https://moodeaudio.org/forum/images/moode-r900-logotype-175px.png
+        url: http://moode.local
+        tags: [media]
+        pingCheckHost: moode.local
+
+      - title: Komga
+        description: Comics streaming
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/komga.png
+        url: http://komga.funkybeefunk.duckdns.org
+        tags: [media]
+
+      - title: Calibre Web
+        description: Ebooks download
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/calibre-web.png
+        url: http://calibre-web.funkybeefunk.duckdns.org
+        tags: [media]
+
+  - name: Photos & Gallery
+    icon: fas fa-images
+    items:
+      - title: Immich
+        description: Pictures management
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/immich.png
+        url: http://immich.funkybeefunk.duckdns.org
+        tags: [photos]
+
+      - title: Immich-Kiosk
+        description: Slideshow
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/immich-kiosk.png
+        url: http://immich-kiosk.funkybeefunk.duckdns.org
+        tags: [photos]
+
+      - title: Digikam
+        description: Photo Management
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/digi-kam.png
+        url: https://digikam.funkybeefunk.duckdns.org
+        tags: [photos]
+        statusCheckAllowInsecure: true
+
+      - title: Darktable
+        description: Photo Raw Editor
+        icon: https://upload.wikimedia.org/wikipedia/commons/7/7b/Darktable_icon.svg
+        url: https://darktable.funkybeefunk.duckdns.org
+        tags: [photos]
+        statusCheckAllowInsecure: true
+
+      - title: Piwigo
+        description: Picture gallery
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/piwigo.png
+        url: http://piwigo.funkybeefunk.duckdns.org
+        tags: [photos]
+
+  - name: Gaming & Emulation
+    icon: fas fa-gamepad
+    items:
+      - title: Romm
+        description: ROM manager
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/romm.png
+        url: http://romm.funkybeefunk.duckdns.org
+        tags: [games]
+
+      - title: Aerofoil
+        description: Switch games
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/nintendo-switch.svg
+        url: http://aerofoil.funkybeefunk.duckdns.org
+        tags: [games]
+
+  - name: Cloud & Sync
+    icon: fas fa-cloud
+    items:
+      - title: Nextcloud
+        description: Cloud storage
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/nextcloud.png
+        url: https://brownfunk.lan:9393
+        tags: [cloud]
+        statusCheckAllowInsecure: true
+
+      - title: Syncthing
+        description: Sync data between devices
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/syncthing.png
+        url: https://syncthing.funkybeefunk.duckdns.org
+        tags: [cloud]
+
+      - title: Privatebin
+        description: Paste bin
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/privatebin.png
+        url: https://privatebin.funkybeefunk.duckdns.org
+        tags: [cloud]
+
+      - title: File Browser
+        description: Explore server files
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/filebrowser.png
+        url: http://filebrowserquantum.funkybeefunk.duckdns.org
+        tags: [tools]
+
+  - name: Downloads & Indexers
+    icon: fas fa-download
+    items:
+      - title: Transmission
+        description: Torrent + VPN
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/transmission.png
+        url: http://transmission.funkybeefunk.duckdns.org
+        tags: [dl]
+
+      - title: Prowlarr
+        description: Indexer search
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/prowlarr.png
+        url: http://prowlarr.funkybeefunk.duckdns.org
+        tags: [dl]
+
+      - title: Jackett
+        description: Torrent proxy
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/jackett.png
+        url: http://jackett.funkybeefunk.duckdns.org
+        tags: [dl]
+
+      - title: Radarr
+        description: Movie download
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/radarr.png
+        url: http://radarr.funkybeefunk.duckdns.org
+        tags: [dl]
+
+      - title: Radarr (French)
+        description: French movies
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/radarr.png
+        url: http://brownfunk.lan:7879
+        tags: [dl]
+
+      - title: Sonarr
+        description: TV show download
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/sonarr.png
+        url: http://sonarr.funkybeefunk.duckdns.org
+        tags: [dl]
+
+      - title: Lidarr
+        description: Music download
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/lidarr.png
+        url: http://lidarr.brownfunk.lan
+        tags: [dl]
+
+      - title: Bazarr
+        description: Subtitle download
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/bazarr.png
+        url: http://brownfunk.lan:6768
+        tags: [dl]
+
+      - title: Pyload
+        description: Link downloader
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/pyload.png
+        url: http://pyload.funkybeefunk.duckdns.org
+        tags: [dl]
+
+  - name: Server Maintenance & Tools
+    icon: fas fa-tools
+    items:
+      - title: Portainer
+        description: Docker management
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/portainer.png
+        url: http://portainer.funkybeefunk.duckdns.org
+        tags: [geek]
+
+      - title: Traefik
+        description: Load Balancer
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/traefik.png
+        url: http://traefik.funkybrownfunk.duckdns.org
+        tags: [geek]
+
+      - title: Cockpit
+        description: Linux console VM
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/cockpit.png
+        url: https://funkybeefunk.duckdns.org:9090
+        tags: [geek]
+        statusCheckAllowInsecure: true
+
+      - title: Pi-hole
+        description: DNS & DHCP server
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/pi-hole.png
+        url: http://pihole.funkybeefunk.duckdns.org/admin
+        tags: [geek]
+
+      - title: Router
+        description: Router config
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/asusrouter.png
+        url: http://192.168.8.1
+        tags: [geek]
+        pingCheckHost: 192.168.8.1
+
+      - title: Scrutiny
+        description: HDD real-time monitoring
+        icon: https://raw.githubusercontent.com/AnalogJ/scrutiny/master/webapp/frontend/src/assets/images/logo/scrutiny-logo-dark.png
+        url: http://scrutiny.funkybeefunk.duckdns.org
+        tags: [geek]
+
+      - title: Grafana
+        description: Metrics & monitoring
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/grafana.png
+        url: http://grafana.funkybeefunk.duckdns.org
+        tags: [geek]
+
+      - title: Calibre Server
+        description: Ebooks Maintenance
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/calibre.png
+        url: http://calibre.funkybeefunk.duckdns.org
+        tags: [app]
+
+      - title: Unmanic
+        description: Video converter
+        icon: http://unmanic.funkybeefunk.duckdns.org/unmanic/img/unmanic-logo-white.a3277864.png
+        url: http://unmanic.funkybeefunk.duckdns.org
+        tags: [app]
+
+      - title: Firefox
+        description: Remote browser
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/firefox.png
+        url: https://firefox.funkybeefunk.duckdns.org/
+        tags: [tools]
