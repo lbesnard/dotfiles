@@ -25,33 +25,8 @@ appConfig:
   pingCheckEnabled: true
   pingCheckInterval: 5
   pingCheckAccessibility: true
-  defaultOpeningMethod: modal
+  defaultOpeningMethod: newtab
   language: en
-  widgets:
-    - type: clock
-      options:
-        timeZone: Australia/Hobart
-        format: en-AU
-        customCityName: Hobart
-    
-    - type: public-holidays
-      options:
-        country: AU
-        region: TAS
-    
-    - type: chuck-norris-quote
-    
-    - type: astronomy-picture
-    
-    - type: glances
-      options:
-        hostname: glances
-    
-    - type: disk-space
-    
-    - type: network-interfaces
-    
-    - type: cpu-usage-per-core
 
 widgets:
   - type: clock
