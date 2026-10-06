@@ -50,7 +50,7 @@ colors:
 message:
   style: "is-warning"
   title: "Welcome to Beefunk!"
-  content: '<a href="http://home.funkybeefunk.duckdns.org">http://home.funkybeefunk.duckdns.org</a> <br> Find more information about this media server at <a href="http://beefunk:3000/s/H1tA_LShH" target="_.local">Server How to</a>'
+  content: '<a href="http://home.funkybrownfunk.duckdns.org">Brownfunk Homepage</a> <br> <a href="http://home.funkybeefunk.duckdns.org">Beefunk Homepage</a>'
 
 links:
   - name: "Server Howto"
@@ -345,6 +345,14 @@ services:
         tag: "geek"
         tagstyle: "is-light"
         target: "_.local"
+
+      - name: "Traefik"
+        logo: "assets/icons/homer-icons/png/traefik.png"
+        subtitle: "Load Balancer"
+        url: "http://traefik.funkybrownfunk.duckdns.org"
+        tag: "geek"
+        target: "_blank" # optional html tag target attribute
+
 
       - name: "Cockpit"
         logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/cockpit.png"
