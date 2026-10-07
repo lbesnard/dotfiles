@@ -29,14 +29,35 @@ appConfig:
   language: en
 
 sections:
-  - name: Media Streaming
-    icon: fas fa-film
+  - name: home-widgets
     widgets:
+      - type: 'custom-search'
+        options:
+          placeholder: Search for something using the buttons below
+          engines:
+          - title: Quant
+            url: https://www.qwant.com/?q=
       - type: clock
         options:
-          timeZone: Australia/Hobart
-          format: en-AU
-          customCityName: Hobart
+          timezone: Australia/Hobart
+
+      - type: public-holidays
+        options:
+          country: AU
+          state: TAS 
+          holidayType: all
+          monthsToShow: 2
+          lang: en
+      - type: xkcd-comic
+        options:
+          comic: latest
+      - type: chucknorris
+      - type: apod
+
+
+  - name: Media Streaming
+    icon: fas fa-film
+
     items:
       - title: Music
         description: Navidrome - music streaming
@@ -204,3 +225,16 @@ sections:
         icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/traefik.png
         url: http://traefik.funkybrownfunk.duckdns.org
         tags: [geek]
+
+  - name: monitoring
+    widgets:
+    - type: gl-disk-space
+      options:
+        hostname: https://glances.funkybrownfunk.duckdns.org
+    - type: gl-current-cpu
+      options:
+        hostname: https://glances.funkybrownfunk.duckdns.org
+    - type: gl-network-interfaces
+      options:
+        hostname: https://glances.funkybrownfunk.duckdns.org
+

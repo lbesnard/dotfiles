@@ -241,7 +241,6 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.glances.rule=Host(`glances.${SERVER_DOMAIN}.lan`) || Host(`glances.${SERVER_DOMAIN}.home`) || Host(`glances.${SERVER_DOMAIN}.local`) || Host(`glances.${DUCKDNS_DOMAIN}.duckdns.org`)"
       - "traefik.http.routers.glances.entrypoints=websecure"
       - "traefik.http.routers.glances.tls=true"
       - "traefik.http.services.glances.loadbalancer.server.port=61208"
