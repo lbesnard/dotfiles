@@ -1,0 +1,206 @@
+# Dashy Configuration - Converted from Homer config
+# Full docs here: https://dashy.to/docs/configuring
+
+pageInfo:
+  title: Brownfunk Dashboard
+  description: Local Services & Infrastructure
+  navLinks:
+    - title: Server Howto
+      path: http://hedgedoc.funkybrownfunk.duckdns.org/s/H1tA_LShH
+      target: newtab
+    - title: Brownfunk Homepage
+      path: http://home.funkybrownfunk.duckdns.org
+      target: newtab
+    - title: Beefunk Homepage
+      path: http://home.funkybeefunk.duckdns.org
+      target: newtab
+  footer: |
+    Created with ❤️ | <a href="http://hedgedoc.funkybrownfunk.duckdns.org/s/H1tA_LShH" target="_blank">Server Howto</a>
+
+appConfig:
+  theme: material-dark
+  statusCheck: true
+  statusCheckInterval: 100
+  statusCheckAccessibility: true
+  pingCheckEnabled: true
+  pingCheckInterval: 100
+  pingCheckAccessibility: true
+  defaultOpeningMethod: newtab
+  language: en
+
+sections:
+  - name: Media Streaming
+    icon: fas fa-film
+    widgets:
+      - type: clock
+        options:
+          timeZone: Australia/Hobart
+          format: en-AU
+          customCityName: Hobart
+    items:
+      - title: Music
+        description: Navidrome - music streaming
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/navidrome.png
+        url: http://navidrome.funkybrownfunk.duckdns.org
+        tags: [media]
+
+      - title: Movies
+        description: Jellyfin - media streaming
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/jellyfin.png
+        url: http://jellyfin.funkybrownfunk.duckdns.org
+        tags: [media]
+
+      - title: Comics
+        description: Komga - Comics streaming
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/komga.png
+        url: http://komga.funkybrownfunk.duckdns.org
+        tags: [media]
+
+      - title: Ebooks
+        description: Calibre Web - Ebooks download
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/calibre-web.png
+        url: http://calibre-web.funkybrownfunk.duckdns.org
+        tags: [media]
+
+      - title: File Browser
+        description: Filebrowser - explore and download files on server
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/filebrowser.png
+        url: http://filebrowser.funkybrownfunk.duckdns.org/
+        tags: [tools]
+
+  - name: Cloud
+    icon: fas fa-cloud
+    items:
+      - title: Cloud storage
+        description: Nextcloud - cloud storage
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/nextcloud.png
+        url: https://nextcloud.funkybrownfunk.duckdns.org
+        tags: [cloud]
+
+      - title: Notes
+        description: HedgeDoc - Note taking in Markdown
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/hedgedoc.png
+        url: http://hedgedoc.funkybrownfunk.duckdns.org
+        tags: [cloud]
+
+  - name: Downloads & Indexers
+    icon: fas fa-download
+    items:
+      - title: Torrent
+        description: Transmission + VPN - torrent download
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/transmission.png
+        url: http://transmission.funkybrownfunk.duckdns.org
+        tags: [dl]
+
+      - title: Jackett
+        description: Jackett - torrent proxy
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/jackett.png
+        url: http://jackett.funkybrownfunk.duckdns.org
+        tags: [dl]
+
+      - title: Prowlarr
+        description: Prowlarr - Search torrent
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/prowlarr.png
+        url: http://prowlarr.funkybrownfunk.duckdns.org
+        tags: [dl]
+
+      - title: Music Download
+        description: Lidarr - music download
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/lidarr.png
+        url: http://lidarr.funkybrownfunk.duckdns.org
+        tags: [dl]
+
+      - title: Movie Download
+        description: Radarr - movie download
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/radarr.png
+        url: http://radarr.funkybrownfunk.duckdns.org
+        tags: [dl]
+
+      - title: Movie (French) Download
+        description: Radarr - french movie download
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/radarr.png
+        url: http://radarr_fr.funkybrownfunk.duckdns.org
+        tags: [dl]
+
+      - title: TV show Download
+        description: Sonarr - TV show download
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/sonarr.png
+        url: http://sonarr.funkybrownfunk.duckdns.org
+        tags: [dl]
+
+      - title: Subtitle Download
+        description: Bazarr - subtitle download
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/bazarr.png
+        url: http://bazarr.funkybrownfunk.duckdns.org
+        tags: [dl]
+
+      - title: Downloader
+        description: Pyload - download any link to server
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/pyload.png
+        url: http://pyload.funkybrownfunk.duckdns.org
+        tags: [dl]
+
+      - title: Firefox
+        description: Remote browser
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/firefox.png
+        url: http://firefox.funkybrownfunk.duckdns.org
+        tags: [tools]
+
+  - name: Server Maintenance & Tools
+    icon: fas fa-tools
+    items:
+      - title: Pi Hole
+        description: Pi Hole - adblocker DNS & DHCP server
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/pi-hole.png
+        url: http://pihole.funkybrownfunk.duckdns.org/admin
+        tags: [geek]
+
+      - title: Router
+        description: Router config
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/asusrouter.png
+        url: http://192.168.1.1
+        tags: [geek]
+        pingCheckHost: 192.168.1.1
+
+      - title: Scrutiny
+        description: Monitor HDD - realtime
+        icon: https://raw.githubusercontent.com/AnalogJ/scrutiny/master/webapp/frontend/src/assets/images/logo/scrutiny-logo-dark.png
+        url: http://scrutiny.funkybrownfunk.duckdns.org
+        tags: [geek]
+
+      - title: Cockpit
+        description: Debian console - VM
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/cockpit.png
+        url: https://funkybrownfunk.duckdns.org:9090
+        tags: [geek]
+        statusCheckAllowInsecure: true
+
+      - title: Grafana
+        description: Grafana monitoring - admin(secret)
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/grafana.png
+        url: http://grafana.funkybrownfunk.duckdns.org
+        tags: [geek]
+
+      - title: PhpMyAdmin
+        description: PhpMyAdmin
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/phpmyadmin.png
+        url: http://phpmyadmin.funkybrownfunk.duckdns.org
+        tags: [geek]
+
+      - title: Calibre Server
+        description: Calibre Server - Ebooks Maintenance
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/calibre.png
+        url: https://calibre.funkybrownfunk.duckdns.org
+        tags: [app]
+
+      - title: Portainer
+        description: Portainer - docker images
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/portainer.png
+        url: http://portainer.funkybrownfunk.duckdns.org
+        tags: [geek]
+
+      - title: Traefik
+        description: Load Balancer
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/traefik.png
+        url: http://traefik.funkybrownfunk.duckdns.org
+        tags: [geek]
