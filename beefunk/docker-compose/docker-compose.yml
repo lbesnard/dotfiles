@@ -158,34 +158,93 @@ services:
     #- net.ipv4.conf.all.src_valid_mark=1
     restart: always
 
-  homer:
-    image: b4bz/homer:latest
-    container_name: homer
+  # homer:
+  #   image: b4bz/homer:latest
+  #   container_name: homer
+  #   environment:
+  #     - PUID=$PUID_USER
+  #     - PGID=$PGID_USER
+  #     - TZ=${TZ}
+  #     - WATCHTOWER_CLEANUP=true
+  #   volumes:
+  #     # - $DOCKER_CONFIG_PATH/homer/config.yml:/www/config.yml
+  #     # - $DOCKER_CONFIG_PATH/homer/local/assets/:/www/assets
+  #     - ./homer/config.yml:/www/config.yml
+  #     - ./homer/local/assets/:/www/assets
+  #   # ports:
+  #   # - 80:8080
+  #   restart: unless-stopped
+  #   networks:
+  #     - proxy
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.homer.rule=Host(`home.${SERVER_DOMAIN}.lan`) || Host(`home.${SERVER_DOMAIN}.home`) || Host(`home.${SERVER_DOMAIN}.local`) || Host(`home.${DUCKDNS_DOMAIN}.duckdns.org`)"
+  #     - "traefik.http.routers.homer.entrypoints=websecure"
+  #     - "traefik.http.routers.homer.tls=true"
+  #     - "traefik.http.services.homer.loadbalancer.server.port=8080"
+  #     - "com.centurylinklabs.watchtower.enable=true"
+  #
+  #     # Watchtower
+  #     - "com.centurylinklabs.watchtower.enable=true"
+  #   depends_on:
+  #     - pihole
+  #     - traefik
+  #
+  dashy:
+    image: lissy93/dashy:latest
+    container_name: dashy
     environment:
       - PUID=$PUID_USER
       - PGID=$PGID_USER
       - TZ=${TZ}
-      - WATCHTOWER_CLEANUP=true
     volumes:
-      # - $DOCKER_CONFIG_PATH/homer/config.yml:/www/config.yml
-      # - $DOCKER_CONFIG_PATH/homer/local/assets/:/www/assets
-      - ./homer/config.yml:/www/config.yml
-      - ./homer/local/assets/:/www/assets
-    # ports:
-    # - 80:8080
+      - ./dashy:/app/user-data
+    restart: unless-stopped
+    networks:
+      - proxy
+    dns:
+      - $SERVER_LAN_IP
+      - 8.8.8.8
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashy.rule=Host(`home.${SERVER_DOMAIN}.lan`) || Host(`home.${SERVER_DOMAIN}.home`) || Host(`home.${SERVER_DOMAIN}.local`) || Host(`home.${DUCKDNS_DOMAIN}.duckdns.org`)"
+      - "traefik.http.routers.dashy.entrypoints=websecure"
+      - "traefik.http.routers.dashy.tls=true"
+      - "traefik.http.services.dashy.loadbalancer.server.port=8080"
+    depends_on:
+      - pihole
+      - traefik
+
+  glances:
+    image: nicolargo/glances:latest-full
+    container_name: glances
+    pid: host
+    # network_mode: "host"
+    read_only: true
+    privileged: false
+    environment:
+      - GLANCES_OPT=-C /glances/conf/glances.conf -w --enable-mcp --enable-plugin smart
+      - PUID=$PUID_USER
+      - PGID=$PGID_USER
+      - TZ=${TZ}
+      - GLANCES_OPT=-w
+    volumes:
+      - "/:/rootfs:ro"
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/os-release:/etc/os-release:ro
+      - "/run/user/1000/podman/podman.sock:/run/user/1000/podman/podman.sock:ro"
+      - "./glances.conf:/glances/conf/glances.conf"
+    tmpfs:
+      - /tmp
     restart: unless-stopped
     networks:
       - proxy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.homer.rule=Host(`home.${SERVER_DOMAIN}.lan`) || Host(`home.${SERVER_DOMAIN}.home`) || Host(`home.${SERVER_DOMAIN}.local`) || Host(`home.${DUCKDNS_DOMAIN}.duckdns.org`)"
-      - "traefik.http.routers.homer.entrypoints=websecure"
-      - "traefik.http.routers.homer.tls=true"
-      - "traefik.http.services.homer.loadbalancer.server.port=8080"
-      - "com.centurylinklabs.watchtower.enable=true"
-
-      # Watchtower
-      - "com.centurylinklabs.watchtower.enable=true"
+      - "traefik.http.routers.glances.rule=Host(`glances.${SERVER_DOMAIN}.lan`) || Host(`glances.${SERVER_DOMAIN}.home`) || Host(`glances.${SERVER_DOMAIN}.local`) || Host(`glances.${DUCKDNS_DOMAIN}.duckdns.org`)"
+      - "traefik.http.routers.glances.entrypoints=websecure"
+      - "traefik.http.routers.glances.tls=true"
+      - "traefik.http.services.glances.loadbalancer.server.port=61208"
     depends_on:
       - pihole
       - traefik
