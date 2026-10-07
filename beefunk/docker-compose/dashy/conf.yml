@@ -6,7 +6,7 @@ pageInfo:
   description: Local Services & Infrastructure
   navLinks:
     - title: Server Howto
-      path: http://beefunk:3000/s/H1tA_LShH
+      path: https://hedgedoc.funkybrownfunk.duckdns.org/s/H1tA_LSh
       target: newtab
     - title: Brownfunk Homepage
       path: http://home.funkybrownfunk.duckdns.org
@@ -15,7 +15,7 @@ pageInfo:
       path: http://home.funkybeefunk.duckdns.org
       target: newtab
   footer: |
-    Created with ❤️ | <a href="http://beefunk:3000/s/H1tA_LShH" target="_blank">Server Howto</a>
+    Created with ❤️ | <a href="https://hedgedoc.funkybrownfunk.duckdns.org/s/H1tA_LShH" target="_blank">Server Howto</a>
 
 appConfig:
   theme: dark
@@ -79,7 +79,7 @@ sections:
       - title: Music Sheet
         description: Sheet music collection
         icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/musicbrainz.png
-        url: http://brownfunk.lan:3000/s/BW3Tx522S
+        url: https://hedgedoc.funkybrownfunk.duckdns.org/s/BW3Tx522S
         tags: [docs]
 
   - name: Media Streaming

@@ -756,7 +756,8 @@ services:
     - DB_PASS=$DB_CODIMD_PASS
     - DB_NAME=$DB_CODIMD_SCHEMA
     - CMD_DOMAIN=$DB_HOST
-    - CMD_URL_ADDPORT=true
+    - CMD_URL_ADDPORT=false
+    - CMD_PROTOCOL_USESSL=true
     - DB_PORT=$DB_PORT
     - PGID=$PGID_USER
     - PUID=$PUID_USER
