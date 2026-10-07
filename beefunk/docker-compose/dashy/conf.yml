@@ -249,7 +249,7 @@ sections:
       - title: Radarr (French)
         description: French movies
         icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/radarr.png
-        url: http://brownfunk.lan:7879
+        url: https://radarr_fr.funkybrownfunk.duckdns.org
         tags: [dl]
 
       - title: Sonarr
@@ -267,7 +267,7 @@ sections:
       - title: Bazarr
         description: Subtitle download
         icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/bazarr.png
-        url: http://brownfunk.lan:6768
+        url: http://bazarr.funkybrownfunk.duckdns.org
         tags: [dl]
 
       - title: Pyload
