@@ -310,6 +310,12 @@ sections:
         url: http://grafana.funkybeefunk.duckdns.org
         tags: [geek]
 
+      - title: Glances
+        description: Metrics & monitoring
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/glances.png
+        url: http://glances.funkybeefunk.duckdns.org
+        tags: [geek]
+
       - title: Calibre Server
         description: Ebooks Maintenance
         icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/calibre.png
