@@ -219,14 +219,23 @@ services:
     image: nicolargo/glances:latest-full
     container_name: glances
     pid: host
+    # network_mode: "host"
+    read_only: true
+    privileged: false
     environment:
+      - GLANCES_OPT=-C /glances/conf/glances.conf -w --enable-mcp --enable-plugin smart
       - PUID=$PUID_USER
       - PGID=$PGID_USER
       - TZ=${TZ}
       - GLANCES_OPT=-w
     volumes:
+      - "/:/rootfs:ro"
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/os-release:/etc/os-release:ro
+      - "/run/user/1000/podman/podman.sock:/run/user/1000/podman/podman.sock:ro"
+      - "./glances.conf:/glances/conf/glances.conf"
+    tmpfs:
+      - /tmp
     restart: unless-stopped
     networks:
       - proxy
