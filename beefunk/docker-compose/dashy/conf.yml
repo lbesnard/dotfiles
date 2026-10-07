@@ -28,16 +28,29 @@ appConfig:
   pingCheckAccessibility: true
   defaultOpeningMethod: newtab
   language: en
+  webSearch:
+    searchEngine: 'duckduckgo'
+    openingMethod: 'newtab'
+    searchBangs:
+      /r: reddit
+      /w: wikipedia
+      /s: https://whoogle.local/search?q=
+      /a: https://www.amazon.co.uk/s?k=
+      ':wolf': wolframalpha
+      ':so': stackoverflow
+      ':git': github
+
+
 
 sections:
   - name: home-widgets
     widgets:
-      - type: 'custom-search'
-        options:
-          placeholder: Search for something using the buttons below
-          engines:
-          - title: Quant
-            url: https://www.qwant.com/?q=
+    #   - type: 'custom-search'
+    #     options:
+    #       placeholder: Search for something using the buttons below
+    #       engines:
+    #       - title: Quant
+    #         url: https://www.qwant.com/?q=
       - type: clock
         options:
           timezone: Australia/Hobart
