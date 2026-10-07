@@ -20,10 +20,10 @@ pageInfo:
 appConfig:
   theme: material-dark
   statusCheck: true
-  statusCheckInterval: 20
+  statusCheckInterval: 100
   statusCheckAccessibility: true
   pingCheckEnabled: true
-  pingCheckInterval: 5
+  pingCheckInterval: 100
   pingCheckAccessibility: true
   defaultOpeningMethod: newtab
   language: en

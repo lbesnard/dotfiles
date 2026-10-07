@@ -29,7 +29,6 @@ appConfig:
   language: en
 
 sections:
-
   - name: home-widgets
     widgets:
       - type: 'custom-search'
