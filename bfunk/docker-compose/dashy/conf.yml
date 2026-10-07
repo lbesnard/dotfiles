@@ -18,7 +18,8 @@ pageInfo:
     Created with ❤️ | <a href="http://hedgedoc.funkybrownfunk.duckdns.org/s/H1tA_LShH" target="_blank">Server Howto</a>
 
 appConfig:
-  theme: material-dark
+  # theme: material-dark
+  theme: nord
   statusCheck: true
   statusCheckInterval: 100
   statusCheckAccessibility: true
