@@ -226,6 +226,12 @@ sections:
         url: https://calibre.funkybrownfunk.duckdns.org
         tags: [app]
 
+      - title: Unmanic
+        description: Video converter
+        icon: http://unmanic.funkybrownfunk.duckdns.org/unmanic/img/unmanic-logo-white.a3277864.png
+        url: http://unmanic.funkybrownfunk.duckdns.org
+        tags: [app]
+
       - title: Portainer
         description: Portainer - docker images
         icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/portainer.png
