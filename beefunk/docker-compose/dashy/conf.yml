@@ -329,6 +329,13 @@ sections:
         url: http://glances.funkybeefunk.duckdns.org
         tags: [geek]
 
+      - title: PhpMyAdmin
+        description: PhpMyAdmin
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/phpmyadmin.png
+        url: http://phpmyadmin.funkybrownfunk.duckdns.org
+        tags: [geek]
+
+
       - title: Calibre Server
         description: Ebooks Maintenance
         icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/calibre.png
