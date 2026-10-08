@@ -214,6 +214,12 @@ sections:
         url: http://grafana.funkybrownfunk.duckdns.org
         tags: [geek]
 
+      - title: Glances
+        description: Metrics & monitoring
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/glances.png
+        url: http://glances.funkybeefunk.duckdns.org
+        tags: [geek]
+
       - title: PhpMyAdmin
         description: PhpMyAdmin
         icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/phpmyadmin.png
