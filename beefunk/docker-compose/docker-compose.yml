@@ -1288,6 +1288,35 @@ services:
       - pihole
       - traefik
 
+  picoshare:
+    container_name: picoshare
+    image: mtlynch/picoshare
+    environment:
+      - PORT=4001
+      - PS_SHARED_SECRET=guest # Change to any password
+    # ports:
+      # - 4001:4001
+    command: -db /data/store.db
+    volumes:
+      - $SHARE_PATH/picoshare:/data
+    restart: unless-stopped  
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      # - "traefik.http.routers.privatebin.rule=Host(`privatebin.${SERVER_DOMAIN}.lan`) || Host(`privatebin.${SERVER_DOMAIN}.home`) || Host(`privatebin.${SERVER_DOMAIN}.local`) || Host(`privatebin.${DUCKDNS_DOMAIN}.duckdns.org`)"
+      - "traefik.http.routers.picoshare.entrypoints=websecure"
+      - "traefik.http.routers.picoshare.tls=true"
+      - "traefik.http.services.picoshare.loadbalancer.server.port=4001"
+      - "com.centurylinklabs.watchtower.enable=true"
+
+      # Watchtower
+      - "com.centurylinklabs.watchtower.enable=true"
+    depends_on:
+      - pihole
+      - traefik
+
+
 
 
   prowlarr:

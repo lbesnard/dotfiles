@@ -213,6 +213,13 @@ sections:
         url: https://privatebin.funkybeefunk.duckdns.org
         tags: [cloud]
 
+      - title: picoshare
+        description: picoshare 
+        icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/picoshare.png
+        url: https://picoshare.funkybeefunk.duckdns.org
+        tags: [cloud]
+
+
       - title: File Browser
         description: Explore server files
         icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/filebrowser.png
