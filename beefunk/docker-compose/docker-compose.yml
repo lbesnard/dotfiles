@@ -412,6 +412,32 @@ services:
     ports:
       - 3306:3306
     restart: always
+
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: lscr.io/linuxserver/phpmyadmin:latest
+    environment:
+    - PUID=$PUID_USER
+    - PGID=$PGID_USER
+    - TZ=$TZ
+    - PMA_ARBITRARY=1
+    volumes:
+    - $DOCKER_CONFIG_PATH/phpmyadmin:/config
+    ports:
+    - 3002:80
+    restart: unless-stopped
+    networks:
+      frontend: null
+      proxy: null
+    dns:
+    - $PIHOLE_DOCKER_SUB_IP_DNS
+    labels:
+      traefik.enable: 'true'
+      traefik.http.routers.phpmyadmin.entrypoints: websecure
+      traefik.http.routers.phpmyadmin.tls: 'true'
+      traefik.http.services.phpmyadmin.loadbalancer.server.port: '80'
+
+
   ######################
   watchtower:
     image: containrrr/watchtower
