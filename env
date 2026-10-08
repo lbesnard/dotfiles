@@ -24,7 +24,7 @@ export MESA_LOADER_DRIVER_OVERRIDE=i965
 export CHEATCOLORS=true
 export CHEATPATH='$HOME/.cheat'
 
-if command -v nvim > /dev/null; then export EDITOR=nvim; else export EDITOR='vim'; fi
+# if command -v nvim > /dev/null; then export EDITOR=nvim; else export EDITOR='vim'; fi
 
 if [ -d $HOME/github_repo ]; then
     export GITHUB_DIR=$HOME/github_repo
