@@ -99,7 +99,7 @@ aliases:
     ! (
       GH_PATH="gh"
       ORG="aodn"
-      PROJECT_NUMBER=72
+      PROJECT_NUMBER=90
 
       $GH_PATH project item-list $PROJECT_NUMBER --owner "$ORG" --format json \
         --query "assignee:$GIT_USER iteration:@current -status:Done" | \
@@ -146,7 +146,7 @@ aliases:
       # GH_PATH="/home/lbesnard/github_repo/dotfiles/bin/gh"
       GH_PATH="gh"
       ORG="aodn"
-      PROJECT_NUMBER=72
+      PROJECT_NUMBER=90
 
       raw_output=$($GH_PATH project item-list $PROJECT_NUMBER --owner "$ORG" --format json \
         --query "assignee:$GIT_USER iteration:@current -status:Done -status:Closed" | \
