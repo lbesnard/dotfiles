@@ -3,7 +3,7 @@
         "[[ -d ~/Downloads ]] || mkdir -p ~/Downloads",
         Creating downloads directory,
       ]
-- clean: ["~"]
+- clean: [$HOME]
 - link:
     ~/.alias: { force: true, path: alias, create: true }
     ~/.alias_forgit: { force: true, path: alias_forgit, create: true }
