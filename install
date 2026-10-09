@@ -37,4 +37,4 @@ fi
 cd "${BASEDIR}"
 git submodule update --init --recursive "${BASEDIR}"
 
-"${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
+"${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" --plugin-dir plugins "${@}"
