@@ -57,18 +57,6 @@
     ~/.irssi: { create: true, force: true, path: irssi }
     ~/.local/passhole.ini:
       { create: true, force: true, path: local/passhole.ini }
-    ~/.local/share/applications/joplin.desktop:
-      { create: true, force: true, path: desktop/joplin.desktop }
-    ~/.local/share/applications/nextcloud.desktop:
-      { create: true, force: true, path: desktop/nextcloud.desktop }
-    ~/.local/share/applications/shotcut.desktop:
-      { create: true, force: true, path: desktop/shotcut.desktop }
-    ~/.local/share/applications/balena.desktop:
-      { create: true, force: true, path: desktop/balena.desktop }
-    ~/.local/share/applications/darktable.desktop:
-      { create: true, force: true, path: desktop/darktable.desktop }
-    ~/.local/share/applications/digikam.desktop:
-      { create: true, force: true, path: desktop/digikam.desktop }
     ~/.lynx.cfg: { force: true, path: lynx.cfg, create: true }
     ~/.myclirc: { create: true, force: true, path: myclirc }
     ~/.ogierc: { force: true, path: ogierc, create: true }
@@ -111,6 +99,19 @@
       { force: true, create: true, path: bfunk/docker-compose/ }
     ~/bin: { path: bin, create: true, force: true }
     ~/Mobac/mapsources: { path: mobac/mapsources, create: true, force: true }
+- conditionallink:
+    ~/.local/share/applications/joplin.desktop:
+      { create: true, force: true, path: desktop/joplin.desktop }
+    ~/.local/share/applications/nextcloud.desktop:
+      { create: true, force: true, path: desktop/nextcloud.desktop }
+    ~/.local/share/applications/shotcut.desktop:
+      { create: true, force: true, path: desktop/shotcut.desktop }
+    ~/.local/share/applications/balena.desktop:
+      { create: true, force: true, path: desktop/balena.desktop }
+    ~/.local/share/applications/darktable.desktop:
+      { create: true, force: true, path: desktop/darktable.desktop }
+    ~/.local/share/applications/digikam.desktop:
+      { create: true, force: true, path: desktop/digikam.desktop }
 - shell:
     - [chmod -R 0755 ~/.zplug, Making zplug-folder read-only]
     - [chmod -R 0755 ~/.zsh_alias, Making SSH-folder read-only]
