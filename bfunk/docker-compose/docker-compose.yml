@@ -1187,7 +1187,7 @@ services:
     image: gtstef/filebrowser:latest
     container_name: filebrowserquantum
     environment:
-    - FILEBROWSER_CONFIG=/data/config.yaml
+    - FILEBROWSER_CONFIG=/config/config.yaml
     - TZ=$TZ
     - WATCHTOWER_CLEANUP=true
     user: ${PUID_USER}:${PGID_USER}
@@ -1195,6 +1195,7 @@ services:
     - 9295:80
     volumes:
     - $DOCKER_CONFIG_PATH/filebrowserquantum/data:/data
+    - ./filebrowser/config.yaml:/config/config.yaml:ro
     - $EBOOKS_AUDIOBOOKS_PATH:/srv/media/ebooks_audiobooks:ro
     - $MUSIC_PATH:/srv/media/music:ro
     - $MOVIES_PATH:/srv/media/movies:ro
