@@ -1,0 +1,18 @@
+server:
+  database:
+    path: "/data/filebrowser.sqlite" # or use FILEBROWSER_DATABASE_PATH env var
+
+
+  sources:
+    - name: "Media"
+      path: "/srv/media"
+      config:
+        defaultEnabled: true
+        defaultUserScope: "/"
+        readOnly: true
+auth:
+  methods:
+    noauth: true
+
+frontend:
+  name: "FileBrowser Quantum"
