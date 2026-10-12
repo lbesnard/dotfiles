@@ -1,7 +1,6 @@
 server:
-  port: 80
-  baseURL: "/"
-  database: "/data/database.db"
+  database:
+    path: "/data/filebrowser.sqlite" # or use FILEBROWSER_DATABASE_PATH env var
 
   sources:
     - name: "Media"
