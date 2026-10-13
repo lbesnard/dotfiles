@@ -15,6 +15,11 @@ case "$HOST" in
     _tmux_link_target ~/.tmux.conf.local
     [[ "$REPLY" != "$HOME/.tmux.conf.ssh" ]] && ln -sf ~/.tmux.conf.ssh ~/.tmux.conf.local
     ;;
+  dev)  # docker-dev container: nested under the laptop's C-a, so use C-b
+    source $HOME/.zshrc.homeserver
+    _tmux_link_target ~/.tmux.conf.local
+    [[ "$REPLY" != "$HOME/.tmux.conf.ssh" ]] && ln -sf ~/.tmux.conf.ssh ~/.tmux.conf.local
+    ;;
   *funk*|*-X202EP*)
     source $HOME/.zshrc.homeserver
     _tmux_link_target ~/.tmux.conf.local
