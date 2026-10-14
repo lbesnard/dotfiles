@@ -86,7 +86,7 @@ sections:
       - title: Blog - El Camino Loco
         description: Wordpress blog
         icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/wordpress.png
-        url: http://beefunk:5555
+        url: https://wordpress.funkybrownfunk.duckdns.org
         tags: [blog]
 
       - title: Music Sheet
