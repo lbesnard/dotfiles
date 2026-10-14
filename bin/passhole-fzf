@@ -44,7 +44,9 @@ fi
 # Pre-load the entry list BEFORE launching fzf.
 # If the DB is locked, passhole prompts for the master password here so it gets
 # a clean TTY — input is hidden correctly and there is no conflict with fzf.
-PH_LIST=$("$PH_BIN" list)
+# `ph list` renders a coloured tree with O(n^2) lookups (~3s); evaluating against the
+# cached DB gives the same entries as full paths in ~0.5s and skips group headers.
+PH_LIST=$("$PH_BIN" eval 'print("\n".join(sorted("/".join(e.path) for e in kp.entries)))')
 
 if [[ -z "$PH_LIST" ]]; then
   echo "No entries returned (unlock failed or empty database)."
@@ -62,34 +64,24 @@ if [[ -z "$ENTRY" ]]; then
 fi
 
 # Retrieve credentials while the terminal is still open (passhole daemon is accessible).
-# We pass the resolved values to the background process rather than the entry name,
-# so there's no dependency on passhole being reachable after the terminal closes.
-if [[ -n "$TABBED" ]]; then
-  export _CRED_USER
-  export _CRED_PASS
-  _CRED_USER=$("$PH_BIN" show "$ENTRY" --field username 2>/dev/null)
-  _CRED_PASS=$("$PH_BIN" show "$ENTRY" --field password 2>/dev/null)
-else
-  export _CRED_PASS
-  _CRED_PASS=$("$PH_BIN" show "$ENTRY" --field password 2>/dev/null)
-fi
+# Secrets stay in shell variables and are piped to xdotool via stdin, so they never
+# appear in the environment or argv of any process.
+umask 077
+CRED_USER=""
+CRED_PASS=$("$PH_BIN" show "$ENTRY" --field password 2>/dev/null)
+[[ -n "$TABBED" ]] && CRED_USER=$("$PH_BIN" show "$ENTRY" --field username 2>/dev/null)
 
-# setsid gives the typing process its own session (survives terminal close).
-# disown removes it from bash's job table so it won't receive SIGHUP on exit.
+# Background subshell ignores SIGHUP so it survives the terminal closing.
 # The 0.3s sleep lets i3-msg kill close the window and focus return first.
-if [[ -n "$TABBED" ]]; then
-  setsid bash -c '
-        sleep 0.3
-        xdotool type --clearmodifiers "$_CRED_USER"
-        xdotool key Tab
-        xdotool type --clearmodifiers "$_CRED_PASS"
-    ' &>/dev/null &
-else
-  setsid bash -c '
-        sleep 0.3
-        xdotool type --clearmodifiers "$_CRED_PASS"
-    ' &>/dev/null &
-fi
+(
+  trap '' HUP
+  sleep 0.3
+  if [[ -n "$TABBED" ]]; then
+    printf '%s' "$CRED_USER" | xdotool type --clearmodifiers --file -
+    xdotool key Tab
+  fi
+  printf '%s' "$CRED_PASS" | xdotool type --clearmodifiers --file -
+) &>/dev/null &
 disown $!
 
 # Close the floating terminal — i3 immediately returns focus to the previous window.
