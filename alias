@@ -1,14 +1,8 @@
 [ -f ~/.env ] && source ~/.env
-[ -f ~/.env_private ] && source ~/.env_private
 [ -f ~/.alias.nixos ] && source ~/.alias.nixos
 unalias  fd >/dev/null 2>/dev/null # in order to use https://github.com/sharkdp/fd
 
 alias mintupdate='sudo mintupdate-cli --install-recommends -y upgrade'
-
-##########################
-# DOTFILES UPDATE
-##########################
-alias dotfiles_update='cd $DOTFILES_PATH && git pull && bash install; cd -'
 
 ##########################
 # UPDATE AppImages
@@ -24,7 +18,6 @@ alias update_darktable='curl -s https://api.github.com/repos/darktable-org/darkt
 alias update_appimages='update_nextcloud; update_joplin; update_etcher; update_shotcut; update_darktable'
 
 alias shotcut='Shotcut.AppImage --QT_SCALE_FACTOR 1'
-alias Shotcut='shotcut'
 
 alias weather="curl wttr.in"
 alias ww="curl wttr.in"
@@ -55,28 +48,10 @@ if command -v ag >/dev/null 2>&1; then
 fi
 
 ##########################
-# CHEF cooking + Ansible provisionning
+# Ansible provisionning
 ##########################
-alias chef_cd="cd $CHEF_DIR"
-alias chef_private_cd="cd $CHEF_DIR/../chef-private"
-alias talend="chef_cd && ./bin/talend7-pipeline.sh"
-alias chef_imos="chef_cd && rm -f private; ln -s ../chef-private private"
-alias chef_pipeline_box_start="chef_cd && ./bin/write_pipeline_stack_secrets.sh -p nodes/pipeline.json; ./bin/pipeline-box.sh"
-alias chef_pipeline_box_provision="chef_cd && ./bin/write_pipeline_stack_secrets.sh -p nodes/pipeline.json; vagrant provision pipeline"
-alias chef_sample="chef_cd && rm -f private; ln -s private-sample private"
-#alias vagrant_ssh='var=$(find $CHEF_DIR/nodes/ -type f -name "*\.json" -exec basename {} \; | cut -d . -f 1 | fzf) && cd $CHEF_DIR && vagrant ssh $var'
-function vs(){
-  #List all vagrant boxes available in the system including its status, and try to access the selected one via ssh
-  cd $(cat ~/.vagrant.d/data/machine-index/index | jq '.machines[] | {name, vagrantfile_path, state}' | jq '.name + "," + .state  + "," + .vagrantfile_path'| sed 's/^"\(.*\)"$/\1/'| column -s, -t | sort -rk 2 | fzf | awk '{print $3}'); vagrant ssh
-}
-alias vagrant_ssh=vs
-#alias chef_pipeline_bckp_json='cp $CHEF_DIR/private-sample/nodes/pipeline.json $CHEF_DIR/private-sample/nodes/pipeline.json.bckp'
-#alias chef_pipeline_restore_json='cp $CHEF_DIR/private-sample/nodes/pipeline.json.bckp  $CHEF_DIR/private-sample/nodes/pipeline.json'
-
 alias ansible_provision_latop='ansible-playbook -i hosts $ANSIBLE_PATH/local.yml -K'
 alias ansible_provision_remote='ansible-playbook -i hosts $ANSIBLE_PATH/remote.yml'
-[[ `hostname` == "9-aws-syd" ]] && alias stackman="source /opt/stackman/virtualenv__usr_bin_python3/bin/activate;stackman";
-[[ `hostname` == "po-dev-aws-syd" ]] && alias stackman="source /mnt/ebs/pyenv/versions/3.8.10/envs/commandpost_venv/bin/activate;stackman";
 
 ##########################
 # IMOS related - pipeline 
@@ -98,22 +73,6 @@ fi
 source $HOME/.zsh_functions/imos_ardc.zsh
 source $HOME/.zsh_functions/pipelines.zsh
 source $HOME/.zsh_functions/comics.zsh
-
-
-# wget for imos buck by simply giving the relative path of an object without the full bucket address
-# $1 imos bucket url
-# $2 output_folder (optional)
-wget_imos_bucket() {
-    local url_suffix=$1; shift;
-    local url_prefix="https://s3-ap-southeast-2.amazonaws.com/imos-data/"
-    local output_folder=$1;
-    [ ! -z $output_folder ] && wget ${url_prefix}${url_suffix} || \
-        wget -P $output_folder ${url_prefix}${url_suffix} 
-}
-
-if [[ -d ~/.local/share/JetBrains/Toolbox/apps/ ]]; then
-    alias pycharm=`fd pycharm.sh ~/.local/share/JetBrains/Toolbox/apps/ &`
-fi
 
 
 function aws_select_profile() {
@@ -308,7 +267,6 @@ if command -v cheat-linux-amd64 > /dev/null; then
     alias cheat=cheat-linux-amd64
 fi
 
-alias irssi='screen irssi'
 alias tmux_start="[[ ! $TERM =~ screen ]] && [ -z $TMUX ] && exec tmux -2 attach"
 alias cleanup_cache="conda clean -a"
 
@@ -321,11 +279,6 @@ function vita_update_all_games() {
         $HOME/nopaystation_scripts/nps_update.sh $id
     done
 }
-
-# file edit function in nvim/vim
-function fe(){ 
-    nvim $(fd -LIH --type f | fzf -m --preview "([[ -f {} ]] && (bat --style=numbers --color=always {} || cat {}))")
-    }
 
 function csv_viewer() {
     local input_file=$1;
@@ -613,18 +566,8 @@ function spotify_pl_ls_missing () {
 }
 
 
-#alias music_player='mp3blaster'
 alias music_player='flatpak run app.sublimemusic.SublimeMusic'
 alias volume='pavucontrol'
-
-###########################
-# paragliding
-###########################
-alias flightrecorder='cd $HOME/paragliding ; sudo flightrecorder && chown $USER:$USER *.IGC; rsync -avc $HOME/paragliding/ $HOME/Nexctloud/paragliding_igc'
-alias igc_viewer='gpligc'
-alias riverHeight='python $GITHUB_DIR/River_Height_Tasmania/riverHeight.py && /usr/bin/elinks ~/Nexctloud/Public/RiverStatusTasmania.html'
-alias gpsdump_flymaster='cd $HOME/Downloads; ./gpsdump -gy -ca0 -lflight'
-alias paragliding_create_osm_map='$GITHUB_DIR/OSM_Tile_Download/osm_ogie3d.py'
 
 ##############################
 # PYTHON
@@ -1091,24 +1034,24 @@ alias cscli_bouncer_list="cscli bouncers list"
 alias beet_install="uv tool install --force --with python3-discogs-client --with flask --with \"$HOME/.config/beets/whatlastgenre_org/[discogs]\" \"beets[lyrics,lastgenre,discogs,chroma,web]==2.13.1\""
 
 
-# Generic SSHFS mount helper
-_mount_sshfs_share () {
-  local remote_target="$1"
-  local local_target="$2"
-
-  mkdir -p "$local_target"
-  sshfs "$remote_target" "$local_target" \
-    -o ServerAliveInterval=15 \
-    -o ServerAliveCountMax=3 \
-    -o reconnect \
-    -o ConnectTimeout=10 \
-    -o auto_cache \
-    -o attr_timeout=3600 \
-    -o entry_timeout=3600 \
-    -o negative_timeout=10 \
-    -o Ciphers=aes128-gcm@openssh.com \
-    -o Compression=no
-}
+# # Generic SSHFS mount helper
+# _mount_sshfs_share () {
+#   local remote_target="$1"
+#   local local_target="$2"
+#
+#   mkdir -p "$local_target"
+#   sshfs "$remote_target" "$local_target" \
+#     -o ServerAliveInterval=15 \
+#     -o ServerAliveCountMax=3 \
+#     -o reconnect \
+#     -o ConnectTimeout=10 \
+#     -o auto_cache \
+#     -o attr_timeout=3600 \
+#     -o entry_timeout=3600 \
+#     -o negative_timeout=10 \
+#     -o Ciphers=aes128-gcm@openssh.com \
+#     -o Compression=no
+# }
 
 ## Specific target functions
 #mount_beefunk_pics () {
@@ -1258,35 +1201,6 @@ PY
   echo "SSH tunnel established (pid: ${ssh_pid:-unknown})"
 }
 
-
-#dask_tunnel() {
-#  if [ "$#" -ne 3 ]; then
-#  echo "Usage: dask_tunnel <target_host> <ssh_host> <token>"
-#  return 1
-#  fi
-#
-#  target_host="$1"
-#  ssh_host="$2"
-#  token="$3"
-#
-#
-#  full_url="https://localhost:8080/status?token=$token"
-#
-#  echo "Connecting to Dask cluster at: $full_url"
-#  unset -f ssh
-#
-#  ssh -L 8080:"$target_host":443 "$ssh_host" -N &
-#
-#  ssh_pid=$!
-#
-#  sleep 2
-#
-#  echo "Please open the following URL in your browser: $full_url"
-#
-#  echo "SSH tunnel established with PID: $ssh_pid"
-#}
-
-# tunnel jupyter notebook from 8888 to 8080 localhost
 
 jupyter_tunnel(){
 
@@ -1442,25 +1356,6 @@ alias tp='task add pro:Personal due:today'
 # Shows everything due in the next 48 hours
 alias tnext='task due.before:today+2d list'
 
-# Triage with Project Labels
-# t2t() {
-#     local task_ids=$(task status:pending export | jq -r '.[] | "\(.id) [\(.project // "no project")] \(.description)"' | \
-#         fzf --multi \
-#             --reverse \
-#             --header "TAB to select multiple / ENTER to set to Today" \
-#             --preview 'task {1} info' \
-#             --height 40% | awk '{print $1}')
-#
-#     if [[ -n "$task_ids" ]]; then
-#         echo "$task_ids" | while read -r id; do
-#             task "$id" modify due:today
-#         done
-#         echo "✅ Selected tasks moved to Today."
-#         task today
-#     else
-#         echo "No tasks selected."
-#     fi
-# }
 t2t() {
     # Added 'due.not:today' to the filter
     local task_ids=$(task status:pending due.not:today export | jq -r '.[] | "\(.id) [\(.project // "no project")] \(.description)"' | \
@@ -1564,23 +1459,6 @@ te() {
     fi
 }
 
-# # ttt 2.0: Browse Today's tasks with Hotkeys
-# ttt() {
-#     # This local function helps refresh the list inside fzf after an action
-#     local gen_list='task due:today export | jq -r ".[] | \"\(.id) [\(.project // \"no project\")] \(.description)\""'
-#
-#     eval $gen_list | \
-#     fzf --reverse \
-#         --header "ENTER: Done | CTRL-E: Edit | CTRL-U: Undo Last | CTRL-P: Postpone" \
-#         --preview 'task {1} info' \
-#         --preview-window=right:60%:wrap \
-#         --bind "enter:execute(task {1} done)+reload($gen_list)" \
-#         --bind "ctrl-e:execute(task {1} edit)+reload($gen_list)" \
-#         --bind "ctrl-p:execute(task {1} modify due:tomorrow)+reload($gen_list)" \
-#         --bind "ctrl-u:execute(task undo)+reload($gen_list)"
-# }
-#
-
 ttd() {
     # 1. Get IDs of tasks due today
     # 2. Use fzf to select (Tab to select multiple)
@@ -1596,24 +1474,6 @@ ttd() {
         task $id_list done
     fi
 }
-
-# # Today List: Interactive browser for today's tasks
-# ttl() {
-#     # 1. Generate the list of today's pending tasks
-#     # We include project and description in the main view
-#     local gen_list='task due:today status:pending export | jq -r ".[] | \"\(.id) [\(.project // \"none\")] \(.description)\""'
-#
-#     # 2. Open FZF
-#     # We use a large preview window to see the full 'task info' (notes, links, etc.)
-#     eval $gen_list | fzf \
-#         --reverse \
-#         --height 80% \
-#         --header "ENTER: Info (Sticky) | TAB: Multi-Select | CTRL-D: Mark Done" \
-#         --preview 'task {1} info' \
-#         --preview-window=right:65%:wrap \
-#         --bind "ctrl-d:execute(task {1} done)+reload($gen_list)" \
-#         --bind "enter:execute(task {1} info | less)"
-# }
 #
 # Today List: The definitive interactive browser for today's tasks
 ttl() {
