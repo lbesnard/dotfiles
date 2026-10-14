@@ -7,7 +7,7 @@ export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ##############################
 # cheat sheet - see github repo https://github.com/chrisallenlane/cheat
 export CHEATCOLORS=true
-export CHEATPATH='$HOME/.cheat'
+# export CHEATPATH="$HOME/.cheat"
 
 # if command -v nvim > /dev/null; then export EDITOR=nvim; else export EDITOR='vim'; fi
 
