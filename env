@@ -1,20 +1,5 @@
 ## JAVA
-export JRE_HOME=/usr/lib/jvm/java-11-openjdk-amd64/jre/bin/java
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-export CATALINA_HOME="/usr/share/tomcat7"
-export CATALINA_BASE="/var/lib/tomcat7"
-
-#############################
-# MATLAB
-##############################
-#export LD_LIBRARY_PATH=/usr/local/MATLAB/MATLAB_Compiler_Runtime/v716/runtime/glnxa64:/usr/local/MATLAB/MATLAB_Compiler_Runtime/v716/sys/os/glnxa64:/usr/local/MATLAB/MATLAB_Compiler_Runtime/v716/sys/java/jre/glnxa64/jre/lib/amd64/native_threads:/usr/local/MATLAB/MATLAB_Compiler_Runtime/v716/sys/java/jre/glnxa64/jre/lib/amd64/server:/usr/local/MATLAB/MATLAB_Compiler_Runtime/v716/sys/java/jre/glnxa64/jre/lib/amd64
-#MCR matlab library path
-#export XAPPLRESDIR=/usr/local/MATLAB/MATLAB_Compiler_Runtime/v716/X11/app-defaults
-MCR_ROOT="/opt/MATLAB/MATLAB_Runtime/v95"
-MCR_APPS="$MCR_ROOT/bin:$MCR_ROOT/glnxa64"
-
-MATLAB_PATH=/opt/MATLAB/R2018b/bin
-export MESA_LOADER_DRIVER_OVERRIDE=i965
 
 
 ##############################
@@ -28,15 +13,9 @@ export CHEATPATH='$HOME/.cheat'
 
 if [ -d $HOME/github_repo ]; then
     export GITHUB_DIR=$HOME/github_repo
-    export CHEF_DIR="$GITHUB_DIR/chef"
-    export DATA_SERVICES_DIR="$GITHUB_DIR/chef/src/data-services"
-    export WIP_DIR="/tmp/WIP_DIR/"
-    export INCOMING_DIR="/tmp/INCOMING_DIR/"
-    export ERROR_DIR="/tmp/ERROR_DIR/"
-    export PYTHONPATH=$DATA_SERVICES_DIR/lib/python
 fi
 
-export ANSIBLE_PATH=$GITHUB_DIR/ansible_laptop/ansible
+export ANSIBLE_PATH=$GITHUB_DIR/Fleet-Control/ansible
 
 ##############################
 # set DOTFILES_PATH env
@@ -53,22 +32,6 @@ elif [ -d $HOME/dotfiles_private >/dev/null ]; then # on any $HOME folder, the d
     export DOTFILES_PRIVATE_PATH=$HOME/dotfiles_private 
 fi
 
-#export PATH="${PATH}:${MCR_APPS}:${JAVA_HOME}/bin:${MATLAB_PATH}:${HOME}/.dotfiles/bin:${HOME}/.dotfiles/bin/encryption:${HOME}/usr/bin:/snap/bin"
-
-## add jetbrains
-##JETBRAINS_PATH=`find $HOME/bin/ -maxdepth 2 -type d -name 'jetbrains-toolbox*'`
-##export PATH=$JETBRAINS_PATH:$PATH
-
-#unalias  fd >/dev/null 2>/dev/null # in order to use https://github.com/sharkdp/fd
-#
-if command -v fd &> /dev/null; then
-  PYCHARM_BIN_PATH=/home/lbesnard/.local/share/JetBrains/Toolbox/apps/PyCharm-C/ch-0/221.5787.24/bin/pycharm.sh
-  # Limit search to JetBrains dir only — scanning all of ~/.local/ is extremely slow on NixOS
-  if [[ ! -f $PYCHARM_BIN_PATH && -d ~/.local/share/JetBrains ]]; then
-    PYCHARM_BIN_PATH=$(fd -aHL --type f pycharm.sh ~/.local/share/JetBrains/ 2>/dev/null)
-  fi
-  [[ ! -z $PYCHARM_BIN_PATH ]] && PYCHARM_PATH=$(dirname $PYCHARM_BIN_PATH) #&& export PATH="$PYCHARM_PATH:${PATH}"
-fi
 
 # Terminal
 if ! command -v alacritty &> /dev/null; 
@@ -88,4 +51,4 @@ if command -v opera > /dev/null; then
     export BROWSER=opera
 fi
 
-
+export PGPASS_PATH='/home/lbesnard/.pgpass'
