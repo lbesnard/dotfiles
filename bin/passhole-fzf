@@ -77,10 +77,10 @@ CRED_PASS=$("$PH_BIN" show "$ENTRY" --field password 2>/dev/null)
   trap '' HUP
   sleep 0.3
   if [[ -n "$TABBED" ]]; then
-    printf '%s' "$CRED_USER" | xdotool type --clearmodifiers --file -
+    printf '%s' "$CRED_USER" | xdotool type --delay 1 --clearmodifiers --file -
     xdotool key Tab
   fi
-  printf '%s' "$CRED_PASS" | xdotool type --clearmodifiers --file -
+  printf '%s' "$CRED_PASS" | xdotool type --delay 1 --clearmodifiers --file -
 ) &>/dev/null &
 disown $!
 
