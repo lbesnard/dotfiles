@@ -10,7 +10,6 @@ alias mintupdate='sudo mintupdate-cli --install-recommends -y upgrade'
 
 # https://github.com/nextcloud/desktop/issues/7231
 alias update_nextcloud="wget https://download.nextcloud.com/desktop/releases/Linux/latest -O $HOME/bin/Nextcloud.AppImage && chmod +x $HOME/bin/*.AppImage"
-#alias update_nextcloud="wget https://download.nextcloud.com/desktop/releases/Linux/Nextcloud-3.13.4-x86_64.AppImage  -O $HOME/bin/Nextcloud.AppImage && chmod +x $HOME/bin/*.AppImage"
 alias update_joplin='curl -s https://api.github.com/repos/laurent22/joplin/releases/latest | grep "browser_download_url.*AppImage" | cut -d : -f 2,3 | tr -d \" | head -1| wget --show-progress -qi - -O $HOME/bin/Joplin.AppImage && chmod +x $HOME/bin/*.AppImage'
 alias update_etcher='curl -s https://api.github.com/repos/balena-io/etcher/releases/latest | grep "browser_download_url.*x64.AppImage" | cut -d : -f 2,3 | tr -d \" | wget --show-progress -qi - -O $HOME/bin/balenaEtcher.AppImage && chmod +x $HOME/bin/*.AppImage'
 alias update_shotcut='curl -s https://api.github.com/repos/mltframework/shotcut/releases/latest | grep "browser_download_url.*AppImage" | cut -d : -f 2,3 | tr -d \" | wget --show-progress -qi - -O $HOME/bin/Shotcut.AppImage && chmod +x $HOME/bin/*.AppImage'
@@ -323,8 +322,6 @@ else
     alias myip="curl ifconfig.me"
 fi
 
-# vpn
-#
 fzf_ssh() {
     local host
     host=$(awk '/^Host / {for(i=2;i<=NF;i++) if ($i !~ /\*|^$/) print $i}' ~/.ssh/config | sort -u \
@@ -608,20 +605,12 @@ alias docker_prune_images='docker image prune --all --force'
 ##############################
 ## BFUNK
 ##############################
-alias mount_games='mount_point=games;mkdir -p $HOME/bfunk/$mount_point; sudo mount -t nfs $SERVER_LOCAL_IP:/export/$mount_point $HOME/bfunk/$mount_point/'
-#alias start_vpn_torrent='sudo systemctl start vpn_access.service; sudo service transmission-daemon start; myip'
-#alias stop_vpn_torrent='sudo service transmission-daemon stop; sudo systemctl stop vpn_access.service; myip'
-#alias nginx_maintenance='sudo rm -f /etc/nginx/sites-enabled/* && sudo ln -s /etc/nginx/sites-available/omv_maintenance /etc/nginx/sites-enabled/omv_maintenance && sudo service nginx restart;'
-#alias nginx_organizr='sudo rm -f /etc/nginx/sites-enabled/* && sudo ln -s /etc/nginx/sites-available/organizr /etc/nginx/sites-enabled/organizr && sudo service nginx restart;'
-#alias filebot_movie_rename_dryrun='IFS=$(echo -en "\n\b"); for dir in `find -type d`; do filebot -rename $dir --db TheMovieDB --format "/export/torrent/{plex}" --action test; done'
-#alias filebot_movie_rename_move='IFS=$(echo -en "\n\b"); for dir in `find -type d`; do filebot -rename $dir --db TheMovieDB --format "/export/torrent/{plex}" --action move; done'
-#alias filebot_tvshows_rename_dryrun='filebot -rename -r -non-strict . --db TheTVDB --format "/export/torrent/{plex}" --action test'
-#alias filebot_tvshows_rename_move='filebot -rename -r -non-strict . --db TheTVDB --format "/export/torrent/{plex}" --action move'
-
-NEXCTLOUD_DATA_DIR=/export/nexctloud
-
 # when files are copied manually to nextcloud folder
 alias nextcloud_force_rescan='docker exec nextcloud sudo -u abc php /config/www/nextcloud/occ files:scan --all'
+
+# Backup aliases replaced by funk_rsync_config (reads from ~/.funk_rsync_config.json)
+alias bfunk_nextcloud_preview_generation='docker exec -it $(docker ps -qf "name=nextcloud") occ preview:generate-all --path=lbesnard/files/Photos -vvv'
+alias efunk_nextcloud_preview_generation='docker exec -it $(docker ps -qf "name=nextcloud") occ preview:generate-all  -vvv'
 
 # ---------------------------------------------------------------------------
 # funk_rsync / funk_rclone helpers
@@ -1020,9 +1009,6 @@ function funk_rsync_cron() {
 
 
 
-# Backup aliases replaced by funk_rsync_config (reads from ~/.funk_rsync_config.json)
-alias bfunk_nextcloud_preview_generation='docker exec -it $(docker ps -qf "name=nextcloud") occ preview:generate-all --path=lbesnard/files/Photos -vvv'
-alias efunk_nextcloud_preview_generation='docker exec -it $(docker ps -qf "name=nextcloud") occ preview:generate-all  -vvv'
 
 # crowdsec
 alias cscli="docker exec -t crowdsec cscli"
