@@ -295,8 +295,6 @@ export MANPAGER="sh -c 'col -bx | bat -l man -p --paging always'"
 # NETWORK
 ##########################
 alias iftop_wlan='iftop -i wlan0'
-alias lynx='lynx -cfg=~/.lynx.cfg'
-alias elinks_google='elinks www.google.com.au'
 alias mac_wlan_random='sudo ifconfig wlp1s0 down && sudo macchanger -r wlp1s0 && sudo ifconfig wlp1s0 up'
 alias ports='netstat -tulanp' # open ports
 alias ssh-add='ssh-add -t 10h'
