@@ -1,0 +1,13 @@
+name = "France IGN Topo 25 (geopf)";
+
+tileType = "jpg";
+tileSize = 256;
+minZoom = 6;
+maxZoom = 16;
+tileUpdate = TileUpdate.IfModifiedSince;
+backgroundColor = "#ffffff";
+ignoreError = "True";
+
+String getTileUrl( int zoom, int x, int y ) {
+  return "https://data.geopf.fr/private/wmts?apikey=ign_scan_ws&layer=GEOGRAPHICALGRIDSYSTEMS.MAPS.SCAN25TOUR&style=normal&tilematrixset=PM_6_16&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image/jpeg&TileMatrix=" + zoom + "&TileCol=" + x + "&TileRow=" + y;
+}
