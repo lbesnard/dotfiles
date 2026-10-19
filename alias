@@ -1104,7 +1104,7 @@ mount_best_pics() {
     sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,soft,timeo=30,retrans=2,addr="$ip" "$target_path" "$HOME/beefunk_pictures"
 }
 
-alias sync_export_pics_beefunk_2_efunk_immich='rsync -av --progress --delete-after /media/lbesnard/beefunk_12tb_c/pictures/Export/ efunk:/media/efunk_4tb_1/pictures_laurent_export/'
+alias sync_export_pics_beefunk_2_efunk_immich='rsync -av --progress --delete-after /media/lbesnard/beefunk_12tb_c/pictures/Export/ evryfunk:/media/efunk_4tb_1/pictures_laurent_export/'
 
 
 dask_tunnel() {

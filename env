@@ -47,9 +47,10 @@ export PYTHONBREAKPOINT=ipdb.set_trace
 
 
 # BROWSER
-if command -v opera > /dev/null; then
-    export BROWSER=opera
-fi
+# if command -v opera > /dev/null; then
+#     export BROWSER=opera
+# fi
+export BROWSER=firefox
 
 export PGPASS_PATH='/home/lbesnard/.pgpass'
 
