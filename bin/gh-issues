@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Pick a GitHub issue with fzf, then view (or comment on) it.
+# Usage: gh-issues <repo> [-a|--all] [-c|--comment] [-m|--milestone <n|top|name>] [--closed]
+set -euo pipefail
+
+ORG="${GH_ORG:-aodn}"
+
+usage() {
+  cat <<EOF
+Usage: gh issues <repo> [options]
+  <repo>                 repo name (prefixed with \$GH_ORG=$ORG) or owner/name
+  -a, --all              issues for all users (default: assigned to me)
+  -c, --comment          comment on the selected issue instead of viewing
+  -m, --milestone VALUE  number -> "Iteration N", "top" -> "Top of PO Backlog", else literal
+  --closed               closed issues
+EOF
+}
+
+[ $# -ge 1 ] || { usage; exit 1; }
+case "$1" in -h|--help) usage; exit 0 ;; esac
+
+repo="$1"; shift
+[[ "$repo" == */* ]] || repo="$ORG/$repo"
+
+all=false command=view state=open milestone=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -a|--all) all=true ;;
+    -c|--comment) command=comment ;;
+    -m|--milestone) milestone="${2:?--milestone needs a value}"; shift ;;
+    --closed) state=closed ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage; exit 1 ;;
+  esac
+  shift
+done
+
+if [[ "${milestone,,}" == *top* ]]; then
+  milestone="Top of PO Backlog"
+elif [[ "$milestone" =~ ^[0-9]+$ ]]; then
+  milestone="Iteration $milestone"
+fi
+
+args=(-L 100 -R "$repo" -s "$state")
+$all || args+=(-a @me)
+[ -z "$milestone" ] || args+=(--search "milestone:\"$milestone\"")
+
+if command -v mdcat >/dev/null; then render=mdcat; else render=cat; fi
+
+id="$(gh issue list "${args[@]}" |
+  fzf --reverse --preview "gh issue -R '$repo' view {1} | $render" |
+  cut -f1)" || true
+
+[ -n "$id" ] && gh issue -R "$repo" "$command" "$id"
+exit 0

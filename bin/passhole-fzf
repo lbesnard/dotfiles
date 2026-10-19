@@ -84,5 +84,6 @@ CRED_PASS=$("$PH_BIN" show "$ENTRY" --field password 2>/dev/null)
 ) &>/dev/null &
 disown $!
 
-# Close the floating terminal — i3 immediately returns focus to the previous window.
-i3-msg kill
+# Exit so the terminal closes cleanly on its own (child exit). Using `i3-msg kill`
+# destroyed the X window out from under ghostty, leaving it spinning at ~100% CPU.
+exit 0
