@@ -1741,19 +1741,11 @@ zip2chd() {
 # yazi wrapper
 y() {
     local dir="$HOME/.config/yazi/plugins"
-    local -a files=()
     
-    if [[ -d "$dir" ]]; then
-        shopt -s nullglob
-        files=("$dir"/*)
-        shopt -u nullglob
-    fi
-
-    if [[ -f "$HOME/.config/yazi/package.toml" ]] && [[ ! -d "$dir" || ${#files[@]} -eq 0 ]]; then
+    # Check if package.toml exists and the plugins directory is missing or empty
+    if [[ -f "$HOME/.config/yazi/package.toml" ]] && [[ ! -d "$dir" || -z "$(print -r -- $dir/*(N))" ]]; then
         echo "Yazi plugins missing. Installing..."
         ya pkg install
     fi
-    
     command yazi "$@"
 }
-
