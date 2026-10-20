@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# List gh aliases with the "# description" comment placed above each in config.yml.
+cfg="${GH_CONFIG_DIR:-$HOME/.config/gh}/config.yml"
+awk '
+/^aliases:/ {in_a=1; next}
+in_a && /^[^ #]/ {in_a=0}
+in_a && /^  #/ {sub(/^  # */,""); desc=$0; next}
+in_a && /^  [^ #][^:]*:/ {
+  name=$0; sub(/^  /,"",name); sub(/:.*/,"",name)
+  printf "%-28s %s\n", name, desc; desc=""
+}' "$cfg" | sort

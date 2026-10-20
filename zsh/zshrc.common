@@ -295,6 +295,8 @@ bindkey -s '^n' 'ncdump -t $(fd -HI -e nc | fzf -m --preview "([[ -f {} ]] && nc
 # (compinit handled by zicompinit in turbo block above)
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' menu select
+# _git stops after the first tag with matches (common-commands), hiding aliases like co-wip; offer those two together (all-commands repeats aliases)
+zstyle ':completion:*:*:git:*' tag-order 'common-commands alias-commands' all-commands
 
 # -----------------------------
 # Optional utilities
@@ -355,6 +357,39 @@ if (( $+commands[gh] )); then
     unset _gh_comp _gh_bin
 fi
 
+# Show my own alias descriptions (see bin/gh-aliases) in `gh <TAB>`.
+# The cobra completion script calls `gh __complete ...`, which resolves to this function.
+gh() {
+    if [[ $1 == __complete && $# -eq 2 ]]; then
+        command gh "$@" | awk -F'\t' -v descs="$(command gh-aliases 2>/dev/null)" '
+            BEGIN { n = split(descs, L, "\n"); for (i = 1; i <= n; i++) { k = L[i]; sub(/ .*/, "", k); d = L[i]; sub(/^[^ ]+ +/, "", d); if (k != "" && d != "") D[k] = d } }
+            ($1 in D) && NF >= 2 { print $1 "\t" D[$1]; next }
+            { print }'
+    else
+        command gh "$@"
+    fi
+}
+
+# Show my own alias descriptions (see bin/git-alias) in `git <TAB>`.
+# zsh's _git lists aliases via `git help --aliases-for-completion` (NUL-separated "name\nexpansion").
+git() {
+    if [[ $1 == help && $2 == --aliases-for-completion ]]; then
+        local -A _desc
+        local _l _rec _name _text _out
+        for _l in ${(f)"$(command git-alias 2>/dev/null)"}; do
+            read -r _name _text <<< "$_l"
+            _desc[$_name]=$_text
+        done
+        for _rec in ${(0)"$(command git help --aliases-for-completion)"}; do
+            _name=${_rec%%$'\n'*}
+            _out+="${_name}"$'\n'"${_desc[$_name]:-${_rec#*$'\n'}}"$'\0'
+        done
+        print -rn -- "$_out"
+    else
+        command git "$@"
+    fi
+}
+
 # ------------------------
 # SSH autocomplete
 # ------------------------
@@ -363,6 +398,9 @@ fi
 zstyle ':completion:*:(scp|rsync):*' tag-order ' hosts:-ipaddr:ip\ address hosts:-host:host files'
 zstyle ':completion:*:(ssh|scp|rsync):*:hosts-host' ignored-patterns '*(.|:)*' loopback ip6-loopback localhost ip6-localhost broadcasthost
 zstyle ':completion:*:(ssh|scp|rsync):*:hosts-ipaddr' ignored-patterns '^(<->.<->.<->.<->|(|::)([[:xdigit:].]##:(#c,2))##(|%*))' '127.0.0.<->' '255.255.255.255' '::1' 'fe80::*'
+
+# Hide system accounts (_flatpak, geoclue, ...) from the user@host completion; offer only my own user
+zstyle ':completion:*:(ssh|scp|sftp|rsync):*' users "$USER" root
 
 unalias jq 2>/dev/null
 
