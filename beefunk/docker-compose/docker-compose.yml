@@ -1064,8 +1064,9 @@ services:
       - TZ=Etc/UTC
     volumes:
       - /opt/docker_config/syncthing/config:/config
-      - $SYNCTHING_DATA_PATH/game_saves:/game_saves
-      - $PICTURES_PATH/syncthing_sd_to_server:/sync/pictures_sd_to_server
+      # - $SYNCTHING_DATA_PATH/game_saves:/game_saves
+      - $SYNCTHING_DATA_PATH/:/sync
+      # - $PICTURES_PATH/syncthing_sd_to_server:/sync/pictures_sd_to_server
       # - /path/to/data2:/data2
     ports:
       # - 8384:8384
