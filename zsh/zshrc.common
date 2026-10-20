@@ -23,6 +23,8 @@ autoload -Uz _zinit
 # Basic Environment
 # -----------------------------
 export PATH="$HOME/.local/bin:$PATH"
+# dotfiles scripts (git-alias, gh-aliases, ...); needed on every machine
+[[ -d "$HOME/bin" && ":$PATH:" != *":$HOME/bin:"* ]] && export PATH="$HOME/bin:$PATH"
 export LANGUAGE="en_AU:en"
 export LANG="en_IE.UTF-8"
 
