@@ -24,6 +24,28 @@ aliases:
   ps: pr status
   # View repo in browser
   rw: repo view --web
+  # Squash-merge PR and delete branch
+  prm: pr merge --squash --delete-branch
+  # Watch PR CI checks
+  prc: pr checks --watch
+  # Show PR diff
+  prd: pr diff
+  # Mark draft PR ready
+  prr: pr ready
+  # My open PRs
+  mine: pr list --author @me
+  # PRs awaiting my review
+  rr: 'pr list --search ''review-requested:@me'''
+  # Recent workflow runs
+  rl: run list -L 10
+  # Watch a workflow run
+  rwatch: run watch
+  # Logs of failed run steps
+  rf: run view --log-failed
+  # Issues assigned to me
+  im: issue list --assignee @me
+  # Create issue in browser
+  ic: issue create --web
   # List aliases with descriptions
   aliases: '!gh-aliases'
 version: "1"

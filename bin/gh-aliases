@@ -8,4 +8,4 @@ in_a && /^  #/ {sub(/^  # */,""); desc=$0; next}
 in_a && /^  [^ #][^:]*:/ {
   name=$0; sub(/^  /,"",name); sub(/:.*/,"",name)
   printf "%-28s %s\n", name, desc; desc=""
-}' "$cfg"
+}' "$cfg" | sort
