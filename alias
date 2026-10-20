@@ -1740,10 +1740,20 @@ zip2chd() {
 
 # yazi wrapper
 y() {
-    # Check if package.toml exists and the plugins directory is missing or empty
-    if [[ -f "$HOME/.config/yazi/package.toml" ]] && [[ ! -d "$HOME/.config/yazi/plugins" || -z "$(command ls -A "$HOME/.config/yazi/plugins")" ]]; then
+    local dir="$HOME/.config/yazi/plugins"
+    local -a files=()
+    
+    if [[ -d "$dir" ]]; then
+        shopt -s nullglob
+        files=("$dir"/*)
+        shopt -u nullglob
+    fi
+
+    if [[ -f "$HOME/.config/yazi/package.toml" ]] && [[ ! -d "$dir" || ${#files[@]} -eq 0 ]]; then
         echo "Yazi plugins missing. Installing..."
         ya pkg install
     fi
+    
     command yazi "$@"
 }
+
