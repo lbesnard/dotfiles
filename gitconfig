@@ -93,6 +93,32 @@
     hist = log --pretty=format:\"%h %ad | %s%d [%an]\" --graph --date=short
     # Checkout
     co = checkout
+    # Amend last commit without editing message
+    cane = commit --amend --no-edit
+    # Safer force push
+    fp = push --force-with-lease
+    # Push new branch and set upstream
+    pu = push -u origin HEAD
+    # Diff of staged changes
+    ds = diff --staged
+    # Short status with branch
+    st = status -sb
+    # Show last commit with stats
+    last = log -1 --stat
+    # Unstage files
+    unstage = reset HEAD --
+    # Cherry-pick
+    cp = cherry-pick
+    # Interactive rebase
+    rbi = rebase -i
+    # Rebase onto latest origin/main
+    rbm = !git fetch origin && git rebase origin/main
+    # Branches by recent commit with tracking info
+    br = branch --sort=-committerdate -vv
+    # Commit counts by author
+    contributors = shortlog -sn
+    # Stash only unstaged changes
+    stash-unstaged = stash --keep-index
     # Checkout main/master, pull, delete merged branches, fetch all
     com = "!f() { if git show-ref --verify --quiet refs/heads/main; then git checkout main; elif git show-ref --verify --quiet refs/heads/master; then git checkout master; else echo 'No main or master branch found'; return 1; fi && git pull && git branch --merged | grep -v 'main' | grep -v 'master' | xargs -r git branch -d && git fetch --all; }; f"
     # Fetch and checkout PR by number

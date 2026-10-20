@@ -6,4 +6,4 @@ awk '
 in_a && /^[ \t]*# / {sub(/^[ \t]*# */,""); desc=$0; next}
 in_a && /^[ \t]+[A-Za-z][A-Za-z0-9_-]* *=/ {
   name=$1; printf "%-26s %s\n", name, desc; desc=""
-}' "$cfg"
+}' "$cfg" | sort
