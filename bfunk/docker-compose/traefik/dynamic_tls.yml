@@ -1,3 +1,11 @@
+entryPoints:
+  websecure:
+    address: ":443"
+    transport:
+      respondingTimeouts:
+        readTimeout: 0s
+        idleTimeout: 300s
+        
 tls:
   certificates:
     - certFile: /certs/brownfunk.crt
