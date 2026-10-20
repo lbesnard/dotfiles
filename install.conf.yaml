@@ -40,6 +40,7 @@
     ~/.config/i3blocks: { create: true, force: true, path: config/i3blocks/ }
     ~/.config/rofi: { create: true, force: true, path: config/rofi/ }
     ~/.config/rmpc: { create: true, force: true, path: config/rmpc/ }
+    ~/.config/yazi: { create: true, force: true, path: config/yazi/ }
     ~/.dotfiles: { force: true, path: ".", create: true }
     ~/.env: { force: true, path: env, create: true }
     ~/.flake8: { force: true, path: flake8, create: true }
