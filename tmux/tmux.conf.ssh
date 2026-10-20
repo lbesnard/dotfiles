@@ -318,6 +318,8 @@ bind-key T command-prompt -p "Title for pane: " "select-pane -T '%%'"
 
 # fix ssh agent when tmux is detached
 setenv -g SSH_AUTH_SOCK $HOME/.ssh/ssh_auth_sock
+# default update-environment overwrites SSH_AUTH_SOCK per session on attach; keep the stable symlink instead
+set -g update-environment "DISPLAY KRB5CCNAME MSYSTEM SSH_ASKPASS SSH_AGENT_PID SSH_CONNECTION WINDOWID XAUTHORITY"
 
 bind-key -n C-s run-shell ' \
     current_prefix=$(tmux show-option -gqv prefix); \
