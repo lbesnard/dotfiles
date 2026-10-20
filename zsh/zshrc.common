@@ -392,6 +392,13 @@ git() {
     fi
 }
 
+# Long-lived tmux panes keep a stale forwarded-agent socket; ~/.ssh/rc maintains a stable symlink
+# to the current one on each ssh login, so follow it at every prompt (remote sessions only).
+if [[ -n $SSH_CONNECTION || -n $TMUX ]]; then
+    _follow_ssh_agent() { [[ -S $HOME/.ssh/ssh_auth_sock ]] && export SSH_AUTH_SOCK=$HOME/.ssh/ssh_auth_sock }
+    autoload -Uz add-zsh-hook && add-zsh-hook precmd _follow_ssh_agent
+fi
+
 # ------------------------
 # SSH autocomplete
 # ------------------------
