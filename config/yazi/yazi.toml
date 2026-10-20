@@ -1,0 +1,47 @@
+[mgr]
+linemode = "whatsize"
+
+[[plugin.prepend_previewers]]
+url = "*.csv"
+run = 'piper -- bat -p --color=always "$1"'
+
+[[plugin.prepend_previewers]]
+url = "*.md"
+run = 'piper -- CLICOLOR_FORCE=1 glow -w=$w -s=dark "$1"'
+
+[[plugin.prepend_previewers]]
+url = "*/"
+run = 'piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$1"'
+
+[[plugin.prepend_previewers]]
+url = "*.tar*"
+run = 'piper --format=url -- tar tf "$1"'
+
+[[plugin.append_previewers]]
+url = "*"
+run = 'piper -- hexyl --border=none --terminal-width=$w "$1"'
+
+[[plugin.prepend_previewers]]
+url = "*.nc"
+run = "netcdf-preview"
+
+[[plugin.prepend_previewers]]
+url = "**/.git/" 
+run = "preview-git"
+
+[[plugin.prepend_previewers]]
+url = "*.parquet"
+run = "parquet-preview"
+
+[[plugin.prepend_previewers]]
+url = "*.parq"
+run = "parquet-preview"
+
+[[plugin.prepend_previewers]]
+url = "*.pq"
+run = "parquet-preview"
+
+[[plugin.prepend_previewers]]
+mime = "application/{*zip,tar,bzip2,7z*,rar,xz,zstd,java-archive}"
+run  = "ouch"
+
