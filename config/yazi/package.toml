@@ -1,0 +1,47 @@
+[[plugin.deps]]
+use = "pirafrank/what-size"
+rev = "1cb456f"
+hash = "7699acf73a1079f8a4afef5cec84ce73"
+
+[[plugin.deps]]
+use = "Reledia/glow"
+rev = "bd3eaa5"
+hash = "92b5c58159a51c567f82b618cee2b78"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:piper"
+rev = "9166202"
+hash = "d1e0499cae5f3aeb628c267616d4b682"
+
+[[plugin.deps]]
+use = "KKV9/compress"
+rev = "80e5268"
+hash = "868db729374b97871bc30b96d0e9061f"
+
+[[plugin.deps]]
+use = "NoponyAsked/sxiv"
+rev = "c0eaa16"
+hash = "698549b242f15f88c1c5137a781f9299"
+
+[[plugin.deps]]
+use = "cxwx/netcdf-preview"
+rev = "f3d1b71"
+hash = "7676a7fc1ab55a0fcc0c355c8466135c"
+
+[[plugin.deps]]
+use = "AminurAlam/yazi-plugins:preview-git"
+rev = "28eea47"
+hash = "ba369f2f02be9e932cf7882c113d6844"
+
+[[plugin.deps]]
+use = "cxwx/parquet-preview"
+rev = "2374bec"
+hash = "f89a2cce6a09692939d4aa8c1b0bb21"
+
+[[plugin.deps]]
+use = "ndtoan96/ouch"
+rev = "596b666"
+hash = "c2f4f4aca257dcceafa9e3b828dbf1c9"
+
+[flavor]
+deps = []
