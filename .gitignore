@@ -3,6 +3,7 @@ lazy-lock.json
 
 nvim.log
 config/yazi/plugins/*
+!config/yazi/plugins/sel-size.yazi
 
 bin/share
 *.pyc

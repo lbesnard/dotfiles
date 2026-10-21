@@ -1740,12 +1740,33 @@ zip2chd() {
 
 # yazi wrapper
 y() {
-    local dir="$HOME/.config/yazi/plugins"
-    
-    # Check if package.toml exists and the plugins directory is missing or empty
-    if [[ -f "$HOME/.config/yazi/package.toml" ]] && [[ ! -d "$dir" || -z "$(print -r -- $dir/*(N))" ]]; then
-        echo "Yazi plugins missing. Installing..."
-        ya pkg install
+    local config_file="$HOME/.config/yazi/package.toml"
+    local plugins_dir="$HOME/.config/yazi/plugins"
+    local missing=0
+
+    if [[ -f "$config_file" ]]; then
+        if [[ ! -d "$plugins_dir" ]]; then
+            missing=1
+        else
+            local -a declared_plugins
+            declared_plugins=("${(@f)$(grep -E '^[[:space:]]*use[[:space:]*]=' "$config_file" | sed -E 's/.*"([^"]+)".*/\1/')}")
+
+            for plugin in "${declared_plugins[@]}"; do
+                local name="${plugin##*/}"
+                name="${name#*:}"
+                
+                if [[ ! -f "$plugins_dir/${name}.yazi/main.lua" ]]; then
+                    missing=1
+                    break
+                fi
+            done
+        fi
+
+        if [[ $missing -eq 1 ]]; then
+            echo "Yazi plugins missing or incomplete. Installing..."
+            ya pkg install
+        fi
     fi
+
     command yazi "$@"
 }
