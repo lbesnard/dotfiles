@@ -304,6 +304,7 @@ bind-key t split-window -h "nvim ~/todo.md"
 bind-key C-j choose-tree
 
 # fix ssh agent when tmux is detached
-setenv -g SSH_AUTH_SOCK $HOME/.ssh/ssh_auth_sock
-# default update-environment overwrites SSH_AUTH_SOCK per session on attach; keep the stable symlink instead
-set -g update-environment "DISPLAY KRB5CCNAME MSYSTEM SSH_ASKPASS SSH_AGENT_PID SSH_CONNECTION WINDOWID XAUTHORITY"
+# Only pin the stable symlink (created by ~/.ssh/rc on sshd login) when it is a live socket;
+# otherwise keep tmux's default behaviour (local/container agents).
+if-shell '[ -S "$HOME/.ssh/ssh_auth_sock" ]' \
+    'setenv -g SSH_AUTH_SOCK "$HOME/.ssh/ssh_auth_sock"; set -g update-environment "DISPLAY KRB5CCNAME MSYSTEM SSH_ASKPASS SSH_AGENT_PID SSH_CONNECTION WINDOWID XAUTHORITY"'
