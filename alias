@@ -1768,5 +1768,13 @@ y() {
         fi
     fi
 
-    command yazi "$@"
+    local tmp cwd
+    tmp="$(mktemp -t "yazi-cwd.XXXXXX")" || return
+    command yazi --cwd-file="$tmp" "$@"
+    local ret=$?
+    if cwd="$(command cat -- "$tmp")" && [[ -n "$cwd" && "$cwd" != "$PWD" ]]; then
+        builtin cd -- "$cwd"
+    fi
+    command rm -f -- "$tmp"
+    return $ret
 }

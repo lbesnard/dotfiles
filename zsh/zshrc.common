@@ -338,17 +338,6 @@ if (( $+commands[rbenv] )); then
     }
 fi
 
-# yazi function
-y() {
-    local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
-    yazi "$@" --cwd-file="$tmp"
-    if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
-        builtin cd -- "$cwd"
-    fi
-    rm -f -- "$tmp"
-}
-
-
 # Cache gh completions — regenerate only when gh binary changes
 if (( $+commands[gh] )); then
     _gh_comp="$HOME/.zsh_alias/_gh"
