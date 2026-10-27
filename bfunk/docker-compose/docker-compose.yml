@@ -750,7 +750,7 @@ services:
     # --- ALLOW TRAEFIK / DOCKER SUBNETS THROUGH GLUETUN FIREWALL ---
     # - FIREWALL_OUTBOUND_SUBNETS=172.16.0.0/12,192.168.0.0/16,10.0.0.0/8
     labels:
-      com.centurylinklabs.watchtower.enable: true
+      com.centurylinklabs.watchtower.enable: false
       traefik.enable: 'true'
       traefik.http.routers.gluetun.rule: Host(`transmission.${SERVER_DOMAIN}.lan`) || Host(`transmission.${SERVER_DOMAIN}.home`) || Host(`transmission.${SERVER_DOMAIN}.local`) || Host(`transmission.${DUCKDNS_DOMAIN}.duckdns.org`)
       traefik.http.routers.gluetun.entrypoints: websecure
@@ -785,6 +785,8 @@ services:
     - $TORRENT_PATH/config:/config
     - $TORRENT_PATH/watch:/watch
     restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: false
 
   tecmint-web:
       # to store icons for help page
@@ -1102,6 +1104,7 @@ services:
     - $EBOOKS_AUDIOBOOKS_PATH:/data/ebooks_audiobooks:ro
     - $EBOOKS_FR_PATH:/data/ebooks_fr:ro
     - $GAMES_PATH:/data/games:ro
+    - $SWITCH_HOMEBREW_PATH:/data/Switch_Homebrew:ro
     - $PS4_PATH:/data/PS4:ro
     - $MOVIES_PATH:/data/movies:ro
     - $MOVIES_FR_PATH:/data/Movies(French):ro
