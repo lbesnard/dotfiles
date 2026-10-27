@@ -48,11 +48,11 @@ http:
       service: radarr-remote
 
     transmission:
-      rule: "Host(`transmission.beefunk.lan`) || Host(`transmission.beefunk.home`) || Host(`transmission.beefunk.local`) || Host(`transmission.funkybeefunk.duckdns.org`)"
+      rule: "Host(`transmission-brownfunk.beefunk.lan`) || Host(`transmission-brownfunk.beefunk.home`) || Host(`transmission-brownfunk.beefunk.local`) || Host(`transmission-brownfunk.funkybeefunk.duckdns.org`)"
       entryPoints:
         - "websecure"
       tls: {}
-      service: transmission-remote
+      service: transmission-brownfunk
 
     jackett:
       rule: "Host(`jackett.beefunk.lan`) || Host(`jackett.beefunk.home`) || Host(`jackett.beefunk.local`) || Host(`jackett.funkybeefunk.duckdns.org`)"

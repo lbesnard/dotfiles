@@ -263,13 +263,23 @@ services:
   - name: "Downloads & Indexers"
     icon: "fas fa-download"
     items:
-      - name: "Transmission"
+      - name: "Transmission Brownfunk"
+        logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/transmission.png"
+        subtitle: "Torrent + VPN"
+        tag: "dl"
+        tagstyle: "is-dark"
+        url: "http://transmission-brownfunk.funkybeefunk.duckdns.org"
+        target: "_.local"
+
+      - name: "Transmission Beefunk"
         logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/transmission.png"
         subtitle: "Torrent + VPN"
         tag: "dl"
         tagstyle: "is-dark"
         url: "http://transmission.funkybeefunk.duckdns.org"
         target: "_.local"
+
+
 
       - name: "Prowlarr"
         logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/prowlarr.png"
