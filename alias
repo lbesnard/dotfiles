@@ -14,7 +14,8 @@ alias update_joplin='curl -s https://api.github.com/repos/laurent22/joplin/relea
 alias update_etcher='curl -s https://api.github.com/repos/balena-io/etcher/releases/latest | grep "browser_download_url.*x64.AppImage" | cut -d : -f 2,3 | tr -d \" | wget --show-progress -qi - -O $HOME/bin/balenaEtcher.AppImage && chmod +x $HOME/bin/*.AppImage'
 alias update_shotcut='curl -s https://api.github.com/repos/mltframework/shotcut/releases/latest | grep "browser_download_url.*AppImage" | cut -d : -f 2,3 | tr -d \" | wget --show-progress -qi - -O $HOME/bin/Shotcut.AppImage && chmod +x $HOME/bin/*.AppImage'
 alias update_darktable='curl -s https://api.github.com/repos/darktable-org/darktable/releases/latest | grep "browser_download_url.*x86_64.AppImage" | cut -d : -f 2,3 | tr -d \" | head -1 | wget --show-progress -qi - -O $HOME/bin/Darktable.AppImage && chmod +x $HOME/bin/*.AppImage'
-alias update_appimages='update_nextcloud; update_joplin; update_etcher; update_shotcut; update_darktable'
+alias update_lightcraft='curl -s https://api.github.com/repos/storytold/lightcraft/releases/latest | grep "browser_download_url.*x86_64.AppImage" | cut -d : -f 2,3 | tr -d \" | head -1 | wget --show-progress -qi - -O $HOME/bin/Lightcraft.AppImage && chmod +x $HOME/bin/*.AppImage'
+alias update_appimages='update_nextcloud; update_joplin; update_etcher; update_shotcut; update_darktable; update_lightcraft'
 
 alias shotcut='Shotcut.AppImage --QT_SCALE_FACTOR 1'
 
@@ -780,6 +781,7 @@ function funk_rclone() {
             --checkers 32 \
             --buffer-size 64M \
             --delete-after \
+            --track-renames \
             --exclude ".*lrprev" \
             --exclude "jellyfin/**" \
             --exclude "uploaded_piwigo/**" \
@@ -1051,7 +1053,7 @@ alias beet_install="uv tool install --force --with python3-discogs-client --with
 mount_beefunk_pics () {
     mkdir -p "$HOME/beefunk_pictures"
     local ip
-    ip=$(getent hosts beefunk.local | awk '{print $1}')
+    ip=$(getent hosts beefunk.lan | awk '{print $1}')
     sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr="$ip" "$ip".local:/media/lbesnard/beefunk_12tb_c/pictures "$home/beefunk_pictures"
 }
 
@@ -1059,7 +1061,7 @@ mount_beefunk_pics () {
 mount_efunknuc_pics () {
   mkdir -p $HOME/beefunk_pictures
   local ip
-  ip=$(getent hosts efunknuc.local | awk '{print $1}')
+  ip=$(getent hosts efunknuc.lan | awk '{print $1}')
   sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr=efunknuc.lan efunknuc.lan:/media/beefunk_12tb_1/pictures "$home/beefunk_pictures"
 }
 
@@ -1067,11 +1069,11 @@ mount_efunknuc_pics () {
 mount_best_pics() {
     mkdir -p "$HOME/beefunk_pictures"
 
-    local host1="beefunk.local"
+    local host1="beefunk.lan"
     local ip1=$(getent hosts $host1| awk '{print $1}')
     local path1="$ip1:/media/lbesnard/beefunk_12tb_c/pictures"
 
-    local host2="efunknuc.local"
+    local host2="efunknuc.lan"
     local ip2=$(getent hosts $host2| awk '{print $1}')
     local path2="$ip2:/media/beefunk_12tb_1/pictures"
 
@@ -1778,3 +1780,5 @@ y() {
     command rm -f -- "$tmp"
     return $ret
 }
+
+alias wg_brownunk="sudo wg-quick up brownfunk"
