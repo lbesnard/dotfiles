@@ -37,6 +37,6 @@ BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 #
 CONFIG="install.conf.yaml"
 cd "${BASEDIR}"
-git submodule update --init --recursive "${BASEDIR}"
+git submodule update --init --recursive --depth 1 "${BASEDIR}"
 
 "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"

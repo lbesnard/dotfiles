@@ -21,7 +21,7 @@
 	url = https://github.com/davdittrich/whatlastgenre.git
 [submodule "config/ranger/plugins/ranger-archives"]
 	path = config/ranger/plugins/ranger-archives
-	url = git@github.com:maximtrp/ranger-archives.git
+	url = https://github.com/maximtrp/ranger-archives.git
 [submodule "config/beets/whatlastgenre_org"]
 	path = config/beets/whatlastgenre_org
 	url = https://github.com/YetAnotherNerd/whatlastgenre.git

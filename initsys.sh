@@ -1,55 +1,77 @@
 #!/usr/bin/env bash
+#
+# Bootstrap a working shell environment in $HOME (no sudo needed):
+#   1. zerobrew (fast Homebrew-compatible package manager)  https://zerobrew.rs
+#   2. the CLI tools listed in ./Brewfile
+#   3. a shallow clone of these dotfiles, linked into $HOME with dotbot
+#   4. (optional) the user-level ansible roles from Fleet-Control
+#
+# Usage:
+#   curl -fsSL https://raw.githubusercontent.com/lbesnard/dotfiles/main/initsys.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/lbesnard/dotfiles/main/initsys.sh | bash -s -- --ansible
+#
+# Options:
+#   --ansible   also run Fleet-Control's remote.yml (miniforge, neovim, cheat) via ansible-pull
+#   -h, --help  show this help
+#
+# Env: DOTFILES_DIR (default: ~/github_repo/dotfiles), DOTFILES_REPO (default: https over https)
 
-## script to install a functional working env on the $HOME directory
-## using linuxbrew and ansible
-## will install tools such as zsh, tmux, ranger, fzf ... and dotfiles
+set -euo pipefail
 
-# install linuxbrew
-# if user has sudo privileges, linuxbrew should be installed in /home/linuxbrew
-# Otherwise the install script will automatically setup brew under $HOME/.linuxbrew
-if ! [ -x "$(command -v brew)" ]; then
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+DOTFILES_REPO="${DOTFILES_REPO:-https://github.com/lbesnard/dotfiles.git}"
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/github_repo/dotfiles}"
+FLEET_REPO="https://github.com/lbesnard/Fleet-Control.git"
+ZEROBREW_BIN="${ZEROBREW_BIN:-$HOME/.local/bin}"
+
+run_ansible=0
+for arg in "$@"; do
+    case "$arg" in
+        --ansible) run_ansible=1 ;;
+        -h|--help) sed -n '2,17p' "$0" 2>/dev/null || true; exit 0 ;;
+        *) echo "unknown option: $arg" >&2; exit 2 ;;
+    esac
+done
+
+log() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
+
+for cmd in curl git; do
+    command -v "$cmd" >/dev/null || { echo "missing required command: $cmd" >&2; exit 1; }
+done
+
+# --- 1. zerobrew -------------------------------------------------------------
+# --no-modify-path: PATH / cert env is already handled by zsh/zshrc.common in these dotfiles.
+export PATH="$ZEROBREW_BIN:$PATH"
+if ! command -v zb >/dev/null; then
+    log "Installing zerobrew"
+    curl -fsSL https://zerobrew.rs/install | bash -s -- --no-modify-path
+fi
+zb --version
+
+# --- 2. dotfiles (shallow: no need for the full history) ---------------------
+if [[ -d "$DOTFILES_DIR/.git" ]]; then
+    log "Updating dotfiles in $DOTFILES_DIR"
+    git -C "$DOTFILES_DIR" pull --ff-only
+else
+    log "Cloning dotfiles into $DOTFILES_DIR"
+    mkdir -p "$(dirname "$DOTFILES_DIR")"
+    git clone --depth 1 "$DOTFILES_REPO" "$DOTFILES_DIR"
 fi
 
-# check where is linuxbrew installed
-if [[ -d $HOME/.linuxbrew ]]; then
-    export HOMEBREW_PREFIX=$HOME/.linuxbrew
-elif [[ -d /home/linuxbrew ]]; then
-    export HOMEBREW_PREFIX=/home/linuxbrew/.linuxbrew
+# --- 3. packages -------------------------------------------------------------
+log "Installing packages from Brewfile"
+zb bundle install -f "$DOTFILES_DIR/Brewfile"
+
+# --- 4. link dotfiles (./install also fetches the submodules, shallowly) -----
+log "Linking dotfiles"
+"$DOTFILES_DIR/install"
+
+# --- 5. optional: ansible roles (miniforge, neovim, cheat) -------------------
+# The brew/dotfiles tags are intentionally skipped: zerobrew + dotbot above replace them.
+if (( run_ansible )); then
+    log "Running Fleet-Control ansible (miniforge, neovim, cheat)"
+    command -v ansible-pull >/dev/null || zb install ansible
+    ansible-pull -U "$FLEET_REPO" -d "$HOME/.cache/ansible_pull" \
+        -i ansible/hosts ansible/remote.yml -t miniforge,neovim,cheat
 fi
 
-eval $($HOMEBREW_PREFIX/bin/brew shellenv)
-
-export PATH="$HOMEBREW_PREFIX/bin:$PATH"
-export MANPATH="$HOMEBREW_PREFIX/share/man:$MANPATH"
-export INFOPATH="$HOMEBREW_PREFIX/share/info:$INFOPATH"
-
-# see https://github.com/Linuxbrew/homebrew-core/issues/955#issuecomment-250151297
-export HOMEBREW_ARCH=core2
-
-# install or upgrade brew packages
-function brew_install_or_upgrade {
-    if brew ls --versions "$1" >/dev/null; then
-        HOMEBREW_NO_AUTO_UPDATE=1; brew upgrade "$1"
-    else
-        HOMEBREW_NO_AUTO_UPDATE=1; brew install "$1"
-    fi
-}
-
-# install or upgrade packages
-brew_install_or_upgrade cmake
-brew_install_or_upgrade gcc
-brew_install_or_upgrade ruby
-brew_install_or_upgrade ruby-install
-
-brew_install_or_upgrade ansible
-
-ansible-pull -U https://github.com/lbesnard/ansible_laptop.git remote.yml -i hosts -t brew
-ansible-pull -U https://github.com/lbesnard/ansible_laptop.git remote.yml -i hosts -t dotfiles
-ansible-pull -U https://github.com/lbesnard/ansible_laptop.git remote.yml -i hosts -t conda
-ansible-pull -U https://github.com/lbesnard/ansible_laptop.git remote.yml -i hosts -t neovim
-ansible-pull -U https://github.com/lbesnard/ansible_laptop.git remote.yml -i hosts -t cheat
-
-# To install useful key bindings and fuzzy completion for fzf
-$(brew --prefix)/opt/fzf/install
-[[ -s $(brew --prefix)/etc/profile.d/autojump.sh ]] && . $(brew --prefix)/etc/profile.d/autojump.sh
+log "Done. Start a new shell: exec zsh"

@@ -86,4 +86,9 @@ fi
   done
 } &!
 
+# Set display if it's not already defined
+if [ -z "$DISPLAY" ]; then
+    export DISPLAY=:0
+fi
+
 [[ -n $ZSH_PROFILE ]] && zprof
