@@ -1,0 +1,84 @@
+# ---- MOVE AROUND ----
+# up/down/parent/enter
+j k h l
+# top / bottom
+gg G
+# back / forward in history
+H L
+# jump: fzf / zoxide
+z Z
+# goto home / ~/.config / Downloads / interactive
+gh gc gd g<space>
+# tabs: new / switch / prev-next / close
+t  1-9  [ ]  ctrl+c
+# help (shows ALL keys incl. mine)
+~
+
+# ---- SELECT ----
+# select file (toggle + go down)
+space
+# visual range select / unselect
+v V
+# select all / invert / clear
+ctrl+a ctrl+r esc
+
+# ---- COPY / MOVE / DELETE ----
+# copy (yank)  ->  go to dest  ->  paste
+y  then  p
+# cut (move)   ->  go to dest  ->  paste
+x  then  p
+# paste, overwrite
+P
+# cancel yank/cut
+Y X
+# trash
+d
+# delete PERMANENTLY
+D
+# rename
+r
+# new file (end with / for a directory)
+a
+# symlink abs / rel
+- _
+# run shell cmd (; async, : wait)
+; :
+# open / open with...
+enter O
+# task manager
+w
+
+# ---- COPY PATH TO CLIPBOARD ----
+# full path / dir / filename / name w/o ext
+cc cd cf cn
+
+# ---- SORT  (uppercase = reverse) ----
+# alpha / natural / mtime / ctime / ext / size / random
+,a  ,n  ,m  ,c  ,e  ,S  ,r
+# NB: ,s is MINE (size of selection), so size sort = ,S
+
+# ---- SEARCH / FILTER ----
+# find in dir, next/prev match
+/ ? n N
+# filter (hide non-matching)
+f
+# search filenames (fd) / file contents (ripgrep)
+s S
+
+# ---- VIEW ----
+# toggle hidden files
+.
+# linemode: size/perms/mtime/btime/owner/none
+ms mp mm mb mo mn
+
+# ---- MY CUSTOM KEYS (config/yazi/keymap.toml) ----
+# size of selection (or cwd) in linemode
+,s
+# archive selection
+caa
+# archive w/ password / +header / level / all three
+cap cah cal cau
+
+# ---- QUIT ----
+# quit (cd to dir if using y wrapper) / quit w/o cd
+q Q
