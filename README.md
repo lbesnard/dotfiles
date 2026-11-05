@@ -68,6 +68,14 @@ Re-run `./install` after adding a link to `install.conf.yaml`.
 
 ### Termux (Android)
 
+First sync the Termux packages (a partial upgrade leaves `curl`/`git` broken with `cannot locate symbol "SSL_set_quic_tls_early_data_enabled"`):
+
+```bash
+pkg update -y && pkg upgrade -y
+```
+
+Then:
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/lbesnard/dotfiles/main/termux-install.sh | sh
 ```
