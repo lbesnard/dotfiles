@@ -1,0 +1,47 @@
+#compdef fleet ./fleet
+# zsh completion for fleet-compose's `fleet` script.
+# Install: put this file in a dir on $fpath (named _fleet), then re-run compinit.
+# Machines are read from <repo>/machines (repo found via the `fleet` symlink, or $FLEET_DIR).
+
+_fleet_dir() {
+  local f=${FLEET_DIR:-}
+  [[ -z $f && -n ${commands[fleet]} ]] && f=${commands[fleet]:A:h}
+  [[ -z $f && -x ./fleet ]] && f=$PWD
+  print -r -- $f
+}
+
+_fleet_machines() {
+  local d=$(_fleet_dir) m
+  local -a machines
+  if [[ -d $d/machines ]]; then
+    machines=($d/machines/*(/N:t))
+  else
+    machines=(beefunk brownfunk evryfunk evryfunknuc)
+  fi
+  [[ $1 == all ]] && machines+=(all)
+  _describe -t machines 'machine' machines
+}
+
+_fleet() {
+  local -a cmds
+  cmds=(
+    'decrypt:decrypt vault files for a machine'
+    'encrypt:encrypt changed secrets (default: all machines)'
+    'vendor:fetch vendored repos'
+    'sync:decrypt + vendor'
+    'rekey:change the vault passphrase'
+    'keygen:generate a new vault key'
+    'edit:edit a .vault file in place'
+  )
+  if (( CURRENT == 2 )); then
+    _describe -t commands 'fleet command' cmds
+    return
+  fi
+  case $words[2] in
+    encrypt)                (( CURRENT == 3 )) && _fleet_machines all ;;
+    decrypt|vendor|sync)    (( CURRENT == 3 )) && _fleet_machines ;;
+    edit)                   _files -g '*.vault' ;;
+  esac
+}
+
+_fleet "$@"

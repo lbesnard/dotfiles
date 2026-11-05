@@ -136,7 +136,7 @@ unsetopt complete_aliases
 # -----------------------------
 # zsh functions autoload (lazy)
 # -----------------------------
-fpath=(~/.zsh_functions "${fpath[@]}")
+fpath=(~/.zsh_functions ~/.zsh_complete "${fpath[@]}")
 autoload -Uz history-search-end cani vmc vmi lps kp fp bip bup bcp tmuxify utils ll lx
 typeset -U PATH fpath
 
