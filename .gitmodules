@@ -4,9 +4,6 @@
 [submodule "bin/encryption"]
     path = bin/encryption
     url  = https://github.com/lbesnard/encryption
-[submodule "beets/bandcamp"]
-	path = beets/bandcamp
-	url = https://github.com/unrblt/beets-bandcamp
 [submodule "cheat/community"]
 	path = cheat/community
 	url = https://github.com/cheat/cheatsheets
