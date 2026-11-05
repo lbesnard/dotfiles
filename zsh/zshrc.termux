@@ -1,0 +1,94 @@
+# ==============================================
+# Termux zshrc — self-contained and minimal (sourced from ~/.zshrc when TERMUX_VERSION is set)
+#
+# One-time setup on the phone:
+#   pkg install zsh git starship zoxide fzf fd bat eza ripgrep openssh tmux
+# Binaries come from `pkg` on purpose: zinit `gh-r` downloads are glibc builds
+# and do NOT run on Termux (bionic libc).
+# ==============================================
+[[ $- != *i* ]] && return
+
+# -----------------------------
+# Environment
+# -----------------------------
+export LANG="en_US.UTF-8"
+export EDITOR="${EDITOR:-nvim}"
+command -v nvim >/dev/null || export EDITOR=vim
+export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
+
+export HISTSIZE=10000 SAVEHIST=10000 HISTFILE=$HOME/.zsh_history
+setopt append_history hist_ignore_all_dups hist_reduce_blanks hist_save_no_dups share_history
+setopt prompt_subst auto_cd interactive_comments
+
+# -----------------------------
+# Plugins (pure zsh only), turbo-loaded after the first prompt
+# -----------------------------
+ZINIT_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/zinit/zinit.git"
+if [[ ! -d $ZINIT_HOME/.git ]]; then
+    mkdir -p "${ZINIT_HOME:h}"
+    git clone --depth 1 https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+fi
+source "$ZINIT_HOME/zinit.zsh"
+
+# Completion stack. fzf-tab must load after compinit but BEFORE syntax highlighting.
+zinit wait"0a" lucid for \
+    atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" blockf \
+    light-mode zsh-users/zsh-completions \
+    Aloxaf/fzf-tab \
+    atload"_zsh_autosuggest_start" zsh-users/zsh-autosuggestions \
+    zdharma-continuum/fast-syntax-highlighting
+
+zinit wait"0b" lucid light-mode for \
+    OMZP::sudo \
+    OMZP::extract \
+    zsh-users/zsh-history-substring-search
+
+# -----------------------------
+# Prompt, zoxide, fzf — cached init output (regenerated when the binary changes)
+# -----------------------------
+_cache_init() {  # _cache_init <name> <cmd...>
+    local name=$1; shift
+    local bin=${commands[$1]} f="$HOME/.cache/zsh/${name}_init.zsh"
+    [[ -n $bin ]] || return 1
+    if [[ ! -s $f || $bin -nt $f ]]; then
+        mkdir -p "${f:h}"; "$@" >| "$f"
+    fi
+    source "$f"
+}
+_cache_init starship starship init zsh --print-full-init
+_cache_init zoxide   zoxide init zsh
+_cache_init fzf      fzf --zsh
+unfunction _cache_init
+
+(( $+commands[fd] )) && export FZF_DEFAULT_COMMAND="fd" FZF_CTRL_T_COMMAND="fd --type f -LHI" FZF_ALT_C_COMMAND="fd --type d"
+export FZF_DEFAULT_OPTS="--info=inline --height=60% --multi --bind '?:toggle-preview' --prompt='∼ ' --pointer='▶' --marker='✓'"
+
+# -----------------------------
+# Completion styling & keys
+# -----------------------------
+zstyle ':completion:*' menu select
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+bindkey "^[[1~" beginning-of-line
+bindkey "^[[4~" end-of-line
+bindkey "^[[3~" delete-char
+
+# -----------------------------
+# Aliases (small, phone-friendly). Extra machine-specific ones: ~/.alias.termux
+# -----------------------------
+alias ..='cd ..' ...='cd ../..' j=z
+alias ll='ls -lh' la='ls -lAh'
+(( $+commands[eza] )) && alias ls='eza --group-directories-first' ll='eza -lh --git' la='eza -lah --git'
+(( $+commands[bat] )) && alias cat='bat --paging=never'
+alias v=$EDITOR g=git
+alias update='pkg update && pkg upgrade'
+
+# Reach shared storage: run `termux-setup-storage` once, then ~/storage/* exists
+alias dl='cd ~/storage/downloads'
+
+# Opt-in tmux autostart: put `export TERMUX_TMUX=1` in ~/.alias.termux or ~/.zshenv
+if (( $+commands[tmux] )) && [[ -n $TERMUX_TMUX && -z $TMUX && -z $SSH_TTY && -t 0 ]]; then
+    exec tmux new-session -A -s main
+fi
+
+[[ -f ~/.alias.termux ]] && source ~/.alias.termux
+true

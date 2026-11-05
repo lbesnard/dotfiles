@@ -53,10 +53,54 @@ PATH="$PYENV_ROOT/bin:$PATH"
 # eval "$(pyenv init --path)"
 
 # -----------------------------
+# TMUX autostart (as early as possible)
+# -----------------------------
+# The OMZ tmux plugin runs tmux in the foreground of THIS shell (and exits with it),
+# so everything loaded after it would be wasted work in the outer shell. Load it first;
+# the real init then happens once, inside tmux ($TMUX set => plugin is a no-op).
+# Only for local terminals (not SSH). Without -t 0, a plain `ssh host` (no PTY) would
+# also satisfy -z SSH_TTY and crash.
+if [[ -z "${SSH_TTY}" && -t 0 ]]; then
+    if (( $+commands[tmux] )) && [[ -z $TMUX ]]; then
+        # Guard against a stale/corrupted tmux server socket. If the server is
+        # unresponsive, ZSH_TMUX_AUTOQUIT=true would close the terminal instantly
+        # when tmux fails to connect. Kill the stale server first.
+        # exit 0 -> healthy server; "no server" -> socket never existed (safe);
+        # anything else (connection refused, timeout 124, ...) -> stale socket.
+        _tmux_out=$(timeout 3 tmux ls 2>&1); _tmux_rc=$?
+        if (( _tmux_rc != 0 )) && [[ "$_tmux_out" != *"no server"* ]]; then
+            tmux kill-server 2>/dev/null
+        fi
+        unset _tmux_out _tmux_rc
+
+        # Prune dead/unattachable sessions in background.
+        (
+          tmux list-sessions 2>/dev/null | while IFS= read -r line; do
+              sess="${line%%:*}"
+              tmux has-session -t "$sess" 2>/dev/null || tmux kill-session -t "$sess" 2>/dev/null
+          done
+        ) &!
+    fi
+    ZSH_TMUX_AUTOSTART=true
+    ZSH_TMUX_AUTOCONNECT=true
+    ZSH_TMUX_FIXTERM=false
+    ZSH_TMUX_AUTOQUIT=true
+    (( $+commands[tmux] )) && zinit lucid for OMZP::"tmux"
+fi
+
+# -----------------------------
 # Prompt — Starship
-# If already installed (e.g. via Nix), init directly; otherwise let zinit install it
-if command -v starship &>/dev/null && [[ ! -f "${ZINIT[PLUGINS_DIR]}/starship---starship/init.zsh" ]]; then
-    eval "$(starship init zsh)"
+# Installed binary (brew/nix/...): cache `starship init` keyed on the binary's mtime
+# (saves a fork+exec per shell). Otherwise let zinit install it.
+# -----------------------------
+if (( $+commands[starship] )) && [[ ! -f "${ZINIT[PLUGINS_DIR]}/starship---starship/init.zsh" ]]; then
+    _sp_cache="$HOME/.cache/zsh/starship_init.zsh"
+    if [[ ! -s $_sp_cache || ${commands[starship]} -nt $_sp_cache ]]; then
+        mkdir -p "${_sp_cache:h}"
+        starship init zsh --print-full-init >| "$_sp_cache"
+    fi
+    source "$_sp_cache"
+    unset _sp_cache
 else
     zinit ice as"command" from"gh-r" atclone"./starship init zsh > init.zsh; ./starship completions zsh > _starship" atpull"%atclone" src"init.zsh"
     zinit light starship/starship
@@ -77,45 +121,9 @@ if [[ -t 1 ]]; then
     [[ -s "$HOMEBREW_PREFIX/etc/grc.zsh" ]] && source $HOMEBREW_PREFIX/etc/grc.zsh
 fi
 
-# -----------------------------
-# TMUX autostart & pane rename
-# -----------------------------
-# Only autostart tmux for local terminals (not SSH). Without -t 0, a plain
-# `ssh host` (no PTY) would also satisfy -z SSH_TTY and crash.
-if [[ -z "${SSH_TTY}" && -t 0 ]]; then
-    if (( $+commands[tmux] )); then
-        # Guard against a stale/corrupted tmux server socket. If the server is
-        # unresponsive, ZSH_TMUX_AUTOQUIT=true would close the terminal instantly
-        # when tmux fails to connect. Kill the stale server first so the plugin
-        # can start a clean new one.
-        local _tmux_out _tmux_rc
-        _tmux_out=$(timeout 3 tmux ls 2>&1)
-        _tmux_rc=$?
-        # exit 0  → healthy server; "no server" message → socket never existed (safe).
-        # Anything else (connection refused, timeout exit 124, etc.) → stale socket.
-        if (( _tmux_rc != 0 )) && [[ "$_tmux_out" != *"no server"* ]]; then
-            tmux kill-server 2>/dev/null
-        fi
-        unset _tmux_out _tmux_rc
-
-        # Prune any dead/unattachable sessions in background.
-        (
-          tmux list-sessions 2>/dev/null | while IFS= read -r line; do
-              local sess="${line%%:*}"
-              tmux has-session -t "$sess" 2>/dev/null || tmux kill-session -t "$sess" 2>/dev/null
-          done
-        ) &!
-    fi
-    ZSH_TMUX_AUTOSTART=true
-    ZSH_TMUX_AUTOCONNECT=true
-    ZSH_TMUX_FIXTERM=false
-    ZSH_TMUX_AUTOQUIT=true
-fi
-
 rename_tmux_pane() {
-    local pane=$(tmux display-message -p '#{pane_id}')
-    local cmd=${1:-$(fc -ln -1 | awk '{print $1}')}
-    tmux select-pane -T "$cmd" -t "$pane"
+    [[ -n $TMUX_PANE ]] || return
+    tmux select-pane -T "${1:-$(fc -ln -1 | awk '{print $1}')}" -t "$TMUX_PANE"
 }
 
 preexec() {
@@ -155,27 +163,26 @@ zstyle :omz:plugins:ssh-agent agent-forwarding on
 zstyle :omz:plugins:ssh-agent identities id_rsa
 
 # -----------------------------
-# Zoxide (smart cd replacement, cmd: j)
+# Turbo loading: everything below is deferred until just AFTER the first prompt is drawn
+# (wait"0a" -> "0b" -> "0c" run in that order), so the prompt appears immediately.
 # -----------------------------
-zinit ice as'null' from"gh-r" sbin
-zinit light ajeetdsouza/zoxide
-zinit has'zoxide' lucid for z-shell/zsh-zoxide
 
-# -----------------------------
-# Plugins: syntax highlighting, completions
-# NOTE: fzf-tab must load after compinit but BEFORE fast-syntax-highlighting
-# -----------------------------
-zinit lucid for \
+# Zoxide (smart cd replacement, cmd: j)
+zinit ice wait"0a" lucid as'null' from"gh-r" sbin
+zinit light ajeetdsouza/zoxide
+zinit ice wait"0a" lucid has'zoxide'
+zinit light z-shell/zsh-zoxide
+
+# Completion stack. fzf-tab must load after compinit but BEFORE fast-syntax-highlighting.
+zinit wait"0a" lucid for \
     atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" blockf \
     light-mode zsh-users/zsh-completions \
     chitoku-k/fzf-zsh-completions \
     Aloxaf/fzf-tab \
     zdharma-continuum/fast-syntax-highlighting
 
-# -----------------------------
-# OMZP core plugins (lazy)
-# -----------------------------
-zi lucid light-mode for \
+# OMZP core plugins
+zinit wait"0b" lucid light-mode for \
   OMZP::"command-not-found" OMZP::"common-aliases" \
   OMZP::"docker-compose" OMZP::"extract" OMZP::"nmap" \
   OMZP::"pip" OMZP::"rsync" OMZP::"sudo" OMZP::"systemd" \
@@ -185,22 +192,13 @@ zi lucid light-mode for \
   OMZP::"cp" # cp with rsync -> call cpv
 
 # brew only on systems where it is available
-(( $+commands[brew] )) && zinit lucid light-mode for OMZP::"brew"
+(( $+commands[brew] )) && zinit wait"0b" lucid light-mode for OMZP::"brew"
 
-
-# TMUX plugin for non-SSH local terminals only — load synchronously so
-# tmux autostart runs during zshrc init and exit is immediate (no turbo workers)
-if [[ -z "${SSH_TTY}" && -t 0 ]]; then
-    zinit lucid for OMZP::"tmux"
-fi
-
-# -----------------------------
 # Git / Forgit / AWS / Conda / Translate
-# -----------------------------
 # Disable default forgit aliases (conflict with grc); custom aliases in ~/.alias_forgit
 export FORGIT_NO_ALIASES=True
 
-zi lucid light-mode for \
+zinit wait"0b" lucid light-mode for \
   "OMZ::plugins/git-extras/git-extras.plugin.zsh" \
   "wfxr/forgit" \
   "fdw/ranger-zoxide" \
@@ -208,13 +206,11 @@ zi lucid light-mode for \
   "esc/conda-zsh-completion" \
   "soimort/translate-shell"
 
-source ~/.alias_forgit
-
-# -----------------------------
-# Aliases - overwrite here
-# -----------------------------
-[ -f $HOME/.alias ] && source $HOME/.alias
-
+# User aliases LAST, so they override the plugin aliases above (common-aliases, git-extras,
+# ...). Also runs ~/.alias, which is large and forks (`git config`) — keep it off the
+# critical path to the first prompt. The `null` plugin is just a hook to run atload at wait"0c".
+zinit ice wait"0c" lucid atload'[[ -f ~/.alias_forgit ]] && source ~/.alias_forgit; [[ -f ~/.alias ]] && source ~/.alias; unalias jq 2>/dev/null'
+zinit light zdharma-continuum/null
 
 # -----------------------------
 # FZF (lazy preview, faster)
@@ -400,6 +396,5 @@ zstyle ':completion:*:(ssh|scp|rsync):*:hosts-ipaddr' ignored-patterns '^(<->.<-
 # Hide system accounts (_flatpak, geoclue, ...) from the user@host completion; offer only my own user
 zstyle ':completion:*:(ssh|scp|sftp|rsync):*' users "$USER" root
 
-unalias jq 2>/dev/null
 
 
