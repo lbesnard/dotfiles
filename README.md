@@ -82,8 +82,7 @@ curl -fsSL https://raw.githubusercontent.com/lbesnard/dotfiles/main/termux-insta
 
 [`termux-install.sh`](termux-install.sh) runs `pkg upgrade`, installs the core tools (zsh, tmux, perl, starship, zoxide, fzf, openssh, neovim)
 plus Termux equivalents of the packages in Fleet-Control's `homebrew_packages.yml` (bat, eza, fd, ripgrep, yazi,
-lazygit, gh, ...) with `pkg`; packages missing from the Termux repo are skipped and listed, shallow-clones this repo into `~/dotfiles`, links only
-the Termux-relevant files (zsh, tmux, starship, `bin`) and sets zsh as login shell. Re-running updates.
+lazygit, gh, ...) with `pkg`; packages missing from the Termux repo are skipped and listed. It then shallow-clones this repo into `~/dotfiles`, runs `./install` (dotbot, like every other machine) and sets zsh as login shell. Re-running updates.
 
 * It uses `pkg` rather than zerobrew: zerobrew's binaries are built for glibc, Termux uses bionic.
 * **`cannot locate symbol "SSL_set_quic_tls_early_data_enabled"` from `git`/`curl`**: your Termux packages
@@ -92,8 +91,9 @@ the Termux-relevant files (zsh, tmux, starship, `bin`) and sets zsh as login she
 * `zsh/zshrc.termux` is a self-contained, minimal zsh config. tmux autostarts in interactive shells
   (attaches to session `main`); set `export TERMUX_NO_TMUX=1` in `~/.zshenv` to disable.
 * tmux uses the same [Oh my tmux!](https://github.com/gpakosz/.tmux) `tmux.conf` as the other machines, with
-  [`tmux/tmux.conf.termux`](tmux/tmux.conf.termux) as its `~/.tmux.conf.local` (mouse on, prefix `C-b`, no
-  plugin cloning). Oh my tmux needs `perl`, which the installer adds.
+  [`tmux/tmux.conf.termux`](tmux/tmux.conf.termux) as its `~/.tmux.conf.local`. That file sources
+  `tmux.conf.ssh` (the server look, prefix `C-b`) and adds phone tweaks (no pane-border row, no plugin cloning,
+  Android clipboard). Oh my tmux needs `perl`, which the installer adds.
 * Optional: `pkg i termux-api` (+ the Termux:API app) so copy-mode `y` reaches the Android clipboard;
   `pkg i termux-services` then `sv-enable ssh-agent` / `sv-enable sshd` to run them as services.
 

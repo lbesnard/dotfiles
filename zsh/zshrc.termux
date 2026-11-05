@@ -85,6 +85,9 @@ alias update='pkg update && pkg upgrade'
 # Reach shared storage: run `termux-setup-storage` once, then ~/storage/* exists
 alias dl='cd ~/storage/downloads'
 
+# tmux local config (oh-my-tmux reads ~/.tmux.conf.local)
+[[ -e ~/.tmux.conf.termux ]] && ln -sfn ~/.tmux.conf.termux ~/.tmux.conf.local
+
 # tmux autostart (opt out: put `export TERMUX_NO_TMUX=1` in ~/.zshenv)
 if (( $+commands[tmux] )) && [[ -z $TERMUX_NO_TMUX && -z $TMUX && -z $SSH_TTY && -t 0 ]]; then
     exec tmux new-session -A -s main

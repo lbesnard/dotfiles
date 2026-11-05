@@ -32,7 +32,7 @@ pkg upgrade -y -o Dpkg::Options::=--force-confnew
 
 # Core tools: must install, the setup is useless without them.
 log "Installing core packages"
-pkg install -y git curl zsh tmux perl starship zoxide fzf openssh neovim
+pkg install -y git curl zsh tmux perl python starship zoxide fzf openssh neovim
 
 # Extras (Termux equivalents of Fleet-Control's homebrew_packages.yml). Installed one by one
 # so a package missing from the Termux repo is skipped instead of aborting the script.
@@ -60,21 +60,14 @@ else
     git clone --depth 1 "$DOTFILES_REPO" "$DOTFILES_DIR"
 fi
 
-# --- 3. link only what Termux uses -------------------------------------------
-# (not ./install: it pulls every submodule - beets, cheat community... - and links
-# desktop configs that make no sense on a phone)
-link() {  # link <repo-relative source> <target>
-    mkdir -p "$(dirname "$2")"
-    ln -sfn "$DOTFILES_DIR/$1" "$2"
-    echo "  $2 -> $1"
-}
-log "Linking dotfiles"
-link zsh/zshrc               "$HOME/.zshrc"
-link zsh/zshrc.termux        "$HOME/.zshrc.termux"
-link tmux/tmux.conf          "$HOME/.tmux.conf"
-link tmux/tmux.conf.termux   "$HOME/.tmux.conf.local"
-link config/starship.toml    "$HOME/.config/starship.toml"
-link bin                     "$HOME/bin"
+# --- 3. link dotfiles -------------------------------------------------------
+# Same entrypoint as every other machine: dotbot via ./install (needs python, installed above;
+# it also fetches the submodules, shallowly).
+log "Linking dotfiles (./install)"
+"$DOTFILES_DIR/install"
+
+# Termux uses the dedicated tmux local config (sources tmux.conf.ssh + phone tweaks)
+ln -sfn "$HOME/.tmux.conf.termux" "$HOME/.tmux.conf.local"
 
 # --- 4. default shell --------------------------------------------------------
 if [ "$(basename "${SHELL:-}")" != zsh ]; then

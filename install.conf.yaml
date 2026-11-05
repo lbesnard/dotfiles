@@ -74,6 +74,7 @@
     ~/.ssh/rc: { create: true, force: true, path: ssh/rc }
     ~/.taskrc: { create: true, force: true, path: taskrc }
     ~/.tmux.conf.laptop: { force: true, path: tmux/tmux.conf.laptop }
+    ~/.tmux.conf.termux: { force: true, path: tmux/tmux.conf.termux }
     ~/.tmux.conf.ssh: { force: true, path: tmux/tmux.conf.ssh }
     ~/.tmux.conf.ssh_laptop: { force: true, path: tmux/tmux.conf.ssh_laptop }
     ~/.tmux.conf: { force: true, path: tmux/tmux.conf }

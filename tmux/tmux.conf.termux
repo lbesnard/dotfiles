@@ -1,35 +1,18 @@
-# Termux local config for Oh my tmux! (~/.tmux.conf.local -> this file, see termux-install.sh)
-# Phone-friendly: touch/mouse on, prefix C-b, no battery/uptime polling in the status bar.
-#
-# Needs (pkg install): tmux perl   (oh-my-tmux shells out to perl/awk/sed)
-# Clipboard: pkg install termux-api + the Termux:API Android app, then copy-mode yanks reach Android.
+# Termux local config for Oh my tmux! (~/.tmux.conf.local -> this file)
+# Same look and keys as the servers (tmux.conf.ssh, prefix C-b), plus phone tweaks below.
+# Needs (pkg install): tmux perl. Clipboard: pkg install termux-api + the Termux:API app.
 
-tmux_conf_new_window_retain_current_path=false
-tmux_conf_new_pane_retain_current_path=true
-tmux_conf_new_pane_reconnect_ssh=false
-tmux_conf_new_session_prompt=false
-tmux_conf_theme_24b_colour=true
+source-file ~/.tmux.conf.ssh
 
-tmux_conf_theme_status_left=' #S '
-tmux_conf_theme_status_right='#{prefix}#{pairing}#{synchronized} , %R '
-
-# oh-my-tmux only knows xsel/xclip/wl-copy/pbcopy; on Termux yank is wired up below instead.
-tmux_conf_copy_to_os_clipboard=false
-
-# Do not auto-clone tpm plugins on a phone
+# -- phone overrides -----------------------------------------------------------
+tmux_conf_new_session_prompt=false       # no prompt when creating a session
+tmux_conf_copy_to_os_clipboard=false     # oh-my-tmux only knows xclip/xsel/wl-copy; see termux-clipboard-set below
 tmux_conf_update_plugins_on_launch=false
 tmux_conf_update_plugins_on_reload=false
 
-set -g mouse on
-set -g history-limit 10000
-set -g mode-keys vi
-set -s set-clipboard on
-
-# single prefix: C-b (no GNU-screen C-a)
-set -gu prefix2
-unbind C-a
-set -g prefix C-b
-bind C-b send-prefix
+set -g mouse on                          # touch scrolling / selecting
+set -g pane-border-status off            # save a row on a small screen
+set -g default-shell zsh
 
 # Yank to the Android clipboard when termux-api is installed
 if-shell 'command -v termux-clipboard-set' \
