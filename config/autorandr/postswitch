@@ -1,0 +1,6 @@
+#!/bin/bash
+# autorandr hook: runs after a profile is applied (hotplug or manual)
+[[ -f ~/bin/mouse_setting.sh ]] && ~/bin/mouse_setting.sh
+# redraw bar/workspaces for the new layout
+i3-msg restart >/dev/null 2>&1
+exit 0

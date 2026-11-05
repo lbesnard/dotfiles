@@ -38,6 +38,7 @@
     ~/.config/terminator:
       { create: true, force: true, path: config/terminator/ }
     ~/.config/i3: { create: true, force: true, path: config/i3/ }
+    ~/.config/autorandr: { create: true, force: true, path: config/autorandr/ }
     ~/.config/i3blocks: { create: true, force: true, path: config/i3blocks/ }
     ~/.config/rofi: { create: true, force: true, path: config/rofi/ }
     ~/.config/rmpc: { create: true, force: true, path: config/rmpc/ }
