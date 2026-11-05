@@ -1,0 +1,4 @@
+# Default starship look, with more headroom for slow/cold directory scans
+# (the default 30ms trips on first prompt after boot, big dirs, network mounts).
+scan_timeout = 200
+command_timeout = 1000

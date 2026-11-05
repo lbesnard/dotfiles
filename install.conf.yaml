@@ -23,6 +23,7 @@
     ~/.config/cmus/autosave: { create: true, force: true, path: cmus/autosave }
     ~/.config/digikamrc: { create: true, force: true, path: config/digikamrc }
     ~/.config/gh: { create: true, force: true, path: config/gh/ }
+    ~/.config/starship.toml: { create: true, force: true, path: config/starship.toml }
     ~/.config/ghostty/config:
       { create: true, force: true, path: config/ghostty/config }
     ~/.config/joplin-desktop:
@@ -89,6 +90,7 @@
     ~/.zshrc.local: { force: true, path: zsh/zshrc.laptop }
     ~/.zshrc.ssh: { force: true, path: zsh/zshrc.server }
     ~/.zshrc.common: { force: true, path: zsh/zshrc.common }
+    ~/.zshrc.termux: { force: true, path: zsh/zshrc.termux }
     ~/.zshrc: { force: true, path: zsh/zshrc }
     ~/.zsh_functions: { force: true, path: zsh/functions }
     ~/.zsh_complete: { force: true, path: zsh/completions }

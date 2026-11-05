@@ -1,43 +1,47 @@
 # Enable profiling: ZSH_PROFILE=1 zsh
 [[ -n $ZSH_PROFILE ]] && zmodload zsh/zprof
 
+# -----------------------------
+# Machine profile: termux | server | homeserver | laptop
+# Override with ZSH_PROFILE_NAME=<profile> (e.g. in ~/.zshenv) if detection is wrong.
+# -----------------------------
+if [[ -z $ZSH_PROFILE_NAME ]]; then
+  if [[ -n $TERMUX_VERSION || $PREFIX == *com.termux* ]]; then
+    ZSH_PROFILE_NAME=termux
+  else
+    case "$HOST" in
+      *aws*|*nec*)             ZSH_PROFILE_NAME=server ;;
+      dev|*funk*|*-X202EP*)    ZSH_PROFILE_NAME=homeserver ;;  # dev = docker-dev container (nested under laptop's C-a, so C-b)
+      *) [[ $USER == ubuntu ]] && ZSH_PROFILE_NAME=homeserver || ZSH_PROFILE_NAME=laptop ;;
+    esac
+  fi
+fi
+export ZSH_PROFILE_NAME
+
+# Termux is fully self-contained: no linuxbrew, no glibc binaries, minimal plugins.
+if [[ $ZSH_PROFILE_NAME == termux ]]; then
+  source $HOME/.zshrc.termux
+  [[ -n $ZSH_PROFILE ]] && zprof
+  return
+fi
+
 source $HOME/.zshrc.common
 
 # Load zsh/stat once for fork-free symlink resolution below
 zmodload zsh/stat 2>/dev/null
 
-# _tmux_link_target: resolve symlink target without forking readlink
-_tmux_link_target() { zstat -A REPLY +link "$1" 2>/dev/null }
+# _tmux_conf: point ~/.tmux.conf.local at $1 (laptop|ssh) unless it already does
+_tmux_conf() {
+  zstat -A REPLY +link ~/.tmux.conf.local 2>/dev/null
+  [[ "$REPLY" != "$HOME/.tmux.conf.$1" ]] && ln -sf ~/.tmux.conf.$1 ~/.tmux.conf.local
+}
 
-case "$HOST" in
-  *aws*|*nec*)
-    source $HOME/.zshrc.server
-    _tmux_link_target ~/.tmux.conf.local
-    [[ "$REPLY" != "$HOME/.tmux.conf.ssh" ]] && ln -sf ~/.tmux.conf.ssh ~/.tmux.conf.local
-    ;;
-  dev)  # docker-dev container: nested under the laptop's C-a, so use C-b
-    source $HOME/.zshrc.homeserver
-    _tmux_link_target ~/.tmux.conf.local
-    [[ "$REPLY" != "$HOME/.tmux.conf.ssh" ]] && ln -sf ~/.tmux.conf.ssh ~/.tmux.conf.local
-    ;;
-  *funk*|*-X202EP*)
-    source $HOME/.zshrc.homeserver
-    _tmux_link_target ~/.tmux.conf.local
-    [[ "$REPLY" != "$HOME/.tmux.conf.ssh" ]] && ln -sf ~/.tmux.conf.ssh ~/.tmux.conf.local
-    ;;
-  *)
-    if [[ $USER == "ubuntu" ]]; then
-      source $HOME/.zshrc.homeserver
-      _tmux_link_target ~/.tmux.conf.local
-      [[ "$REPLY" != "$HOME/.tmux.conf.ssh" ]] && ln -sf ~/.tmux.conf.ssh ~/.tmux.conf.local
-    else
-      source $HOME/.zshrc.laptop
-      _tmux_link_target ~/.tmux.conf.local
-      [[ "$REPLY" != "$HOME/.tmux.conf.laptop" ]] && ln -sf ~/.tmux.conf.laptop ~/.tmux.conf.local
-    fi
-    ;;
+case $ZSH_PROFILE_NAME in
+  server)     source $HOME/.zshrc.server;     _tmux_conf ssh ;;
+  homeserver) source $HOME/.zshrc.homeserver; _tmux_conf ssh ;;
+  laptop)     source $HOME/.zshrc.laptop;     _tmux_conf laptop ;;
 esac
-unfunction _tmux_link_target
+unfunction _tmux_conf
 
 # ~/.tmux.conf.ssh_laptop (prefix C-s) is available for nested-tmux use cases
 # (e.g. outer tmux on laptop with C-a, inner tmux on server with C-s).
@@ -74,58 +78,12 @@ fi
 # Nix
 [ -e "$HOME/.nix-profile/etc/profile.d/nix.sh" ] && source "$HOME/.nix-profile/etc/profile.d/nix.sh"
 
+# Byte-compile the rc files in the background when they change (symlinks in $HOME, so
+# the .zwc files land next to the links and never touch the repo).
+{
+  for _f in ~/.zshrc ~/.zshrc.common ~/.zshrc.laptop ~/.zshrc.server; do
+    [[ -f $_f && ( ! -f $_f.zwc || $_f -nt $_f.zwc ) ]] && zcompile $_f 2>/dev/null
+  done
+} &!
+
 [[ -n $ZSH_PROFILE ]] && zprof
-
-# Set display if it's not already defined
-if [ -z "$DISPLAY" ]; then
-    export DISPLAY=:0
-fi
-# >>> zerobrew >>>
-# zerobrew
-export ZEROBREW_DIR="${HOME}/.zerobrew"
-export ZEROBREW_BIN="${HOME}/.zerobrew/bin"
-export ZEROBREW_ROOT="${HOME}/.local/share/zerobrew"
-export ZEROBREW_PREFIX="${HOME}/.local/share/zerobrew/prefix"
-export PKG_CONFIG_PATH="$ZEROBREW_PREFIX/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
-
-# SSL/TLS certificates (only if ca-certificates is installed)
-if [ -z "${CURL_CA_BUNDLE:-}" ] || [ -z "${SSL_CERT_FILE:-}" ]; then
-  if [ -f "$ZEROBREW_PREFIX/opt/ca-certificates/share/ca-certificates/cacert.pem" ]; then
-    [ -z "${CURL_CA_BUNDLE:-}" ] && export CURL_CA_BUNDLE="$ZEROBREW_PREFIX/opt/ca-certificates/share/ca-certificates/cacert.pem"
-    [ -z "${SSL_CERT_FILE:-}" ] && export SSL_CERT_FILE="$ZEROBREW_PREFIX/opt/ca-certificates/share/ca-certificates/cacert.pem"
-  elif [ -f "$ZEROBREW_PREFIX/etc/ca-certificates/cacert.pem" ]; then
-    [ -z "${CURL_CA_BUNDLE:-}" ] && export CURL_CA_BUNDLE="$ZEROBREW_PREFIX/etc/ca-certificates/cacert.pem"
-    [ -z "${SSL_CERT_FILE:-}" ] && export SSL_CERT_FILE="$ZEROBREW_PREFIX/etc/ca-certificates/cacert.pem"
-  elif [ -f "$ZEROBREW_PREFIX/etc/openssl/cert.pem" ]; then
-    [ -z "${CURL_CA_BUNDLE:-}" ] && export CURL_CA_BUNDLE="$ZEROBREW_PREFIX/etc/openssl/cert.pem"
-    [ -z "${SSL_CERT_FILE:-}" ] && export SSL_CERT_FILE="$ZEROBREW_PREFIX/etc/openssl/cert.pem"
-  elif [ -f "$ZEROBREW_PREFIX/share/ca-certificates/cacert.pem" ]; then
-    [ -z "${CURL_CA_BUNDLE:-}" ] && export CURL_CA_BUNDLE="$ZEROBREW_PREFIX/share/ca-certificates/cacert.pem"
-    [ -z "${SSL_CERT_FILE:-}" ] && export SSL_CERT_FILE="$ZEROBREW_PREFIX/share/ca-certificates/cacert.pem"
-  fi
-fi
-
-if [ -z "${SSL_CERT_DIR:-}" ]; then
-  if [ -d "$ZEROBREW_PREFIX/etc/ca-certificates" ]; then
-    export SSL_CERT_DIR="$ZEROBREW_PREFIX/etc/ca-certificates"
-  elif [ -d "$ZEROBREW_PREFIX/etc/openssl/certs" ]; then
-    export SSL_CERT_DIR="$ZEROBREW_PREFIX/etc/openssl/certs"
-  elif [ -d "$ZEROBREW_PREFIX/share/ca-certificates" ]; then
-    export SSL_CERT_DIR="$ZEROBREW_PREFIX/share/ca-certificates"
-  fi
-fi
-
-# Helper function to safely append to PATH
-_zb_path_append() {
-    local argpath="$1"
-    case ":${PATH}:" in
-        *:"$argpath":*) ;;
-        *) export PATH="$argpath:$PATH" ;;
-    esac;
-}
-
-_zb_path_append "$ZEROBREW_BIN"
-_zb_path_append "$ZEROBREW_PREFIX/sbin"
-_zb_path_append "$ZEROBREW_PREFIX/bin"
-
-# <<< zerobrew <<<
