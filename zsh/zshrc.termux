@@ -2,7 +2,7 @@
 # Termux zshrc — self-contained and minimal (sourced from ~/.zshrc when TERMUX_VERSION is set)
 #
 # One-time setup on the phone:
-#   pkg install zsh git starship zoxide fzf fd bat eza ripgrep openssh tmux
+#   curl -fsSL https://raw.githubusercontent.com/lbesnard/dotfiles/main/termux-install.sh | sh
 # Binaries come from `pkg` on purpose: zinit `gh-r` downloads are glibc builds
 # and do NOT run on Termux (bionic libc).
 # ==============================================

@@ -69,14 +69,24 @@ Re-run `./install` after adding a link to `install.conf.yaml`.
 ### Termux (Android)
 
 ```bash
-pkg install git curl zsh starship zoxide fzf fd bat eza ripgrep openssh tmux
-git clone --depth 1 https://github.com/lbesnard/dotfiles.git ~/dotfiles
-cd ~/dotfiles && ./install && chsh -s zsh
+curl -fsSL https://raw.githubusercontent.com/lbesnard/dotfiles/main/termux-install.sh | sh
 ```
 
-Use `pkg` rather than zerobrew here: zerobrew's binaries are built for glibc, Termux uses bionic.
-`zsh/zshrc.termux` is a self-contained, minimal config. Set `TERMUX_TMUX=1` in `~/.alias.termux` to
-autostart tmux.
+[`termux-install.sh`](termux-install.sh) runs `pkg upgrade`, installs zsh, tmux, perl, starship, zoxide, fzf,
+fd, bat, eza, ripgrep, openssh and neovim with `pkg`, shallow-clones this repo into `~/dotfiles`, links only
+the Termux-relevant files (zsh, tmux, starship, `bin`) and sets zsh as login shell. Re-running updates.
+
+* It uses `pkg` rather than zerobrew: zerobrew's binaries are built for glibc, Termux uses bionic.
+* **`cannot locate symbol "SSL_set_quic_tls_early_data_enabled"` from `git`/`curl`**: your Termux packages
+  are partially upgraded (new libcurl, old openssl). Run `pkg update -y && pkg upgrade -y` (try
+  `termux-change-repo` if a mirror is stale), then re-run the installer. The script does this upgrade itself.
+* `zsh/zshrc.termux` is a self-contained, minimal zsh config. Set `TERMUX_TMUX=1` in `~/.alias.termux` to
+  autostart tmux.
+* tmux uses the same [Oh my tmux!](https://github.com/gpakosz/.tmux) `tmux.conf` as the other machines, with
+  [`tmux/tmux.conf.termux`](tmux/tmux.conf.termux) as its `~/.tmux.conf.local` (mouse on, prefix `C-b`, no
+  plugin cloning). Oh my tmux needs `perl`, which the installer adds.
+* Optional: `pkg i termux-api` (+ the Termux:API app) so copy-mode `y` reaches the Android clipboard;
+  `pkg i termux-services` then `sv-enable ssh-agent` / `sv-enable sshd` to run them as services.
 
 ## How the zsh config is organised
 
@@ -105,6 +115,7 @@ zb bundle dump -f Brewfile --force     # keep Brewfile in sync
 ```
 install, install.conf.yaml   dotbot entrypoint and link map
 initsys.sh, Brewfile         bootstrap for fresh machines
+termux-install.sh            bootstrap for Termux (Android)
 zsh/ tmux/ nvim/ config/     tool configs (config/* is linked into ~/.config)
 bin/                         scripts, put on $PATH as ~/bin
 ```
