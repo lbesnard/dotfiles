@@ -30,8 +30,26 @@ log "Updating Termux packages"
 pkg update -y
 pkg upgrade -y -o Dpkg::Options::=--force-confnew
 
-log "Installing packages"
-pkg install -y git curl zsh tmux perl starship zoxide fzf fd bat eza ripgrep openssh neovim
+# Core tools: must install, the setup is useless without them.
+log "Installing core packages"
+pkg install -y git curl zsh tmux perl starship zoxide fzf openssh neovim
+
+# Extras (Termux equivalents of Fleet-Control's homebrew_packages.yml). Installed one by one
+# so a package missing from the Termux repo is skipped instead of aborting the script.
+# Not in Termux: act, angle-grinder, awscli (pip), mdcat, termshark, xclip (use termux-api), ueberzugpp.
+EXTRAS="
+    clang cmake ruby nodejs python
+    autojump bat btop coreutils croc dust eza fd git-delta gh git-extras glow
+    hexyl htop httpie hugo lazygit lazydocker lf lnav lsd mc ncdu p7zip poppler
+    ranger rclone ripgrep sad taskwarrior the-silver-searcher tig tldr tree
+    vim viu yazi yq
+"
+log "Installing extra packages"
+skipped=""
+for p in $EXTRAS; do
+    pkg install -y "$p" >/dev/null 2>&1 && echo "  + $p" || skipped="$skipped $p"
+done
+[ -z "$skipped" ] || echo "  not installed (unavailable or failed):$skipped"
 
 # --- 2. dotfiles -------------------------------------------------------------
 if [ -d "$DOTFILES_DIR/.git" ]; then
@@ -66,4 +84,4 @@ fi
 
 log "Done. Restart Termux (or run: exec zsh)."
 echo "Optional: pkg install termux-services termux-api   # ssh-agent/sshd services, Android clipboard"
-echo "Optional: echo 'export TERMUX_TMUX=1' >> ~/.alias.termux   # autostart tmux"
+echo "tmux starts automatically; to disable: echo 'export TERMUX_NO_TMUX=1' >> ~/.zshenv"

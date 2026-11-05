@@ -80,16 +80,17 @@ Then:
 curl -fsSL https://raw.githubusercontent.com/lbesnard/dotfiles/main/termux-install.sh | sh
 ```
 
-[`termux-install.sh`](termux-install.sh) runs `pkg upgrade`, installs zsh, tmux, perl, starship, zoxide, fzf,
-fd, bat, eza, ripgrep, openssh and neovim with `pkg`, shallow-clones this repo into `~/dotfiles`, links only
+[`termux-install.sh`](termux-install.sh) runs `pkg upgrade`, installs the core tools (zsh, tmux, perl, starship, zoxide, fzf, openssh, neovim)
+plus Termux equivalents of the packages in Fleet-Control's `homebrew_packages.yml` (bat, eza, fd, ripgrep, yazi,
+lazygit, gh, ...) with `pkg`; packages missing from the Termux repo are skipped and listed, shallow-clones this repo into `~/dotfiles`, links only
 the Termux-relevant files (zsh, tmux, starship, `bin`) and sets zsh as login shell. Re-running updates.
 
 * It uses `pkg` rather than zerobrew: zerobrew's binaries are built for glibc, Termux uses bionic.
 * **`cannot locate symbol "SSL_set_quic_tls_early_data_enabled"` from `git`/`curl`**: your Termux packages
   are partially upgraded (new libcurl, old openssl). Run `pkg update -y && pkg upgrade -y` (try
   `termux-change-repo` if a mirror is stale), then re-run the installer. The script does this upgrade itself.
-* `zsh/zshrc.termux` is a self-contained, minimal zsh config. Set `TERMUX_TMUX=1` in `~/.alias.termux` to
-  autostart tmux.
+* `zsh/zshrc.termux` is a self-contained, minimal zsh config. tmux autostarts in interactive shells
+  (attaches to session `main`); set `export TERMUX_NO_TMUX=1` in `~/.zshenv` to disable.
 * tmux uses the same [Oh my tmux!](https://github.com/gpakosz/.tmux) `tmux.conf` as the other machines, with
   [`tmux/tmux.conf.termux`](tmux/tmux.conf.termux) as its `~/.tmux.conf.local` (mouse on, prefix `C-b`, no
   plugin cloning). Oh my tmux needs `perl`, which the installer adds.
