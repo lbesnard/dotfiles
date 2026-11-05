@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# PipeWire/WirePlumber volume.
+#  left=mute  right=pick output device (rofi)  middle=pavucontrol  wheel=+/-2%
+# Refresh instantly with: pkill -RTMIN+1 i3blocks   (signal=1 in the config)
+S=@DEFAULT_AUDIO_SINK@
+pick_sink() {
+  cur=$(pactl get-default-sink)
+  list=$(pactl list sinks | awk -F': ' '/^\tName:/{n=$2} /^\tDescription:/{print n "\t" $2}')
+  choice=$(while IFS=$'\t' read -r n d; do
+             [ "$n" = "$cur" ] && echo "● $d" || echo "  $d"; done <<<"$list" |
+           rofi -dmenu -i -p "Output" -format i) || return
+  name=$(sed -n "$((choice+1))p" <<<"$list" | cut -f1)
+  [ -n "$name" ] && pactl set-default-sink "$name"
+}
+case "$BLOCK_BUTTON" in
+  1) wpctl set-mute $S toggle ;;
+  2) setsid pavucontrol >/dev/null 2>&1 & ;;
+  3) pick_sink ;;
+  4) wpctl set-volume -l 1.0 $S 2%+ ;;
+  5) wpctl set-volume $S 2%- ;;
+esac
+out=$(wpctl get-volume $S 2>/dev/null) || { echo "n/a"; exit 0; }
+vol=$(awk '{printf "%d", $2*100}' <<<"$out")
+case "$(pactl get-default-sink)" in
+  *bluez*|*Headset*|*HEADSET*|*HS70*) dev=$'' ;;   # headphones
+  *) dev=$'' ;;                                     # speaker
+esac
+if [[ "$out" == *MUTED* ]]; then
+  echo $' muted'; echo $''; echo "#6272a4"
+else
+  echo "$dev $vol%"; echo "$vol%"; echo "#bd93f9"
+fi

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Battery from sysfs (no acpi dependency). Colour by level, bolt when charging.
+bat=$(ls -d /sys/class/power_supply/BAT* 2>/dev/null | head -n1)
+[ -z "$bat" ] && { echo "AC"; exit 0; }
+cap=$(<"$bat/capacity"); st=$(<"$bat/status")
+if   [ "$cap" -ge 90 ]; then icon=$''
+elif [ "$cap" -ge 65 ]; then icon=$''
+elif [ "$cap" -ge 40 ]; then icon=$''
+elif [ "$cap" -ge 15 ]; then icon=$''
+else icon=$''; fi
+[ "$st" = "Charging" ] && icon=$''
+if   [ "$st" = "Charging" ]; then color="#50fa7b"
+elif [ "$cap" -le 15 ]; then color="#ff5555"
+elif [ "$cap" -le 30 ]; then color="#ffb86c"
+else color="#ff79c6"; fi
+text="$icon $cap%"
+echo "$text"; echo "$text"; echo "$color"
+[ "$st" = "Discharging" ] && [ "$cap" -le 10 ] && exit 33
+exit 0

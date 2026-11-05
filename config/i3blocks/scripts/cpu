@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# CPU utilisation (delta of /proc/stat) + 1-min load average, coloured by usage.
+. "$(dirname "$0")/lib.sh"
+[ "$BLOCK_BUTTON" = 1 ] && { for t in btop htop top; do command -v $t >/dev/null && { setsid ghostty -e $t >/dev/null 2>&1 & break; }; done; }
+state="${XDG_RUNTIME_DIR:-/tmp}/i3blocks-cpu"
+read -r _ u n s i w q sq st _ < /proc/stat
+idle=$(( i + w )); total=$(( u + n + s + i + w + q + sq + st ))
+pct=0
+if [ -f "$state" ]; then
+  read -r pt pi < "$state"
+  dt=$(( total - pt )); di=$(( idle - pi ))
+  [ "$dt" -gt 0 ] && pct=$(( 100 * (dt - di) / dt ))
+fi
+echo "$total $idle" > "$state"
+load=$(cut -d' ' -f1 /proc/loadavg)
+echo $' '"$pct% $load"; echo "$pct%"; pct_color "$pct"; echo

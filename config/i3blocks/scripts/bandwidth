@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Down/up rate on the default-route interface, from /proc/net/dev.
+iface=$(ip route show default 2>/dev/null | awk '{print $5; exit}')
+[ -z "$iface" ] && { echo "no net"; exit 0; }
+state="${XDG_RUNTIME_DIR:-/tmp}/i3blocks-bw-$iface"
+read -r rx tx < <(awk -v i="$iface:" '$1==i{print $2, $10}' /proc/net/dev)
+now=$(date +%s)
+fmt() { numfmt --to=iec --suffix=B/s --format=%.1f "$1"; }
+if [ -f "$state" ]; then
+  read -r prx ptx pt < "$state"
+  dt=$(( now - pt )); [ "$dt" -lt 1 ] && dt=1
+  echo "↓ $(fmt $(( (rx-prx)/dt ))) ↑ $(fmt $(( (tx-ptx)/dt )))"
+else
+  echo "↓ … ↑ …"
+fi
+echo "$rx $tx $now" > "$state"

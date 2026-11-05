@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Used RAM % (MemTotal - MemAvailable), coloured green -> red.
+. "$(dirname "$0")/lib.sh"
+read -r total avail < <(awk '/^MemTotal/{t=$2} /^MemAvailable/{a=$2} END{print t, a}' /proc/meminfo)
+pct=$(( 100 * (total - avail) / total ))
+used=$(numfmt --to=iec --from-unit=1024 --format=%.1f $(( total - avail )))
+echo $' '"$pct% $used"; echo "$pct%"; pct_color "$pct"; echo

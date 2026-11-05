@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Used % of the filesystem holding $HOME (or $1), coloured green -> red.
+. "$(dirname "$0")/lib.sh"
+read -r pct avail < <(df -h --output=pcent,avail "${1:-$HOME}" | tail -n1)
+pct=${pct%\%}
+echo $' '"$pct% ${avail} free"; echo "$pct%"; pct_color "$pct"; echo

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Private IP; right-click copies the public IP (looked up on demand, not polled).
+if [ "$BLOCK_BUTTON" = 3 ]; then
+  pub=$(curl -fsS --max-time 3 https://api.ipify.org) && { echo -n "$pub" | xclip -selection clipboard; notify-send "Public IP" "$pub (copied)"; }
+fi
+ip route get 8.8.8.8 2>/dev/null | sed -n 's/.*src \([^ ]*\).*/\1/p' | head -n1
