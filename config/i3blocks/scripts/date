@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Date/time. Left click toggles a GTK calendar popup.
+if [ "$BLOCK_BUTTON" = 1 ]; then
+  pkill -f 'zenity --calendar' || setsid zenity --calendar --title=Calendar --text= >/dev/null 2>&1 &
+fi
+date '+%a, %e %b %H:%M'

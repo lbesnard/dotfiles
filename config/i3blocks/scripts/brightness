@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Refresh instantly with: pkill -RTMIN+2 i3blocks   (signal=2 in the config)
+case "$BLOCK_BUTTON" in 4) brightnessctl -q s 5%+ ;; 5) brightnessctl -q s 5%- ;; esac
+brightnessctl -m 2>/dev/null | awk -F, '{print $4}'

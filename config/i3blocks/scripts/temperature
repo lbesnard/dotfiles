@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# CPU package temperature from thermal zones.
+for z in /sys/class/thermal/thermal_zone*; do
+  [ "$(<"$z/type")" = "x86_pkg_temp" ] && t=$(<"$z/temp") && break
+done
+[ -z "$t" ] && t=$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null)
+[ -z "$t" ] && exit 0
+c=$(( t / 1000 ))
+echo "$c°C"; echo "$c°C"
+if [ "$c" -ge 90 ]; then echo "#ff5555"; exit 33
+elif [ "$c" -ge 75 ]; then echo "#ffb86c"
+else echo "#e65d19"; fi

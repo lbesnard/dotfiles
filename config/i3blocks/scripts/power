@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Power menu. Any click on the block opens it (rofi). Needs systemd + rofi.
+ICON=$''
+if [ -n "$BLOCK_BUTTON" ]; then
+  menu=$'  Lock\n  Suspend\n  Hibernate\n  Logout\n  Reboot\n  Shutdown'
+  choice=$(printf '%s\n' "$menu" | rofi -dmenu -i -p "Power" -no-custom) || exit 0
+  action=${choice##* }
+  case "$action" in
+    Logout|Reboot|Shutdown)
+      [ "$(printf 'No\nYes\n' | rofi -dmenu -i -p "$action?")" = Yes ] || exit 0 ;;
+  esac
+  case "$action" in
+    Lock)      "$HOME/.config/i3/scripts/blur_lock.sh" & ;;
+    Suspend)   systemctl suspend ;;
+    Hibernate) systemctl hibernate ;;
+    Logout)    i3-msg exit ;;
+    Reboot)    systemctl reboot ;;
+    Shutdown)  systemctl poweroff ;;
+  esac
+fi
+echo "$ICON"; echo "$ICON"; echo "#a9e185"

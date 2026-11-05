@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Usage: vpn <label> [connection-name-regex]   (matches active NM wireguard/vpn connections)
+label=${1:-VPN}; pat=${2:-.}
+if nmcli -t -f NAME,TYPE con show --active | grep -E ':(wireguard|vpn)$' | cut -d: -f1 | grep -qE "$pat"; then
+  echo $' '"$label"; echo "$label"; echo "#50fa7b"
+else
+  echo $' '"$label"; echo "$label"; echo "#6272a4"
+fi

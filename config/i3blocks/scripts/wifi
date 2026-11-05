@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Active Wi-Fi SSID + signal via NetworkManager.
+#  left=pick a network (rofi + nmcli)  right=nm-connection-editor  middle=toggle wifi radio
+pick_wifi() {
+  nmcli dev wifi rescan >/dev/null 2>&1
+  list=$(nmcli -t -f IN-USE,SSID,SIGNAL,SECURITY dev wifi list | awk -F: '$2!=""' | sort -t: -k3 -nr | awk -F: '!seen[$2]++')
+  [ -z "$list" ] && { notify-send "Wi-Fi" "No networks found"; return; }
+  cur=$(nmcli -t -f ACTIVE,SSID dev wifi | sed -n 's/^yes://p' | head -n1)
+  idx=$(while IFS=: read -r use ssid sig sec; do
+          [ "$ssid" = "$cur" ] && use='●' || use=' '
+          printf '%s %-32s %3s%%  %s\n' "$use" "$ssid" "$sig" "${sec:---}"
+        done <<<"$list" | rofi -dmenu -i -p "Wi-Fi" -format i) || return
+  ssid=$(sed -n "$((idx+1))p" <<<"$list" | cut -d: -f2)
+  [ -z "$ssid" ] && return
+  # known connection -> just bring it up; otherwise ask for the password if secured
+  if nmcli -t -f NAME con show | grep -qxF "$ssid"; then
+    out=$(nmcli con up id "$ssid" 2>&1)
+  else
+    sec=$(sed -n "$((idx+1))p" <<<"$list" | cut -d: -f4)
+    if [ -n "$sec" ]; then
+      pw=$(rofi -dmenu -password -p "Password for $ssid" -lines 0) || return
+      out=$(nmcli dev wifi connect "$ssid" password "$pw" 2>&1)
+    else
+      out=$(nmcli dev wifi connect "$ssid" 2>&1)
+    fi
+  fi
+  notify-send "Wi-Fi: $ssid" "$out"
+}
+case "$BLOCK_BUTTON" in
+  1) pick_wifi ;;
+  2) [ "$(nmcli radio wifi)" = enabled ] && nmcli radio wifi off || nmcli radio wifi on ;;
+  3) setsid nm-connection-editor >/dev/null 2>&1 & ;;
+esac
+line=$(nmcli -t -f ACTIVE,SSID,SIGNAL dev wifi 2>/dev/null | grep '^yes' | head -n1)
+if [ -z "$line" ]; then
+  eth=$(nmcli -t -f TYPE,STATE dev | grep -m1 '^ethernet:connected')
+  [ -n "$eth" ] && { echo $' wired'; echo; echo "#bdb637"; exit 0; }
+  echo $' down'; echo; echo "#ff5555"; exit 0
+fi
+IFS=: read -r _ ssid sig <<<"$line"
+echo $' '"$ssid $sig%"; echo "$ssid"; echo "#bdb637"
