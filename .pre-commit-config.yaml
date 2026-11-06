@@ -1,0 +1,17 @@
+# Enabled by ./install (or: ./secrets install-hook). Run on everything: pre-commit run --all-files
+repos:
+  - repo: local
+    hooks:
+      # Re-encrypt edited secrets and stage the .age files. Stops the commit once so it contains them; just commit again.
+      - id: secrets-encrypt
+        name: encrypt secrets (age)
+        entry: ./secrets encrypt --stage
+        language: system
+        always_run: true      # the plaintext is gitignored, so it never appears in the staged file list
+        pass_filenames: false
+      # Refuse plaintext secrets and non-age *.age files.
+      - id: secrets-check
+        name: no plaintext secrets staged
+        entry: ./secrets check
+        language: system
+        files: ''

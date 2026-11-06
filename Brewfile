@@ -19,6 +19,8 @@ brew "jq"
 
 # git
 brew "git"
+brew "age"
+brew "pre-commit"
 brew "gh"
 brew "tig"
 brew "git-delta"

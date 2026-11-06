@@ -1,0 +1,2 @@
+# age public keys that secrets are encrypted to (safe to publish). One per line.
+age19ycskmqu6nf5kn6rup5sh90qdagpp70jvfhzle6dkuk34w665paqgrngs9

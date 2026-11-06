@@ -40,3 +40,17 @@ cd "${BASEDIR}"
 git submodule update --init --recursive --depth 1 "${BASEDIR}"
 
 "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
+
+# --- secrets (age) -----------------------------------------------------------
+# With the age key (~/.config/age/key.txt): decrypt *.age and link the secret files.
+# Without it: public dotfiles only, with a warning. Never fails the install.
+"${BASEDIR}/secrets" install-hook || true
+rc=0
+"${BASEDIR}/secrets" decrypt || rc=$?
+if [ "$rc" -eq 0 ]; then
+  "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c install.private.conf.yaml "${@}"
+elif [ "$rc" -ne 2 ]; then
+  echo "secrets: decrypt had problems (rc=$rc); private links skipped. See above." >&2
+fi
+echo
+"${BASEDIR}/secrets" status || true

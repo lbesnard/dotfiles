@@ -1,0 +1,11 @@
+# Links to decrypted secrets. Run by ./install only when `./secrets decrypt` succeeded (age key present).
+- link:
+    ~/.config/passhole.ini:
+      { create: true, force: true, path: config/passhole.ini }
+    ~/.funk_rsync_config.json:
+      { force: true, path: funk_rsync_config, create: true }
+    ~/.pgpass: { create: true, force: true, path: pgadmin/pgpass }
+    ~/.ssh/config: { force: true, path: ssh/config, create: true }
+    ~/.taskrc: { create: true, force: true, path: taskrc }
+- shell:
+    - [chmod 600 ~/.ssh/config ~/.pgpass, Securing ssh config and pgpass]

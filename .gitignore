@@ -39,3 +39,25 @@ config/pgcli/log
 
 efunk/docker-compose/tandoor/mediafiles/
 efunk/docker-compose/data/
+
+# --- secrets: plaintext is ignored, only *.age is committed (see secrets.list) ---
+/aws/config
+/aws/credentials
+/config/beets/discogs_token.json
+/config/redlist/spotify_token.json
+/config/passhole.ini
+/config/Nextcloud/nextcloud.cfg
+/config/joplin-desktop/settings.json
+/funk_rsync_config
+/pgadmin/pgpass
+/ssh/config
+/taskrc
+/whatlastgenre/config
+/hosts
+# runtime state written by apps into config dirs that now live in this repo
+/config/Nextcloud/*
+!/config/Nextcloud/sync-exclude.lst
+!/config/Nextcloud/*.age
+/config/joplin-desktop/*
+!/config/joplin-desktop/*.age
+*.age.tmp
