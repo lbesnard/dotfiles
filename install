@@ -45,7 +45,8 @@ git submodule update --init --recursive --depth 1 "${BASEDIR}"
 migrate_appdir() {  # <dir under ~/.config> <legacy dir under dotfiles_private>
   local d="$HOME/.config/$1" tgt src tmp
   [ -L "$d" ] || return 0
-  if pgrep -i -f "${1%%-*}" >/dev/null 2>&1; then
+  # match the executable name (argv[0]) only: a browser with a nextcloud URL must not count as the app running
+  if pgrep -i -f "^([^ ]*/)?${1%%-*}[^ /]*( |\$)" >/dev/null 2>&1; then
     echo "install: $1 looks like it is running; quit it and re-run ./install to convert $d" >&2; return 0
   fi
   tgt="$(readlink -f "$d")"; src="$tgt"
