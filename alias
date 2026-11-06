@@ -1784,4 +1784,4 @@ y() {
 alias wg_brownunk="sudo wg-quick up brownfunk"
 
 # rebuild the zsh completion cache and restart the shell (e.g. after adding a zsh/completions/_foo file)
-alias rezsh='rm -f "${ZDOTDIR:-$HOME}"/.zcompdump* ~/.zcompdump*; exec zsh'
+alias zsh_rebuild_completion='rm -f "${ZDOTDIR:-$HOME}"/.zcompdump* ~/.zcompdump*; exec zsh'
