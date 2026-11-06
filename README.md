@@ -136,7 +136,7 @@ secret or an `*.age` file that is not really age.
 
 A `post-merge` / `post-rewrite` hook runs `./secrets decrypt` after `git pull`, so the plaintext follows.
 It never overwrites a local edit that was not encrypted yet: you get a `CONFLICT` line and your file is kept
-(`./secrets decrypt --force` to take the repo's version). Without a key the hook is silent; without `age` it warns.
+(`./secrets decrypt --force` to take the repo's version). It says what it did (`secrets: refreshing decrypted secrets after pull...`, then `decrypt: N updated, M unchanged`); without a key it prints a one-line note, without `age` it warns.
 `git pull` itself never fails because of it.
 
 ### Adding a secret
@@ -153,7 +153,7 @@ It never overwrites a local edit that was not encrypted yet: you get a `CONFLICT
 | --- | --- |
 | `./secrets status` | key, hook, and the state of every secret |
 | `./secrets encrypt [--stage\|--add]` | re-encrypt changed plaintext (only if it really changed; age output is random) |
-| `./secrets decrypt [--force] [--quiet]` | write plaintext from the `.age` files |
+| `./secrets decrypt [--force] [--quiet\|--hook]` | write plaintext from the `.age` files |
 | `./secrets install-hook` | git hooks: pre-commit framework if it runs, else plain git hooks |
 | `./secrets install-completion` | link the zsh completion (`zsh/completions/_secrets`) into your `$fpath`; `./install` does it too |
 | `./secrets bootstrap` | the interactive install/paste-the-key step of `./install` |

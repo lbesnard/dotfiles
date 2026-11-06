@@ -22,7 +22,7 @@ repos:
       # After `git pull`, refresh the decrypted files from the new .age files. Silent without a key.
       - id: secrets-decrypt
         name: decrypt secrets after pull
-        entry: ./secrets decrypt --quiet
+        entry: ./secrets decrypt --hook
         language: system
         stages: [post-merge, post-rewrite]
         always_run: true
