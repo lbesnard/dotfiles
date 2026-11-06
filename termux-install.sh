@@ -32,7 +32,7 @@ pkg upgrade -y -o Dpkg::Options::=--force-confnew
 
 # Core tools: must install, the setup is useless without them.
 log "Installing core packages"
-pkg install -y git curl zsh tmux perl python starship zoxide fzf openssh neovim age pre-commit
+pkg install -y git curl zsh tmux perl python starship zoxide fzf openssh neovim age
 
 # Extras (Termux equivalents of Fleet-Control's homebrew_packages.yml). Installed one by one
 # so a package missing from the Termux repo is skipped instead of aborting the script.

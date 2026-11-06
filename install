@@ -39,6 +39,24 @@ CONFIG="install.conf.yaml"
 cd "${BASEDIR}"
 git submodule update --init --recursive --depth 1 "${BASEDIR}"
 
+# --- migrate Nextcloud/Joplin dirs ---------------------------------------------
+# They used to be symlinks into this repo (-> dotfiles_private). Only their config files are linked now, and a
+# symlinked dir would make dotbot delete the repo's own decrypted file. Turn them into real dirs, keeping state.
+migrate_appdir() {  # <dir under ~/.config> <legacy dir under dotfiles_private>
+  local d="$HOME/.config/$1" tgt src tmp
+  [ -L "$d" ] || return 0
+  if pgrep -i -f "${1%%-*}" >/dev/null 2>&1; then
+    echo "install: $1 looks like it is running; quit it and re-run ./install to convert $d" >&2; return 0
+  fi
+  tgt="$(readlink -f "$d")"; src="$tgt"
+  [ -d "$(dirname "${BASEDIR}")/dotfiles_private/$2" ] && src="$(dirname "${BASEDIR}")/dotfiles_private/$2"
+  echo "install: converting $d from a symlink into a real directory (state copied from $src)"
+  tmp="$d.new"; rm -rf "$tmp"
+  if cp -a "$src/." "$tmp" 2>/dev/null || { mkdir -p "$tmp"; true; }; then rm "$d" && mv "$tmp" "$d"; fi
+}
+migrate_appdir Nextcloud Nextcloud
+migrate_appdir joplin-desktop joplin-desktop
+
 # dotbot exits non-zero if any link failed; do not let `set -e` skip the secrets step below.
 dotbot_rc=0
 "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}" || dotbot_rc=$?
