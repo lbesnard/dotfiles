@@ -97,6 +97,73 @@ lazygit, gh, ...) with `pkg`; packages missing from the Termux repo are skipped 
 * Optional: `pkg i termux-api` (+ the Termux:API app) so copy-mode `y` reaches the Android clipboard;
   `pkg i termux-services` then `sv-enable ssh-agent` / `sv-enable sshd` to run them as services.
 
+## Secrets
+
+This repo is public, but credentials live in it **encrypted** with [age](https://age-encryption.org).
+Everything listed in [`secrets.list`](secrets.list) (aws, ssh config, tokens, taskrc, ...) exists as:
+
+* a plaintext file in the usual place: **gitignored**, so `git status` never shows it;
+* a `<file>.age` next to it: encrypted to the public key in [`recipients.txt`](recipients.txt), **committed**.
+
+The private key is `~/.config/age/key.txt`. It is not in the repo; keep a copy in KeePass.
+Without it you get the public dotfiles only and everything else still works.
+
+### New machine
+
+`./install` does it all: it offers to install zerobrew + `age` (and `pre-commit` via pip),
+asks you to paste the key (hidden; the `AGE-SECRET-KEY-1...` line is enough, it is checked against
+`recipients.txt`), decrypts, installs the git hooks and links the secret files
+([`install.private.conf.yaml`](install.private.conf.yaml)). Press Enter at the key prompt to skip.
+
+### Changing a secret
+
+`git status` will **not** show an edited secret (it is gitignored). Check with:
+
+```bash
+cd ~/github_repo/dotfiles
+./secrets status                      # "plaintext differs from .age" = you have an unencrypted change
+./secrets encrypt                     # writes the .age files
+git add -A && git commit -m "..." && git push
+```
+
+Run `./secrets encrypt` yourself when the secret is the only thing you changed: the commit hook only
+runs once git sees something to commit, so a secret-only change would otherwise say "nothing to commit".
+When you commit other files too, the hook re-encrypts for you (with the pre-commit framework the first
+attempt stops once after staging the `.age` files; commit again). It also refuses to commit a plaintext
+secret or an `*.age` file that is not really age.
+
+### Pulling a change
+
+A `post-merge` / `post-rewrite` hook runs `./secrets decrypt` after `git pull`, so the plaintext follows.
+It never overwrites a local edit that was not encrypted yet: you get a `CONFLICT` line and your file is kept
+(`./secrets decrypt --force` to take the repo's version). Without a key the hook is silent; without `age` it warns.
+`git pull` itself never fails because of it.
+
+### Adding a secret
+
+1. Add its path to `secrets.list` **and** to `.gitignore` (`encrypt` refuses a path that is not ignored).
+2. `./secrets encrypt`, then commit the new `.age` file.
+3. If it needs a symlink, add it to `install.private.conf.yaml` (not `install.conf.yaml`).
+
+### Commands
+
+| Command | |
+| --- | --- |
+| `./secrets status` | key, hook, and the state of every secret |
+| `./secrets encrypt [--stage\|--add]` | re-encrypt changed plaintext (only if it really changed; age output is random) |
+| `./secrets decrypt [--force] [--quiet]` | write plaintext from the `.age` files |
+| `./secrets install-hook` | git hooks: pre-commit framework if it runs, else plain git hooks |
+| `./secrets bootstrap` | the interactive install/paste-the-key step of `./install` |
+
+### Keep in mind
+
+* The ciphertext is public and permanent. If the key leaks, anything ever pushed can be read, and changing
+  `recipients.txt` does not help for old commits: **rotate the secrets themselves** (new tokens, keys, passwords).
+* Never commit a secret in plaintext by accident: if you did, rewriting history is not enough on its own,
+  see how [fleet-compose rotates TLS/ACME keys](https://github.com/lbesnard/fleet-compose/blob/master/docs/rotate-tls-and-acme.md).
+* The key is a random file, not a passphrase, so brute-forcing the public ciphertext is not realistic.
+* Nextcloud and Joplin keep their state in real `~/.config` folders; only their config files are linked from here.
+
 ## How the zsh config is organised
 
 | File | Role |
@@ -127,4 +194,6 @@ initsys.sh, Brewfile         bootstrap for fresh machines
 termux-install.sh            bootstrap for Termux (Android)
 zsh/ tmux/ nvim/ config/     tool configs (config/* is linked into ~/.config)
 bin/                         scripts, put on $PATH as ~/bin
+secrets, secrets.list        age-encrypted secrets: tool, list of files (+ *.age, recipients.txt)
+install.private.conf.yaml    links for decrypted secrets (only used when the age key is present)
 ```
