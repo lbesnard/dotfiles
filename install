@@ -75,6 +75,7 @@ if [ "$rc" -eq 0 ]; then
 elif [ "$rc" -ne 2 ]; then
   echo "secrets: decrypt had problems (rc=$rc); private links skipped. See above." >&2
 fi
+"${BASEDIR}/secrets" install-completion || true
 echo
 "${BASEDIR}/secrets" status || true
 

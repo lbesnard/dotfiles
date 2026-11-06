@@ -147,12 +147,15 @@ It never overwrites a local edit that was not encrypted yet: you get a `CONFLICT
 
 ### Commands
 
+`secrets` is also on your `PATH` (`bin/secrets`), so these work from any directory, with zsh tab completion.
+
 | Command | |
 | --- | --- |
 | `./secrets status` | key, hook, and the state of every secret |
 | `./secrets encrypt [--stage\|--add]` | re-encrypt changed plaintext (only if it really changed; age output is random) |
 | `./secrets decrypt [--force] [--quiet]` | write plaintext from the `.age` files |
 | `./secrets install-hook` | git hooks: pre-commit framework if it runs, else plain git hooks |
+| `./secrets install-completion` | link the zsh completion (`zsh/completions/_secrets`) into your `$fpath`; `./install` does it too |
 | `./secrets bootstrap` | the interactive install/paste-the-key step of `./install` |
 
 ### Keep in mind
