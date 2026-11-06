@@ -39,11 +39,15 @@ CONFIG="install.conf.yaml"
 cd "${BASEDIR}"
 git submodule update --init --recursive --depth 1 "${BASEDIR}"
 
-"${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
+# dotbot exits non-zero if any link failed; do not let `set -e` skip the secrets step below.
+dotbot_rc=0
+"${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}" || dotbot_rc=$?
 
 # --- secrets (age) -----------------------------------------------------------
 # With the age key (~/.config/age/key.txt): decrypt *.age and link the secret files.
 # Without it: public dotfiles only, with a warning. Never fails the install.
+# Offers (interactively) to install zerobrew/age/pre-commit and to paste the age key.
+"${BASEDIR}/secrets" bootstrap || true
 "${BASEDIR}/secrets" install-hook || true
 rc=0
 "${BASEDIR}/secrets" decrypt || rc=$?
@@ -54,3 +58,8 @@ elif [ "$rc" -ne 2 ]; then
 fi
 echo
 "${BASEDIR}/secrets" status || true
+
+if [ "$dotbot_rc" -ne 0 ]; then
+  echo "install: dotbot reported failed links (rc=$dotbot_rc); see the output above." >&2
+  exit "$dotbot_rc"
+fi
