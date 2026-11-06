@@ -55,3 +55,6 @@ efunk/docker-compose/data/
 /whatlastgenre/config
 /hosts
 *.age.tmp
+/config/rclone/rclone.conf
+/config/beets/spotify_token.json
+/pgadmin/pgpass_encrypted.tar
