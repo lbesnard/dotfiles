@@ -1,4 +1,8 @@
 # Enabled by ./install (or: ./secrets install-hook). Run on everything: pre-commit run --all-files
+# pre-commit also installs the post-merge/post-rewrite hooks (decrypt after git pull).
+default_install_hook_types: [pre-commit, post-merge, post-rewrite]
+default_stages: [pre-commit]
+
 repos:
   - repo: local
     hooks:
@@ -15,3 +19,12 @@ repos:
         entry: ./secrets check
         language: system
         files: ''
+      # After `git pull`, refresh the decrypted files from the new .age files. Silent without a key.
+      - id: secrets-decrypt
+        name: decrypt secrets after pull
+        entry: ./secrets decrypt --quiet
+        language: system
+        stages: [post-merge, post-rewrite]
+        always_run: true
+        pass_filenames: false
+        verbose: true
