@@ -2,6 +2,10 @@
 - link:
     ~/.config/passhole.ini:
       { create: true, force: true, path: config/passhole.ini }
+    ~/.config/Nextcloud/nextcloud.cfg:
+      { create: true, force: true, path: config/Nextcloud/nextcloud.cfg }
+    ~/.config/joplin-desktop/settings.json:
+      { create: true, force: true, path: config/joplin-desktop/settings.json }
     ~/.funk_rsync_config.json:
       { force: true, path: funk_rsync_config, create: true }
     ~/.pgpass: { create: true, force: true, path: pgadmin/pgpass }

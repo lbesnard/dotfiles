@@ -26,10 +26,10 @@
     ~/.config/starship.toml: { create: true, force: true, path: config/starship.toml }
     ~/.config/ghostty/config:
       { create: true, force: true, path: config/ghostty/config }
-    ~/.config/joplin-desktop:
-      { create: true, force: false, path: config/joplin-desktop/ }
+    # Nextcloud/Joplin keep their own state in real ~/.config dirs; only config files are linked
+    ~/.config/Nextcloud/sync-exclude.lst:
+      { create: true, force: true, path: config/Nextcloud/sync-exclude.lst }
     ~/.config/nvim: { create: true, force: true, path: nvim/ }
-    ~/.config/Nextcloud: { create: true, force: true, path: config/Nextcloud/ }
     ~/.config/ranger: { create: true, force: true, path: config/ranger/ }
     ~/.config/rclone: { create: true, force: true, path: config/rclone/ }
     ~/.config/redlist: { create: true, force: true, path: config/redlist/ }

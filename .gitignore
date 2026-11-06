@@ -54,10 +54,4 @@ efunk/docker-compose/data/
 /taskrc
 /whatlastgenre/config
 /hosts
-# runtime state written by apps into config dirs that now live in this repo
-/config/Nextcloud/*
-!/config/Nextcloud/sync-exclude.lst
-!/config/Nextcloud/*.age
-/config/joplin-desktop/*
-!/config/joplin-desktop/*.age
 *.age.tmp
