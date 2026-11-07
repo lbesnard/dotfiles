@@ -158,6 +158,40 @@ It never overwrites a local edit that was not encrypted yet: you get a `CONFLICT
 | `./secrets install-completion` | link the zsh completion (`zsh/completions/_secrets`) into your `$fpath`; `./install` does it too |
 | `./secrets bootstrap` | the interactive install/paste-the-key step of `./install` |
 
+### Machine-specific configs (apps that rewrite their own files)
+
+Some apps (Nextcloud, Joplin, Digikam, Darktable) silently update their own config
+on each machine, causing `CONFLICT` warnings after every pull.
+They are stored as `config/APP/name.<hostname>.ext` and symlinked at install time by
+[`bin/link-hostname-configs`](bin/link-hostname-configs).
+
+**Adding a new machine** (run on the new machine after cloning):
+
+```bash
+cp ~/.config/Nextcloud/nextcloud.cfg \
+   ~/.dotfiles/config/Nextcloud/nextcloud.$(hostname -s).cfg
+
+cp ~/.config/joplin-desktop/settings.json \
+   ~/.dotfiles/config/joplin-desktop/settings.$(hostname -s).json
+
+cp ~/.config/digikamrc \
+   ~/.dotfiles/config/digikamrc.$(hostname -s)
+
+cp ~/.config/darktable/darktablerc \
+   ~/.dotfiles/config/darktable/darktablerc.$(hostname -s)
+
+cd ~/.dotfiles
+./secrets encrypt   # for Nextcloud and Joplin (they are in secrets.list)
+git add -A && git commit -m "hostname configs: $(hostname -s)" && git push
+./install
+```
+
+`bin/link-hostname-configs` prints `MISSING: …` with the exact copy command for any
+file not yet present, so you know exactly what to do on a fresh machine.
+
+**Adding a new app** to this mechanism: add one `_link` line to `bin/link-hostname-configs`,
+and add the file to `secrets.list` + `.gitignore` only if it contains credentials.
+
 ### Keep in mind
 
 * The ciphertext is public and permanent. If the key leaks, anything ever pushed can be read, and changing
@@ -165,7 +199,9 @@ It never overwrites a local edit that was not encrypted yet: you get a `CONFLICT
 * Never commit a secret in plaintext by accident: if you did, rewriting history is not enough on its own,
   see how [fleet-compose rotates TLS/ACME keys](https://github.com/lbesnard/fleet-compose/blob/master/docs/rotate-tls-and-acme.md).
 * The key is a random file, not a passphrase, so brute-forcing the public ciphertext is not realistic.
-* Nextcloud and Joplin keep their state in real `~/.config` folders; only their config files are linked from here.
+* When the secrets hook says `CONFLICT … has local edits not yet encrypted; kept it`: your local
+  file is safe. Run `./secrets encrypt && git add -A && git commit` to push your version, or
+  `./secrets decrypt --force` to overwrite with the repo's version.
 
 ## How the zsh config is organised
 
@@ -176,7 +212,12 @@ It never overwrites a local edit that was not encrypted yet: you get a `CONFLICT
 | `zsh/zshrc.laptop`, `.server`, `.homeserver` | Per-machine additions |
 | `zsh/zshrc.termux` | Standalone Termux config |
 | `zsh/functions/`, `zsh/completions/` | Autoloaded functions and completions |
-| `alias`, `alias_forgit` | Aliases and helper functions (loaded last so they override plugin aliases) |
+| `alias` | Core aliases and helpers (loaded last so they override plugin aliases); sources the domain files below |
+| `alias_forgit` | [forgit](https://github.com/wfxr/forgit) aliases, kept separate to avoid conflicts with `grc` |
+| `alias_sync` | Server sync: `funk_rsync` / `funk_rclone`, NFS mounts, SSH tunnels, crowdsec |
+| `alias_taskwarrior` | All taskwarrior interactive functions (`td`, `ttl`, `tlog`, `tpurge`, …) |
+| `alias_gaming` | Emulation helpers: vita, `v64toz64`, `zip2chd` |
+| `alias_netcdf` | NetCDF / compliance checker helpers (`ncbrowse`, `ncdumph`, `cc_cf`, …) |
 | `config/starship.toml` | Prompt config |
 
 Profile startup with `ZSH_PROFILE=1 zsh -i -c exit` (prints a zprof report), or
@@ -192,11 +233,13 @@ zb bundle dump -f Brewfile --force     # keep Brewfile in sync
 ## Layout
 
 ```
-install, install.conf.yaml   dotbot entrypoint and link map
-initsys.sh, Brewfile         bootstrap for fresh machines
-termux-install.sh            bootstrap for Termux (Android)
-zsh/ tmux/ nvim/ config/     tool configs (config/* is linked into ~/.config)
-bin/                         scripts, put on $PATH as ~/bin
-secrets, secrets.list        age-encrypted secrets: tool, list of files (+ *.age, recipients.txt)
-install.private.conf.yaml    links for decrypted secrets (only used when the age key is present)
+install, install.conf.yaml      dotbot entrypoint and link map
+initsys.sh, Brewfile            bootstrap for fresh machines
+termux-install.sh               bootstrap for Termux (Android)
+zsh/ tmux/ nvim/ config/        tool configs (config/* is linked into ~/.config)
+bin/                            scripts, put on $PATH as ~/bin
+  link-hostname-configs         symlinks machine-specific app configs (Nextcloud, Joplin, …)
+alias, alias_*                  shell aliases split by domain (sync, taskwarrior, gaming, netcdf)
+secrets, secrets.list           age-encrypted secrets: tool, list of files (+ *.age, recipients.txt)
+install.private.conf.yaml       links for decrypted secrets (only used when the age key is present)
 ```
