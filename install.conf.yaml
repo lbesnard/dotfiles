@@ -97,3 +97,7 @@
     ~/Mobac/mapsources: { path: mobac/mapsources, create: true, force: true }
 - shell:
     - [chmod -R 0755 ~/.zsh_alias, Making SSH-folder read-only]
+    - [
+        "mkdir -p ~/.config/Nextcloud && ln -sfn ~/.dotfiles/config/Nextcloud/nextcloud.$(hostname -s).cfg ~/.config/Nextcloud/nextcloud.cfg",
+        Link hostname-specific Nextcloud config,
+      ]

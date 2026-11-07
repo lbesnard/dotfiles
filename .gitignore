@@ -46,7 +46,7 @@ efunk/docker-compose/data/
 /config/beets/discogs_token.json
 /config/redlist/spotify_token.json
 /config/passhole.ini
-/config/Nextcloud/nextcloud.cfg
+/config/Nextcloud/nextcloud*.cfg
 /config/joplin-desktop/settings.json
 /funk_rsync_config
 /pgadmin/pgpass
