@@ -1,0 +1,507 @@
+##############################
+## BFUNK server sync / mounts
+##############################
+
+alias nextcloud_force_rescan='docker exec nextcloud sudo -u abc php /config/www/nextcloud/occ files:scan --all'
+alias bfunk_nextcloud_preview_generation='docker exec -it $(docker ps -qf "name=nextcloud") occ preview:generate-all --path=lbesnard/files/Photos -vvv'
+alias efunk_nextcloud_preview_generation='docker exec -it $(docker ps -qf "name=nextcloud") occ preview:generate-all  -vvv'
+
+# ---------------------------------------------------------------------------
+# funk_rsync / funk_rclone helpers
+# ---------------------------------------------------------------------------
+
+_funk_state_dir() {
+    local dir="$HOME/.local/share/funk_rsync"
+    mkdir -p "$dir"
+    echo "$dir"
+}
+
+_funk_state_file() {
+    local task_name="$1"
+    local safe_name="${task_name//[:\/]/_}"
+    safe_name="${safe_name// /_}"
+    echo "$(_funk_state_dir)/$safe_name"
+}
+
+_funk_mounts_cache=""
+
+_funk_dest_is_available() {
+    local dest="${1%/}"
+
+    [[ -z "$dest" || "$dest" == "TO_BE_FILLED_MANUALLY" ]] && return 1
+
+    # Populate cache once per shell session
+    if [[ -z "$_funk_mounts_cache" ]]; then
+        _funk_mounts_cache=$(awk '{print $2}' /proc/mounts 2>/dev/null | tr '\n' ':')
+    fi
+
+    local -a candidates=("$dest")
+    [[ "$dest" == /media/* ]] && candidates+=("/run$dest")
+
+    local candidate path stop_at
+    for candidate in "${candidates[@]}"; do
+        stop_at="/"
+        [[ "$candidate" == /run/media/* ]] && stop_at="/run/media"
+
+        path="$candidate"
+        while [[ "$path" != "$stop_at" && "$path" != "/" ]]; do
+            if [[ ":${_funk_mounts_cache}:" == *":${path}:"* ]]; then
+                return 0
+            fi
+            path="${path:h}"
+        done
+    done
+
+    case "$dest" in
+        /media/*|/mnt/*|/run/media/*) return 1 ;;
+        *) return 0 ;;
+    esac
+}
+
+_funk_last_sync_info() {
+    local task_name="$1"
+    local state_file
+    state_file=$(_funk_state_file "$task_name")
+    if [[ -f "$state_file" ]]; then
+        local ts
+        ts=$(cat "$state_file")
+        echo "last: ${ts:0:16}"
+    else
+        echo "never synced"
+    fi
+}
+
+_funk_record_sync() {
+    local task_name="$1"
+    local state_file
+    state_file=$(_funk_state_file "$task_name")
+    date -Iseconds > "$state_file"
+}
+
+# ---------------------------------------------------------------------------
+# Common rsync exclude list (shared by funk_rsync and funk_rsync_cron)
+# ---------------------------------------------------------------------------
+_funk_rsync_excludes=(
+    --exclude ".*lrprev"
+    --exclude jellyfin/
+    --exclude "uploaded_piwigo"
+    --exclude "piwigo"
+    --exclude='*.tmp'
+    --exclude="*.jpg_original*"
+    --exclude="docker_photoprism"
+    --exclude="photoprism"
+    --exclude="komga/logs/.*"
+    --exclude="komga/lucene/.*"
+    --exclude="komga/artemis/.*"
+    --exclude='.bazarr.log.*'
+    --exclude='lidarr/logs/*'
+    --exclude='radarr/logs/*'
+    --exclude='radarr_fr/logs/.*'
+    --exclude='MediaCover/*'
+    --exclude='Navidrome/cache/.*'
+    --exclude="*.log"
+    --exclude="*.log\..*\.gz"
+    --exclude="*.page"
+    --exclude="*.amq"
+    --exclude=.deleted
+)
+
+function funk_rsync() {
+    local server_ip="$1"; shift
+    local folder_to_bckp="$1"; shift
+    local src="/data/$folder_to_bckp"
+    local dest="$1/$folder_to_bckp"; shift
+
+    mkdir -p "$dest"
+    [ -d "$dest" ] && rsync -auvh -P --delete-after --delete-excluded \
+        -e "ssh -i ~/.ssh/id_rsa -p 9000 -l root" \
+        "$server_ip:$src/" "$dest/" \
+        --stats --progress \
+        "${_funk_rsync_excludes[@]}" \
+        "$@" || echo "$dest does not exist"
+}
+
+_ensure_ssh_key_loaded() {
+    export SSH_AUTH_SOCK="$HOME/.ssh/ssh-agent.sock"
+
+    ssh-add -l &> /dev/null
+    local ssh_exit_code=$?
+
+    if [ $ssh_exit_code -eq 2 ] || [[ ! -S "$SSH_AUTH_SOCK" ]]; then
+        echo "SSH agent unreachable or socket dead. Restarting..."
+        rm -f "$SSH_AUTH_SOCK"
+        eval "$(ssh-agent -s -a "$SSH_AUTH_SOCK")" > /dev/null
+    fi
+
+    if ! ssh-add -l &> /dev/null; then
+        echo "No SSH keys loaded. Running ssh-add..."
+        ssh-add -t 10h
+    fi
+}
+
+function funk_rclone() {
+    _ensure_ssh_key_loaded
+    local server_ip="$1"; shift
+    local folder_to_bckp="$1"; shift
+    local dest_root="$1"; shift
+    local src="/data/$folder_to_bckp"
+    local dest="$dest_root/$folder_to_bckp"
+
+    mkdir -p "$dest"
+
+    local rclone_conf="$HOME/.config/rclone/rclone.conf"
+    local rclone_src
+
+    if [[ -f "$rclone_conf" ]]; then
+        rclone_src="funk_sftp,host=$server_ip:$src"
+    else
+        rclone_src=":sftp,host=$server_ip,port=9000,user=root,use_agent_auth=true,skip_hostkey_check=true:$src"
+    fi
+
+    if [ -d "$dest" ]; then
+        rclone sync "$rclone_src" "$dest" \
+            --progress \
+            --sftp-ciphers aes128-gcm@openssh.com \
+            --sftp-idle-timeout 0 \
+            --transfers 4 \
+            --checkers 16 \
+            --buffer-size 16M \
+            --retries 10 \
+            --retries-sleep 30s \
+            --low-level-retries 20 \
+            --delete-after \
+            --track-renames \
+            --exclude ".*lrprev" \
+            --exclude "jellyfin/**" \
+            --exclude "uploaded_piwigo/**" \
+            --exclude "piwigo/**" \
+            --exclude "*.tmp" \
+            --exclude "*.jpg_original*" \
+            --exclude "docker_photoprism/**" \
+            --exclude "photoprism/**" \
+            --exclude "komga/logs/**" \
+            --exclude "komga/lucene/**" \
+            --exclude "komga/artemis/**" \
+            --exclude ".bazarr.log.*" \
+            --exclude "lidarr/logs/**" \
+            --exclude "radarr/logs/**" \
+            --exclude "radarr_fr/logs/**" \
+            --exclude "MediaCover/**" \
+            --exclude "Navidrome/cache/**" \
+            --exclude "*.log" \
+            --exclude "*.log.*.gz" \
+            --exclude "*.page" \
+            --exclude "*.amq" \
+            --exclude ".deleted" \
+            "$@"
+    else
+        echo "Error: $dest could not be created."
+    fi
+}
+
+function funk_rsync_config() {
+    if ! command -v jq &>/dev/null; then
+        echo "Error: 'jq' is not installed. Please install it and try again."
+        return 1
+    fi
+    if ! command -v fzf &>/dev/null; then
+        echo "Error: 'fzf' is not installed. Please install it and try again."
+        return 1
+    fi
+
+    local config_file="$HOME/.funk_rsync_config.json"
+    if [[ ! -f "$config_file" ]]; then
+        echo "Error: Configuration file '$config_file' not found."
+        return 1
+    fi
+
+    local fzf_lines=() dest sync_info
+    while IFS= read -r task_name; do
+        dest=$(jq -r --arg t "$task_name" '.tasks[] | select(.name == $t) | .destination' "$config_file")
+        _funk_dest_is_available "$dest" || continue
+        sync_info=$(_funk_last_sync_info "$task_name")
+        fzf_lines+=("${task_name}  │  ${sync_info}")
+    done < <(jq -r '.tasks[].name' "$config_file")
+
+    if [[ ${#fzf_lines[@]} -eq 0 ]]; then
+        echo "No tasks with available destinations found."
+        return 1
+    fi
+
+    local selected_line
+    selected_line=$(printf '%s\n' "${fzf_lines[@]}" | fzf --prompt="Select a task: " --height=15 --border --ansi)
+    [[ -z "$selected_line" ]] && { echo "No task selected. Exiting."; return 1; }
+
+    local selected_task
+    selected_task=$(echo "$selected_line" | awk -F'  │  ' '{print $1}')
+
+    local server_ip folder_to_bckp dest
+    server_ip=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .server)' "$config_file")
+    folder_to_bckp=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .source)' "$config_file")
+    dest=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .destination)' "$config_file")
+
+    local extra_rsync_options=()
+    while IFS= read -r line; do
+        extra_rsync_options+=("$line")
+    done < <(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task)) | .rsync_options[]' "$config_file")
+
+    funk_rsync "$server_ip" "$folder_to_bckp" "$dest" "${extra_rsync_options[@]}" "$@"
+    local exit_code=$?
+    [[ $exit_code -eq 0 ]] && _funk_record_sync "$selected_task"
+    return $exit_code
+}
+
+function funk_rclone_config() {
+    _ensure_ssh_key_loaded
+    if ! command -v jq &>/dev/null || ! command -v fzf &>/dev/null; then
+        echo "Error: 'jq' and 'fzf' are required."
+        return 1
+    fi
+
+    local config_file="$HOME/.funk_rsync_config.json"
+    if [[ ! -f "$config_file" ]]; then
+        echo "Error: Configuration file '$config_file' not found."
+        return 1
+    fi
+
+    local fzf_lines=() dest sync_info
+    while IFS= read -r task_name; do
+        dest=$(jq -r --arg t "$task_name" '.tasks[] | select(.name == $t) | .destination' "$config_file")
+        _funk_dest_is_available "$dest" || continue
+        sync_info=$(_funk_last_sync_info "$task_name")
+        fzf_lines+=("${task_name}  │  ${sync_info}")
+    done < <(jq -r '.tasks[].name' "$config_file")
+
+    if [[ ${#fzf_lines[@]} -eq 0 ]]; then
+        echo "No tasks with available destinations found."
+        return 1
+    fi
+
+    local selected_line
+    selected_line=$(printf '%s\n' "${fzf_lines[@]}" | fzf --prompt="Select a task: " --height=15 --border)
+    [[ -z "$selected_line" ]] && return 1
+
+    local selected_task
+    selected_task=$(echo "$selected_line" | awk -F'  │  ' '{print $1}')
+
+    local server_ip folder_to_bckp dest
+    server_ip=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .server)' "$config_file")
+    folder_to_bckp=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .source)' "$config_file")
+    dest=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .destination)' "$config_file")
+
+    local extra_options=()
+    while IFS= read -r line; do
+        extra_options+=("$line")
+    done < <(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task)) | .rclone_options[]' "$config_file")
+
+    print -P "%F{green}❯ $selected_task%f"
+    funk_rclone "$server_ip" "$folder_to_bckp" "$dest" "${extra_options[@]}" "$@"
+    local exit_code=$?
+    [[ $exit_code -eq 0 ]] && _funk_record_sync "$selected_task"
+    return $exit_code
+}
+
+function funk_rsync_cron() {
+    local out_machine="$1"
+    local config_file="$HOME/.funk_rsync_config.json"
+
+    if [[ -z "$out_machine" ]]; then
+        echo "Usage: funk_rsync_cron <out_machine_name>"
+        return 1
+    fi
+    if ! command -v jq &>/dev/null; then
+        echo "Error: 'jq' is not installed."
+        return 1
+    fi
+    if [[ ! -f "$config_file" ]]; then
+        echo "Error: Configuration file '$config_file' not found."
+        return 1
+    fi
+
+    jq -c --arg out_machine "$out_machine" \
+        '.tasks[] | select(.name | test("OUT:" + $out_machine + "$"))' "$config_file" | \
+    while read -r task_json; do
+        local name
+        name=$(jq -r '.name' <<< "$task_json")
+
+        local disable
+        disable=$(jq -r '.disable_auto_rsync // false' <<< "$task_json")
+        if [[ "$disable" == "true" ]]; then
+            echo "[$name] Skipping (disable_auto_rsync is true)"
+            continue
+        fi
+
+        local server_ip folder_to_bckp dest src target
+        server_ip=$(jq -r '.server' <<< "$task_json")
+        folder_to_bckp=$(jq -r '.source' <<< "$task_json")
+        dest=$(jq -r '.destination' <<< "$task_json")
+        src="/data/$folder_to_bckp"
+        target="$dest/$folder_to_bckp"
+
+        mkdir -p "$target"
+
+        local extra_rsync_options=()
+        while IFS= read -r line; do
+            extra_rsync_options+=("$line")
+        done < <(jq -r '.rsync_options[]?' <<< "$task_json")
+
+        local rsync_base=(
+            rsync -auvh -P --delete-after --delete-excluded
+            -e "ssh -i ~/.ssh/id_rsa -p 9000 -l root"
+            "${extra_rsync_options[@]}"
+            --stats --progress
+            "${_funk_rsync_excludes[@]}"
+        )
+
+        echo "[$name] Running dry-run..."
+        if "${rsync_base[@]}" --dry-run "$server_ip:$src/" "$target/"; then
+            echo "[$name] Dry-run succeeded. Starting sync..."
+            if "${rsync_base[@]}" --bwlimit 1500 "$server_ip:$src/" "$target/"; then
+                _funk_record_sync "$name"
+            fi
+        else
+            echo "[$name] Dry-run failed. Skipping task."
+        fi
+    done
+}
+
+# crowdsec
+alias cscli="docker exec -t crowdsec cscli"
+alias cscli_decisions_list="cscli decisions list"
+alias cscli_alerts_list="cscli alerts list"
+alias cscli_metrics="cscli metrics"
+alias cscli_bouncer_list="cscli bouncers list"
+
+# NFS picture mounts
+mount_beefunk_pics() {
+    mkdir -p "$HOME/beefunk_pictures"
+    local ip
+    ip=$(getent hosts beefunk.lan | awk '{print $1}')
+    sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr="$ip" "$ip":/media/lbesnard/beefunk_12tb_c/pictures "$HOME/beefunk_pictures"
+}
+
+mount_efunknuc_pics() {
+    mkdir -p "$HOME/beefunk_pictures"
+    local ip
+    ip=$(getent hosts efunknuc.lan | awk '{print $1}')
+    sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr=efunknuc.lan efunknuc.lan:/media/beefunk_12tb_1/pictures "$HOME/beefunk_pictures"
+}
+
+mount_best_pics() {
+    mkdir -p "$HOME/beefunk_pictures"
+
+    local host1="beefunk.lan"
+    local ip1
+    ip1=$(getent hosts "$host1" | awk '{print $1}')
+    local path1="$ip1:/media/lbesnard/beefunk_12tb_c/pictures"
+
+    local host2="efunknuc.lan"
+    local ip2
+    ip2=$(getent hosts "$host2" | awk '{print $1}')
+    local path2="$ip2:/media/beefunk_12tb_1/pictures"
+
+    local rtt1 rtt2
+    rtt1=$(ping -c 1 -W 1 "$host1" 2>/dev/null | awk -F'/' 'END {print $5}')
+    rtt1=${rtt1:-9999}
+    rtt2=$(ping -c 1 -W 1 "$host2" 2>/dev/null | awk -F'/' 'END {print $5}')
+    rtt2=${rtt2:-9999}
+
+    local target_host target_path
+    local faster
+    faster=$(awk -v r1="$rtt1" -v r2="$rtt2" 'BEGIN {if (r1+0 < r2+0) print "1"; else print "2"}')
+
+    if [[ "$faster" == "1" ]]; then
+        target_host="$host1"
+        target_path="$path1"
+    else
+        target_host="$host2"
+        target_path="$path2"
+    fi
+
+    local ip
+    ip=$(getent hosts "$target_host" | awk '{print $1}')
+    echo "Connecting to the fastest server: $target_host ($ip)..."
+    sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,soft,timeo=30,retrans=2,addr="$ip" "$target_path" "$HOME/beefunk_pictures"
+}
+
+alias sync_export_pics_beefunk_2_efunk_immich='rsync -av --progress --delete-after /media/lbesnard/beefunk_12tb_c/pictures/Export/ evryfunk:/media/efunk_4tb_1/pictures_laurent_export/'
+
+dask_tunnel() {
+    local ssh_host dask_url local_port target_host token full_url rc ssh_pid
+
+    if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+        echo "Usage: dask_tunnel <ssh_host> <dask_url> [local_port]"
+        return 1
+    fi
+
+    ssh_host="$1"
+    dask_url="$2"
+
+    if [ -n "$3" ]; then
+        local_port="$3"
+    else
+        local_port=$(python3 - <<'PY'
+import socket
+def try_bind(af, addr, p):
+    s = socket.socket(af, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    try:
+        s.bind((addr, p))
+        s.close()
+        return True
+    except OSError:
+        return False
+for p in range(8080, 8192):
+    v4 = try_bind(socket.AF_INET, '127.0.0.1', p)
+    try:
+        v6 = try_bind(socket.AF_INET6, '::1', p)
+    except Exception:
+        v6 = True
+    if v4 and v6:
+        print(p)
+        break
+else:
+    s = socket.socket()
+    s.bind(('', 0))
+    print(s.getsockname()[1])
+    s.close()
+PY
+)
+    fi
+
+    target_host=$(printf '%s' "$dask_url" | sed -E 's#https?://([^/]+)/?.*#\1#')
+    token=$(printf '%s' "$dask_url" | sed -nE 's/.*[?&]token=([^&]+).*/\1/p')
+
+    full_url="https://localhost:${local_port}/status?token=${token}"
+    echo "Connecting to Dask cluster at: $full_url"
+
+    /usr/bin/ssh -f -o ExitOnForwardFailure=yes -L "${local_port}:${target_host}:443" "${ssh_host}" -N
+    rc=$?
+    if [ "$rc" -ne 0 ]; then
+        echo "SSH failed to set up the tunnel (exit code $rc). Port ${local_port} may already be in use."
+        return $rc
+    fi
+
+    sleep 0.2
+    if command -v ss >/dev/null 2>&1; then
+        if ! ss -ltn | grep -qE "(:|\\.)${local_port}(\s|$)"; then
+            echo "Warning: no local listener found on port ${local_port} -- tunnel may not be active."
+        fi
+    elif command -v lsof >/dev/null 2>&1; then
+        if ! lsof -iTCP:"${local_port}" -sTCP:LISTEN -P -n >/dev/null 2>&1; then
+            echo "Warning: no local listener found on port ${local_port} -- tunnel may not be active."
+        fi
+    fi
+
+    ssh_pid=$(pgrep -f "/usr/bin/ssh -L ${local_port}:${target_host}:443 ${ssh_host}" | head -n1)
+    echo "Please open: $full_url"
+    echo "SSH tunnel established (pid: ${ssh_pid:-unknown})"
+}
+
+jupyter_tunnel() {
+    # Kill any existing tunnel on port 8080
+    lsof -ti:8080 | xargs kill -9 2>/dev/null
+
+    /usr/bin/ssh -f -N -L 8080:localhost:8888 laptop-work
+    echo "Jupyter tunnel established on http://localhost:8080"
+}

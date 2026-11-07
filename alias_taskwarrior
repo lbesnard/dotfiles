@@ -1,0 +1,168 @@
+##########################
+# Taskwarrior
+##########################
+alias t='task'
+alias tt='task due:today list'
+alias twt='task add pro:Work due:tomorrow'
+alias tpt='task add pro:Personal due:tomorrow'
+alias twb='task add pro:Work'
+alias tpb='task add pro:Personal'
+alias tw='task add pro:Work due:today'
+alias tp='task add pro:Personal due:today'
+alias tnext='task due.before:today+2d list'
+alias thist='task status:completed end.after:today-1wk list'
+alias twork='task project:Work list'
+alias tpers='task project:Personal list'
+alias tui=task-tui
+alias twait='task $(task status:pending export | jq -r ".[] | \"\(.id) \(.description)\"" | fzf --reverse --header "Wait until when?") modify wait:tomorrow'
+
+# Interactive "Task Done" with fzf picker
+td() {
+    local task_id
+    task_id=$(task status:pending export | jq -r '.[] | "\(.id) [\(.project // "no project")] \(.description)"' | \
+        fzf --height 40% --reverse --header "Select task to complete" --preview 'task {1} info' | awk '{print $1}')
+
+    if [[ -n "$task_id" ]]; then
+        task "$task_id" done
+    fi
+}
+
+# Move tasks to today
+t2t() {
+    local task_ids
+    task_ids=$(task status:pending due.not:today export | jq -r '.[] | "\(.id) [\(.project // "no project")] \(.description)"' | \
+        fzf --multi \
+            --reverse \
+            --header "TAB to select multiple / ENTER to set to Today" \
+            --preview 'task {1} info' \
+            --height 40% | awk '{print $1}')
+
+    if [[ -n "$task_ids" ]]; then
+        echo "$task_ids" | while read -r id; do
+            task "$id" modify due:today
+        done
+        echo "Selected tasks moved to Today."
+        task today
+    else
+        echo "No tasks selected (or all pending tasks are already due today)."
+    fi
+}
+
+# Remove due date from today's tasks (back to backlog)
+tnot() {
+    local selected ids id_list
+    selected=$(task due:today status:pending export | \
+        jq -r '.[] | "\(.id) [\(.project // "none")] \(.description)"' | \
+        fzf -m --reverse --header "Remove from Today (Clear Due Date)" --height 40%)
+
+    ids=$(echo "$selected" | awk '{print $1}')
+
+    if [[ -n "$ids" ]]; then
+        id_list=$(echo "$ids" | tr '\n' ' ')
+        task $id_list modify due:
+        echo "\e[38;5;208mTasks moved back to backlog.\e[0m"
+    fi
+}
+
+# Delete tasks permanently
+tpurge() {
+    local gen_list='task status:pending export | jq -r ".[] | \"\(.uuid) [\(.project // \"none\")] \(.description) \(if .annotations then \" | NOTES: \" + ([.annotations[] | .description] | join(\" | \")) else \"\" end)\""'
+
+    local selected
+    selected=$(eval $gen_list | fzf --multi --ansi --reverse \
+        --header "TRASH CAN: TAB to select multiple | ENTER to Delete" \
+        --with-nth=2.. \
+        --preview 'task {1} info' \
+        --height 70%)
+
+    if [[ -n "$selected" ]]; then
+        local uuids
+        uuids=$(echo "$selected" | awk '{print $1}' | tr '\n' ' ')
+        task $uuids delete rc.confirmation=no
+        task purge rc.confirmation=no
+        echo "Selected tasks have been permanently deleted."
+    else
+        echo "Nothing deleted."
+    fi
+}
+
+# Set a time for today on a task
+ttime() {
+    local task_id task_time
+    task_id=$(task status:pending export | jq -r '.[] | "\(.id) [\(.project)] \(.description)"' | fzf --reverse --header "Set time for today (HH:MM)")
+    if [[ -n "$task_id" ]]; then
+        echo -n "Enter time (e.g., 14:00): "
+        read task_time
+        task ${task_id%% *} modify due:todayT$task_time
+    fi
+}
+
+# Add annotation/note to a task
+tann() {
+    local task_id note
+    task_id=$(task status:pending export | jq -r '.[] | "\(.id) \(.description)"' | fzf --reverse --header "Add note/annotation")
+    if [[ -n "$task_id" ]]; then
+        echo -n "Annotation: "
+        read note
+        task ${task_id%% *} annotate "$note"
+    fi
+}
+
+# Interactive edit
+te() {
+    local task_id
+    task_id=$(task status:pending export | jq -r '.[] | "\(.id) [\(.project // "no project")] \(.description)"' | \
+        fzf --reverse --header "Select task to EDIT" --preview 'task {1} info' | awk '{print $1}')
+
+    if [[ -n "$task_id" ]]; then
+        task "$task_id" edit
+    fi
+}
+
+# Mark today's tasks done
+ttd() {
+    local ids id_list
+    ids=$(task due:today status:pending export | \
+        jq -r '.[] | "\(.id) \(.description)"' | \
+        fzf -m --header "Select tasks to complete (Tab to multi-select)" --height 40% | \
+        awk '{print $1}')
+
+    if [[ -n "$ids" ]]; then
+        id_list=$(echo "$ids" | tr '\n' ' ')
+        task $id_list done
+    fi
+}
+
+# Today interactive browser with keybindings
+ttl() {
+    local gen_list='task due:today status:pending export | jq -r ".[] | \"\(.id) [\(.project // \"none\")] \(.description)\""'
+
+    eval $gen_list | fzf \
+        --reverse --multi \
+        --height 80% \
+        --header "TAB: Select | ENTER: Info | CTRL-D: Done | CTRL-P: Postpone | CTRL-E: Edit" \
+        --preview 'task {1} info' \
+        --preview-window=right:65%:wrap \
+        --bind "ctrl-d:execute(task {1} done)+reload($gen_list)" \
+        --bind "ctrl-p:execute(task {1} modify due:tomorrow)+reload($gen_list)" \
+        --bind "ctrl-e:execute(task {1} edit)+reload($gen_list)" \
+        --bind "enter:execute(task {1} info | less -R)"
+}
+
+# Work log for the last 4 days
+tlog() {
+    echo -e "\n## Today ($(date +%Y-%m-%d))"
+    task project:Work modified.after:today all rc.verbose=nothing rc.report.all.columns=description rc.report.all.labels= | perl -pe 's/^([^\s\-])/* $1/'
+
+    echo -e "\n## Yesterday ($(date -d "yesterday" +%Y-%m-%d))"
+    task project:Work modified.after:today-1d modified.before:today all rc.verbose=nothing rc.report.all.columns=description rc.report.all.labels= | perl -pe 's/^([^\s\-])/* $1/'
+
+    echo -e "\n## $(date -d "2 days ago" +%A) ($(date -d "2 days ago" +%Y-%m-%d))"
+    task project:Work modified.after:today-2d modified.before:today-1d all rc.verbose=nothing rc.report.all.columns=description rc.report.all.labels= | perl -pe 's/^([^\s\-])/* $1/'
+
+    echo -e "\n## $(date -d "3 days ago" +%A) ($(date -d "3 days ago" +%Y-%m-%d))"
+    task project:Work modified.after:today-3d modified.before:today-2d all rc.verbose=nothing rc.report.all.columns=description rc.report.all.labels= | perl -pe 's/^([^\s\-])/* $1/'
+
+    echo -e "\n## $(date -d "4 days ago" +%A) ($(date -d "4 days ago" +%Y-%m-%d))"
+    task project:Work modified.after:today-4d modified.before:today-3d all rc.verbose=nothing rc.report.all.columns=description rc.report.all.labels= | perl -pe 's/^([^\s\-])/* $1/'
+}

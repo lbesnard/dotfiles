@@ -1,0 +1,142 @@
+##########################
+# Gaming
+##########################
+alias vita_dock="mplayer tv:// -tv driver=v4l2:device=/dev/video2:width=960:height=544"
+
+vita_update_all_games() {
+    local vita_path=/export/games/emulation/Playstation/PSVITA
+    for id in $(fd -e zip -t f . --full-path "$vita_path" | grep -o -E "P[A-Z]{3}[0-9]{5}" | sort -u); do
+        echo "updating $(basename "$(fd -e zip -t f "$id" --full-path "$vita_path" --max-depth 1)")"
+        "$HOME/nopaystation_scripts/nps_update.sh" "$id"
+    done
+}
+
+# Nintendo 64 V64 to Z64 converter (byte-swap); passes filename via argv to avoid shell injection
+v64toz64() {
+    if [[ -z "$1" ]]; then
+        echo "Usage: v64toz64 input.v64"
+        return 1
+    fi
+    local input="$1"
+    local out="${input%.v64}.z64"
+    python3 - "$input" "$out" <<'PY'
+import sys
+with open(sys.argv[1], 'rb') as f_in, open(sys.argv[2], 'wb') as f_out:
+    while chunk := f_in.read(2):
+        f_out.write(bytes([chunk[1], chunk[0]]) if len(chunk) == 2 else chunk)
+PY
+    [[ $? -eq 0 ]] && echo "Converted successfully to $out"
+}
+
+zip2chd() {
+    local delete_input=0
+    local outdir=""
+    local input=""
+    local disc=""
+    local outfile=""
+    local outfile_name=""
+    local tmpdir=""
+    local chd_type=""
+
+    while getopts "do:" opt; do
+        case "$opt" in
+            d)
+                delete_input=1
+                ;;
+            o)
+                outdir="$OPTARG"
+                ;;
+            *)
+                echo "Usage: zip2chd [-d] [-o output_dir] <zip|cue|gdi|ccd|iso>"
+                return 1
+                ;;
+        esac
+    done
+    shift $((OPTIND - 1))
+
+    if [[ $# -ne 1 ]]; then
+        echo "Usage: zip2chd [-d] [-o output_dir] <zip|cue|gdi|ccd|iso>"
+        return 1
+    fi
+
+    input="$1"
+
+    case "$input" in
+        *.zip|*.ZIP)
+            tmpdir=$(mktemp -d) || return 1
+
+            echo "Extracting: $input"
+
+            unzip -qq "$input" -d "$tmpdir" || {
+                echo "Failed to extract $input"
+                rm -rf "$tmpdir"
+                return 1
+            }
+
+            # Prefer descriptor files (GDI/CUE/CCD reference other files)
+            disc=$(find "$tmpdir" -type f \( \
+                -iname "*.gdi" -o \
+                -iname "*.cue" -o \
+                -iname "*.ccd" -o \
+                -iname "*.iso" \
+            \) -print | head -n1)
+
+            if [[ -z "$disc" ]]; then
+                echo "No supported disc image found in: $input"
+                rm -rf "$tmpdir"
+                return 1
+            fi
+
+            case "$disc" in
+                *.iso|*.ISO) chd_type="createdvd" ;;
+                *)           chd_type="createcd"  ;;
+            esac
+
+            outfile_name="${input:t:r}.chd"
+            ;;
+        *.gdi|*.GDI|*.cue|*.CUE|*.ccd|*.CCD)
+            disc="$input"
+            chd_type="createcd"
+            outfile_name="${input:t:r}.chd"
+            ;;
+        *.iso|*.ISO)
+            disc="$input"
+            chd_type="createdvd"
+            outfile_name="${input:t:r}.chd"
+            ;;
+        *)
+            echo "Unsupported input: $input"
+            echo "Supported: zip, gdi, cue, ccd, iso"
+            return 1
+            ;;
+    esac
+
+    if [[ -n "$outdir" ]]; then
+        mkdir -p "$outdir" || {
+            rm -rf "$tmpdir"
+            return 1
+        }
+        outfile="$outdir/$outfile_name"
+    else
+        outfile="${input:h}/$outfile_name"
+    fi
+
+    echo "Input : $disc"
+    echo "Output: $outfile"
+    echo "Type  : $chd_type"
+
+    if ! chdman "$chd_type" -i "$disc" -o "$outfile"; then
+        echo "chdman failed"
+        rm -f "$outfile"
+        rm -rf "$tmpdir"
+        return 1
+    fi
+
+    # Only delete a directly supplied image file, never the ZIP
+    if (( delete_input )) && [[ -z "$tmpdir" ]]; then
+        rm -f "$input"
+    fi
+
+    rm -rf "$tmpdir"
+    echo "Done: $outfile"
+}

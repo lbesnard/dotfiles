@@ -54,7 +54,7 @@ alias ansible_provision_latop='ansible-playbook -i hosts $ANSIBLE_PATH/local.yml
 alias ansible_provision_remote='ansible-playbook -i hosts $ANSIBLE_PATH/remote.yml'
 
 ##########################
-# IMOS related - pipeline 
+# IMOS related - pipeline
 ##########################
 alias project_officer_user='sudo -u projectofficer -s'
 
@@ -76,38 +76,19 @@ source $HOME/.zsh_functions/comics.zsh
 
 
 function aws_select_profile() {
-    # Define local variables
-    local profiles
-    local selected_profile
-
-    # Read the content of the ~/.aws/config file and extract profile names
+    local profiles selected_profile
     profiles=$(awk '$1=="[profile" {print substr($2, 1, length($2)-1)}' ~/.aws/config)
-
-    # Use fzf to select a profile
     selected_profile=$(echo "$profiles" | fzf)
-
-    # Export AWS_PROFILE with the selected profile
     export AWS_PROFILE="$selected_profile"
-
-    # Optionally, you can print the selected profile for confirmation
     echo "Selected AWS profile: $selected_profile"
 }
+
 function aws_select_profile_login() {
-    # Define local variables
-    local profiles
-    local selected_profile
-
-    # Read the content of the ~/.aws/config file and extract profile names
+    local profiles selected_profile
     profiles=$(awk '$1=="[profile" {print substr($2, 1, length($2)-1)}' ~/.aws/config)
-
-    # Use fzf to select a profile
     selected_profile=$(echo "$profiles" | fzf)
-
-    # Export AWS_PROFILE with the selected profile
     export AWS_PROFILE="$selected_profile"
-    aws sso login --profile $AWS_PROFILE --no-browser --use-device-code
-
-    # Optionally, you can print the selected profile for confirmation
+    aws sso login --profile "$AWS_PROFILE" --no-browser --use-device-code
     echo "Selected AWS profile: $selected_profile"
 }
 
@@ -125,9 +106,9 @@ function ssh-agent-fix() {
     if [[ -n "$SSH_AUTH_SOCK" ]]; then
         tmux set-environment -g SSH_AUTH_SOCK "$SSH_AUTH_SOCK" 2>/dev/null
         export SSH_AUTH_SOCK=$(tmux show-environment -s SSH_AUTH_SOCK 2>/dev/null | sed 's/^SSH_AUTH_SOCK=//')
-        echo "SSH_AUTH_SOCK refreshed for tmux ✅"
+        echo "SSH_AUTH_SOCK refreshed for tmux"
     else
-        echo "No SSH agent found ❌"
+        echo "No SSH agent found"
     fi
 }
 
@@ -148,11 +129,6 @@ if command -v gh > /dev/null; then
     done
 fi
 
-# load beets music tagging completions
-#if command -v beet > /dev/null; then
-#    eval "$(beet completion)"
-#fi
-#
 # forgit aliases https://github.com/wfxr/forgit written manually not to conflict
 # with grc tool
 alias ga=forgit::add
@@ -169,7 +145,6 @@ alias g='git'
 #########################
 ## conda
 #########################
-# create autocompletion fzf for conda envs
 function conda_activate () {
   conda activate "$(conda info --envs | grep envs | fzf | awk '{print $1}')"
 }
@@ -186,13 +161,10 @@ function conda_destroy () {
 alias conda_remove=conda_destroy
 alias mamba_destroy=conda_destroy
 
-# Interactive Poetry Activation (Zsh 2.0)
 function poetry_activate() {
-  # 1. Try to find a local .venv first (fastest)
   if [[ -f ".venv/bin/activate" ]]; then
     source .venv/bin/activate
     echo "Activated local .venv"
-  # 2. Fallback to asking poetry where the env is hidden
   else
     local env_path
     env_path=$(poetry env info --path 2>/dev/null)
@@ -205,16 +177,13 @@ function poetry_activate() {
   fi
 }
 alias pa=poetry_activate
-#
-# Interactive Poetry Environment Removal (Zsh Optimized)
+
 function poetry_destroy() {
   local envs
-  # Get all envs, allow multi-select with Tab
   envs=$(poetry env list | fzf --multi --height 40% --reverse --prompt="Select Env(s) to Destroy (Tab to mark) > " | awk '{print $1}')
-  
+
   [[ -z "$envs" ]] && return
 
-  # Use Zsh parameter expansion (f) to iterate over lines properly
   for env in ${(f)envs}; do
     echo "Destroying: $env"
     poetry env remove "$env"
@@ -270,19 +239,8 @@ fi
 alias tmux_start="[[ ! $TERM =~ screen ]] && [ -z $TMUX ] && exec tmux -2 attach"
 alias cleanup_cache="conda clean -a"
 
-alias vita_dock="mplayer tv:// -tv driver=v4l2:device=/dev/video2:width=960:height=544"
-function vita_update_all_games() { 
-    local vita_path=/export/games/emulation/Playstation/PSVITA
-    cd $vita_path
-    for id in `fd -e zip -t f . --full-path $vita_path  | grep -o -E "P[A-Z]{3}[0-9]{5}" | uniq | sort`; do
-        echo updating  $(basename "$(fd -e zip -t f $id --full-path $vita_path --max-depth 1)")
-        $HOME/nopaystation_scripts/nps_update.sh $id
-    done
-}
-
 function csv_viewer() {
-    local input_file=$1;
-    cat $input_file | column -t -s, | less -S
+    column -t -s, "$1" | less -S
 }
 
 #https://github.com/junegunn/fzf/wiki/Examples
@@ -305,12 +263,8 @@ alias wifi_configure='nm-applet'
 
 function host_via_which_route() {
     local host=$1
-    # get the ip of that host (works with dns and /etc/hosts. In case we get  
-    # multiple IP addresses, we just want one of them
+    local host_ip
     host_ip=$(getent ahosts "$host" | awk '{print $1; exit}')
-
-    # only list the interface used to reach a specific host/IP. We only want the
-    # part between dev and src (use grep for that)
     ip route get "$host_ip" | grep -Po '(?<=(dev )).*(?= src| proto)'
 }
 
@@ -334,7 +288,7 @@ fzf_ssh() {
     fi
 }
 alias s=fzf_ssh
-#alias s='var=$(grep -e "^Host " ~/.ssh/config | sed "s#Host ##" | fzf) && ssh $var' # ssh with fzf to list known hosts from ssh/config
+
 [ -f ~/.utas_vpnc.conf ] && alias vpn_utas_connect='sudo vpnc ~/.utas_vpnc.conf --local-port 0' && alias vpn_utas_disconnect='sudo vpnc-disconnect'
 
 alias vpn_bfunk_start='sudo openvpn --cd $DOTFILES_PRIVATE_PATH/openvpn/ --writepid /run/openvpn/home.pid --config lbesnard.ovpn'
@@ -343,7 +297,7 @@ alias wg_bfunk_start='wg_bfunk_up'
 alias wg_bfunk_down='wg-quick down bfunk'
 alias wg_bfunk_stop='wg_bfunk_down'
 alias wg_bfunk_restart='wg_bfunk_down && wg_bfunk_up'
-alias wg_bfunk_route_force_start='sudo ip route del default; sudo ip route add default via 131.217.38.1 dev eth1; sudo ip route add $SERVER_LOCAL_IP via 11.13.13.4 dev bfunk; sudo ip route add 10.1.1.0/24 via 10.13.13.4 dev bfunk' # could be useful if wifi network has same network as vpn
+alias wg_bfunk_route_force_start='sudo ip route del default; sudo ip route add default via 131.217.38.1 dev eth1; sudo ip route add $SERVER_LOCAL_IP via 11.13.13.4 dev bfunk; sudo ip route add 10.1.1.0/24 via 10.13.13.4 dev bfunk'
 
 ##########################
 # vim nvim alias
@@ -382,20 +336,18 @@ alias latest_installed_pckg='cat /var/log/apt/history.log | grep "\ install\ "'
 alias killall='killall -SIGUSR1'
 alias lock_screen='gnome-screensaver-command --lock || xscreensaver-command -lock'
 
-
-# should be replaced by kp but kp has some issues on the fzf preview
 fkill() {
-    local pid 
+    local pid
     if [ "$UID" != "0" ]; then
         pid=$(ps -f -u $UID | sed 1d | fzf -m | awk '{print $2}')
     else
         pid=$(ps -ef | sed 1d | fzf -m | awk '{print $2}')
-    fi  
+    fi
 
     if [ "x$pid" != "x" ]
     then
         echo $pid | xargs kill -${1:-9}
-    fi  
+    fi
 }
 
 #########################
@@ -405,7 +357,6 @@ if command -v pgcli > /dev/null; then
     alias psql=pgcli
 fi
 
-# list hosts with fzf from pgpass file and connect to DB. 
 [ -f $HOME/.pgpass ] && export PGPASS_PATH=$HOME/.pgpass && alias psql-connect='var=$(cat $PGPASS_PATH | cut -d : -f1 | grep -v "^#" | fzf) && psql -d `cat $PGPASS_PATH  | grep $var | cut -d':' -f3 | head -1` -h $var -U `cat $PGPASS_PATH  | grep $var | cut -d':' -f4 | head -1`'
 
 ##########################
@@ -417,7 +368,7 @@ remove_space_from_filename_recur() {
 
 remove_file_extension() {
     local file="$1"; shift
-    mv $file ${file%\.[^.]*}
+    mv "$file" "${file%\.[^.]*}"
 }
 
 bulk_rename() {
@@ -431,7 +382,7 @@ bulk_rename() {
 
   fd "$find_pattern" -t f | while read -r file; do
     new_name=$(echo "$file" | sed "s/$find_pattern/$replace_pattern/")
-    
+
     if [[ "$file" != "$new_name" ]]; then
       echo "$file -> $new_name"
     fi
@@ -440,93 +391,10 @@ bulk_rename() {
   done
 }
 
-
 ##########################
 # NetCDF
 ##########################
-list_error_netcdf() {
-    readlink -f * | cut -d '/' -f6 | sed -e 's/\.nc\..*/\.nc/g'
-}
-
-ncdumph() {
-    command ncdump -h "$@" | less;
-}
-
-ncbrowse() {
-    local uuid_regexp='[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
-    filepath=$( (fd -LHI nc.$uuid_regexp ; fd -LHI -e nc) | fzf --multi=1 --preview "([[ -f {} ]] && ncdump -h {})")
-
-    if [ ! -z "$filepath" ]
-        then
-        [ -f /mnt/ebs/pipeline/bin/activate ] && . /mnt/ebs/pipeline/bin/activate || conda activate ncvue
-        ncvue "$filepath"
-        [ -f /mnt/ebs/pipeline/bin/activate ] && deactivate || conda deactivate
-    fi
-}
-alias ncvue_plot=ncbrowse
-
-
-_cc_activate_env() {
-    local conda_cc=1
-    [ -f /mnt/ebs/pyenv/versions/pipeline_prod_venv/bin/activate ] && . /mnt/ebs/pyenv/versions/pipeline_prod_venv/bin/activate && conda_cc=0
-    [ -f /mnt/ebs/pyenv/versions/pipeline_rc_venv/bin/activate ] && . /mnt/ebs/pyenv/versions/pipeline_rc_venv/bin/activate && conda_cc=0
-
-    if [ $conda_cc -eq "1" ]; then
-        conda activate python-aodndata-conda
-    fi
-}
-
-_cc_deactivate_env() {
-    local conda_cc=1
-    [ -f /mnt/ebs/pyenv/versions/pipeline_prod_venv/bin/activate ] &&  /mnt/ebs/pyenv/bin/pyenv deactivate && conda_cc=0
-    [ -f /mnt/ebs/pyenv/versions/pipeline_rc_venv/bin/activate ] &&  /mnt/ebs/pyenv/bin/pyenv deactivate && conda_cc=0
-
-    if [ $conda_cc -eq "1" ]; then
-        conda deactivate
-    fi
-}
-# compliance checker with fzf
-_cc() {
-    local test=$1;shift
-    #[ -f /mnt/ebs/pipeline/bin/activate ] && . /mnt/ebs/pipeline/bin/activate || conda activate python-aodndata-conda
-    _cc_activate_env
-    local uuid_regexp='[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
-    filepath=$( (fd -LHI nc.$uuid_regexp ; fd -LHI -e nc) | fzf --multi=1 --preview "([[ -f {} ]] && ncdump -h {})")
-
-    if [ ! -z "$filepath" ]
-        then
-            #compliance-checker $test $(fd -LHI -e nc | fzf -m --preview "([[ -f {} ]] && ncdump -h {})") 
-            compliance-checker $test $filepath
-            tmux split-window -h "ncdump -h \"$filepath\" | less"
-            #[ -f /mnt/ebs/pipeline/bin/activate ] && deactivate || conda deactivate
-            _cc_deactivate_env
-    fi
-}
-
-cc_cf() {
-    _cc -t=cf:latest
-}
-
-
-cc_cf_1.6() {
-    _cc -t=cf:1.6
-}
-
-# compliance checker running the imos1.4 check
-cc_imos_1.3() {
-    _cc -t=imos:1.3
-}
-
-# compliance checker running the imos1.4 check
-cc_imos_1.4() {
-    _cc -t=imos:1.4
-}
-
-# compliance checker running the ghrsst check
-cc_ghrsst() {
-    _cc -t=ghrsst
-}
-
+[ -f ~/.alias_netcdf ] && source ~/.alias_netcdf
 
 ###########################
 # MUSIC
@@ -544,21 +412,22 @@ function spotify_pl_ls_missing () {
     local pl_path=/media/lbesnard/bfunk_10tb_3/music/beet_library/playlists_navidrome
     local pl_val=`ls $pl_path | fzf  --multi=1`
 
+    local str=""
     cat "$pl_path/$pl_val" | while read line; do
-       if [[ $line = \#* ]] 
+       if [[ $line = \#* ]]
             then
             local albumartist=`echo "$line" | grep -o '#.*' | cut -d : -f2,4 | sort | uniq | sed "s/\"title\":/album:/g" | cut -d ',' -f1 | sed "s/\"//g" | sed "s/^ //g"`
             local album=`echo "$line" | grep -o '#.*' | cut -d : -f2,4 | sort | uniq | sed "s/\"title\":/album:/g" | sed "s/, \"length\"//g" | cut -d ',' -f2 | sed "s/\"//g" | sed "s/^ //g" | sed "s/album: //g"`
             local albumartist_replace=`echo "${albumartist}" | sed "s/ /+/g"`
-            
+
             local url="https://jackett.funkybrownfunk.duckdns.org/UI/Dashboard#search=$albumartist_replace&tracker=rutracker&category=3000&filter=all"
 
             local str_line=`printf "albumartist: %s, album: %s, url: %s\n" "${albumartist}" "${album}" "$url"`
-            local str="$str\n$str_line"
+            str="$str\n$str_line"
         fi
     done
 
-    echo "$str" | sort | uniq 
+    echo "$str" | sort | uniq
 }
 
 
@@ -585,633 +454,30 @@ kill_py () {
 ##############################
 # docker compose
 ##############################
-#alias dcp='docker-compose -f /opt/docker-compose.yml '
-#alias dcpull='docker-compose -f /opt/docker-compose.yml pull --parallel'
-#alias dclogs='docker-compose -f /opt/docker-compose.yml logs -tf --tail="50" '
-#alias dtail='docker logs -tf --tail="50" "$@"'
-# replaced by fzf-docker
-alias docker_logs_truncate='sudo sh -c "truncate -s 0 /var/lib/docker/containers/*/*-json.log"' # can save 50Gb of logs easily!!
+alias docker_logs_truncate='sudo sh -c "truncate -s 0 /var/lib/docker/containers/*/*-json.log"'
 alias docker_logs_tail='docker ps --format "{{.Names}}" | fzf | xargs -I {} docker logs -f {}'
 
-# from https://www.reddit.com/r/devops/comments/o5iwbk/useful_fzf_tricks/
 alias docker_sh='docker exec -it $(  docker ps  --format "{{.Names}}" | fzf | awk '"'"'{print $1;}'"'"'  ) sh'
 alias docker_bash='docker exec -it $(  docker ps  --format "{{.Names}}" | fzf | awk '"'"'{print $1;}'"'"'  ) bash'
 alias docker_rm='docker rm $(  docker ps  --format "{{.Names}}" | fzf | awk '"'"'{print $1;}'"'"'  )'
 alias docker_rma='docker rm $(  docker ps -a  --format "{{.Names}}" | fzf | awk '"'"'{print $1;}'"'"'  )'
 alias docker_prune_images='docker image prune --all --force'
 
-
 ##############################
-## BFUNK
+## BFUNK server sync / mounts
 ##############################
-# when files are copied manually to nextcloud folder
-alias nextcloud_force_rescan='docker exec nextcloud sudo -u abc php /config/www/nextcloud/occ files:scan --all'
-
-# Backup aliases replaced by funk_rsync_config (reads from ~/.funk_rsync_config.json)
-alias bfunk_nextcloud_preview_generation='docker exec -it $(docker ps -qf "name=nextcloud") occ preview:generate-all --path=lbesnard/files/Photos -vvv'
-alias efunk_nextcloud_preview_generation='docker exec -it $(docker ps -qf "name=nextcloud") occ preview:generate-all  -vvv'
-
-# ---------------------------------------------------------------------------
-# funk_rsync / funk_rclone helpers
-# ---------------------------------------------------------------------------
-
-# Returns (and creates) the state directory for sync timestamps.
-_funk_state_dir() {
-    local dir="$HOME/.local/share/funk_rsync"
-    mkdir -p "$dir"
-    echo "$dir"
-}
-
-# Returns the path to the per-task state file.
-# Task names are sanitized (: / and spaces → _) to form a safe filename.
-_funk_state_file() {
-    local task_name="$1"
-    local safe_name="${task_name//[:\/]/_}"
-    safe_name="${safe_name// /_}"
-    echo "$(_funk_state_dir)/$safe_name"
-}
-
-# Cache of mount points loaded from /proc/mounts (lazy, one read per session).
-_funk_mounts_cache=""
-
-# Returns true if the destination path's underlying mount point is available.
-# Reads /proc/mounts once and caches the result for the session.
-# Handles both Ubuntu (/media/USER/DRIVE) and NixOS (/run/media/USER/DRIVE) layouts.
-_funk_dest_is_available() {
-    local dest="${1%/}"  # strip trailing slash so ${path:h} doesn't skip the mount point
-
-    # Skip placeholder destinations
-    [[ -z "$dest" || "$dest" == "TO_BE_FILLED_MANUALLY" ]] && return 1
-
-    # Populate cache once (colon-delimited list of mount points)
-    # if [[ -z "$_funk_mounts_cache" ]]; then
-    _funk_mounts_cache=$(awk '{print $2}' /proc/mounts 2>/dev/null | tr '\n' ':')
-    # fi
-
-    # Paths to walk up: the destination itself, plus /run<dest> for NixOS
-    # (/media/USER/DRIVE configs also mount at /run/media/USER/DRIVE on NixOS)
-    local -a candidates=("$dest")
-    [[ "$dest" == /media/* ]] && candidates+=("/run$dest")
-
-    local candidate path stop_at
-    for candidate in "${candidates[@]}"; do
-        # For /run/media/... paths stop walking before /run/media itself
-        # (which is a tmpfs, not a drive mount)
-        stop_at="/"
-        [[ "$candidate" == /run/media/* ]] && stop_at="/run/media"
-
-        path="$candidate"
-        while [[ "$path" != "$stop_at" && "$path" != "/" ]]; do
-            if [[ ":${_funk_mounts_cache}:" == *":${path}:"* ]]; then
-                return 0
-            fi
-            path="${path:h}"
-        done
-    done
-
-    # No mount found — local paths are always ok, media paths are not
-    case "$dest" in
-        /media/*|/mnt/*|/run/media/*) return 1 ;;
-        *) return 0 ;;
-    esac
-}
-
-# Returns a formatted last-sync string for fzf display.
-_funk_last_sync_info() {
-    local task_name="$1"
-    local state_file
-    state_file=$(_funk_state_file "$task_name")
-    if [[ -f "$state_file" ]]; then
-        local ts
-        ts=$(cat "$state_file")
-        # Format to YYYY-MM-DD HH:MM (trim seconds and timezone)
-        echo "last: ${ts:0:16}"
-    else
-        echo "never synced"
-    fi
-}
-
-# Records a successful sync timestamp for a task.
-_funk_record_sync() {
-    local task_name="$1"
-    local state_file
-    state_file=$(_funk_state_file "$task_name")
-    date -Iseconds > "$state_file"
-}
-
-# ---------------------------------------------------------------------------
-# delete function without. can be added manually in optional
-# arguments. This removes the risks of deleting files if I/O error
-function funk_rsync() {
-    local server_ip="$1"; shift
-    local folder_to_bckp="$1"; shift
-    local src="/data/$folder_to_bckp"
-    local dest="$1/$folder_to_bckp";shift
-    # The remaining arguments in "$@" are the extra options passed from funk_rsync_config
-    mkdir -p $dest
-
-    # Pass the remaining arguments "$@" directly to rsync
-    [ -d $dest ] && rsync -auvh -P  --delete-after --delete-excluded -e "ssh -i ~/.ssh/id_rsa -p 9000 -l root" $server_ip:$src/ $dest/ \
-        --stats --progress --exclude ".*lrprev" --exclude jellyfin/ \
-        --exclude "uploaded_piwigo" --exclude "piwigo" --exclude='*.tmp' \
-        --exclude="*.jpg_original*" \
-        --exclude="docker_photoprism" \
-        --exclude="photoprism" \
-        --exclude="komga/logs/.*" \
-        --exclude="komga/lucene/.*" \
-        --exclude="komga/artemis/.*" \
-        --exclude='.bazarr.log.*' \
-        --exclude='lidarr/logs/*' \
-        --exclude='radarr/logs/*' \
-        --exclude='radarr_fr/logs/.*' \
-        --exclude='MediaCover/*' \
-        --exclude='Navidrome/cache/.*' \
-        --exclude="*.log" --exclude="*.log\..*\.gz" \
-        --exclude="*.page" --exclude="*.amq" \
-        --exclude=.deleted "$@" || echo "$dest does not exist" # Use "$@" directly
-}
-
-
-_ensure_ssh_key_loaded () {
-    export SSH_AUTH_SOCK="$HOME/.ssh/ssh-agent.sock"
-
-    ssh-add -l &> /dev/null
-    local ssh_exit_code=$?
-
-    if [ $ssh_exit_code -eq 2 ] || [[ ! -S "$SSH_AUTH_SOCK" ]]; then
-        echo "SSH agent unreachable or socket dead. Restarting..."
-        rm -f "$SSH_AUTH_SOCK"
-        eval "$(ssh-agent -s -a "$SSH_AUTH_SOCK")" > /dev/null
-    fi
-
-    if ! ssh-add -l &> /dev/null; then
-        echo "No SSH keys loaded. Running ssh-add..."
-        ssh-add -t 10h
-    fi
-}
-
-function funk_rclone() {
-    _ensure_ssh_key_loaded
-    local server_ip="$1"; shift
-    local folder_to_bckp="$1"; shift
-    local src="/data/$folder_to_bckp"
-    local dest_root="$1"; shift
-    local dest="$dest_root/$folder_to_bckp"
-    
-    mkdir -p "$dest"
-
-    local rclone_conf="$HOME/.config/rclone/rclone.conf"
-    local rclone_src
-
-    if [[ -f "$rclone_conf" ]]; then
-        # Use the remote defined in rclone.conf and override the host
-        # This assumes you named the remote [funk_sftp] in the file
-        rclone_src="funk_sftp,host=$server_ip:$src"
-    else
-        # Fallback to on-the-fly backend if no config exists
-        rclone_src=":sftp,host=$server_ip,port=9000,user=root,use_agent_auth=true,skip_hostkey_check=true:$src"
-    fi
-
-    if [ -d "$dest" ]; then
-        rclone sync "$rclone_src" "$dest" \
-            --progress \
-            --use-mmap \
-            --sftp-ciphers aes128-gcm@openssh.com \
-            --transfers 16 \
-            --checkers 32 \
-            --buffer-size 64M \
-            --delete-after \
-            --track-renames \
-            --exclude ".*lrprev" \
-            --exclude "jellyfin/**" \
-            --exclude "uploaded_piwigo/**" \
-            --exclude "piwigo/**" \
-            --exclude "*.tmp" \
-            --exclude "*.jpg_original*" \
-            --exclude "docker_photoprism/**" \
-            --exclude "photoprism/**" \
-            --exclude "komga/logs/**" \
-            --exclude "komga/lucene/**" \
-            --exclude "komga/artemis/**" \
-            --exclude ".bazarr.log.*" \
-            --exclude "lidarr/logs/**" \
-            --exclude "radarr/logs/**" \
-            --exclude "radarr_fr/logs/**" \
-            --exclude "MediaCover/**" \
-            --exclude "Navidrome/cache/**" \
-            --exclude "*.log" \
-            --exclude "*.log.*.gz" \
-            --exclude "*.page" \
-            --exclude "*.amq" \
-            --exclude ".deleted" \
-            "$@"
-    else
-        echo "Error: $dest could not be created."
-    fi
-}
-
-function funk_rsync_config() {
-    # Check if jq is installed
-    if ! command -v jq &>/dev/null; then
-        echo "Error: 'jq' is not installed. Please install it and try again."
-        return 1
-    fi
-
-    # Check if fzf is installed
-    if ! command -v fzf &>/dev/null; then
-        echo "Error: 'fzf' is not installed. Please install it and try again."
-        return 1
-    fi
-    local config_file="$HOME/.funk_rsync_config.json"
-
-    # Check if the configuration file exists
-    if [[ ! -f "$config_file" ]]; then
-        echo "Error: Configuration file '$config_file' not found."
-        return 1
-    fi
-
-    # Build the fzf list: only tasks whose destination is mounted, with last-sync info
-    local fzf_lines=() dest sync_info
-    while IFS= read -r task_name; do
-        dest=$(jq -r --arg t "$task_name" '.tasks[] | select(.name == $t) | .destination' "$config_file")
-        _funk_dest_is_available "$dest" || continue
-        sync_info=$(_funk_last_sync_info "$task_name")
-        fzf_lines+=("${task_name}  │  ${sync_info}")
-    done < <(jq -r '.tasks[].name' "$config_file")
-
-    if [[ ${#fzf_lines[@]} -eq 0 ]]; then
-        echo "No tasks with available destinations found."
-        return 1
-    fi
-
-    # Show picker and extract task name (before the │ delimiter)
-    local selected_line
-    selected_line=$(printf '%s\n' "${fzf_lines[@]}" | fzf --prompt="Select a task: " --height=15 --border --ansi)
-    [[ -z "$selected_line" ]] && { echo "No task selected. Exiting."; return 1; }
-
-    local selected_task
-    selected_task=$(echo "$selected_line" | awk -F'  │  ' '{print $1}')
-
-    # Extract the selected task's details from the JSON
-    local server_ip folder_to_bckp dest
-    server_ip=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .server)' "$config_file")
-    folder_to_bckp=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .source)' "$config_file")
-    dest=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .destination)' "$config_file")
-
-    local extra_rsync_options=()
-    while IFS= read -r line; do
-        extra_rsync_options+=("$line")
-    done < <(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task)) | .rsync_options[]' "$config_file")
-
-    # Call funk_rsync; record timestamp on success
-    funk_rsync "$server_ip" "$folder_to_bckp" "$dest" "${extra_rsync_options[@]}" "$@"
-    local exit_code=$?
-    [[ $exit_code -eq 0 ]] && _funk_record_sync "$selected_task"
-    return $exit_code
-}
-
-function funk_rclone_config() {
-    _ensure_ssh_key_loaded
-    if ! command -v jq &>/dev/null || ! command -v fzf &>/dev/null; then
-        echo "Error: 'jq' and 'fzf' are required."
-        return 1
-    fi
-
-    local config_file="$HOME/.funk_rsync_config.json"
-    if [[ ! -f "$config_file" ]]; then
-        echo "Error: Configuration file '$config_file' not found."
-        return 1
-    fi
-
-    # Build the fzf list: only tasks whose destination is mounted, with last-sync info
-    local fzf_lines=() dest sync_info
-    while IFS= read -r task_name; do
-        dest=$(jq -r --arg t "$task_name" '.tasks[] | select(.name == $t) | .destination' "$config_file")
-        _funk_dest_is_available "$dest" || continue
-        sync_info=$(_funk_last_sync_info "$task_name")
-        fzf_lines+=("${task_name}  │  ${sync_info}")
-    done < <(jq -r '.tasks[].name' "$config_file")
-
-    if [[ ${#fzf_lines[@]} -eq 0 ]]; then
-        echo "No tasks with available destinations found."
-        return 1
-    fi
-
-    # Show picker and extract task name (before the │ delimiter)
-    local selected_line
-    selected_line=$(printf '%s\n' "${fzf_lines[@]}" | fzf --prompt="Select a task: " --height=15 --border)
-    [[ -z "$selected_line" ]] && return 1
-
-    local selected_task
-    selected_task=$(echo "$selected_line" | awk -F'  │  ' '{print $1}')
-
-    local server_ip folder_to_bckp dest
-    server_ip=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .server)' "$config_file")
-    folder_to_bckp=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .source)' "$config_file")
-    dest=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .destination)' "$config_file")
-
-    local extra_options=()
-    while IFS= read -r line; do
-        extra_options+=("$line")
-    done < <(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task)) | .rclone_options[]' "$config_file")
-
-    print -P "%F{green}❯ $selected_task%f"
-    funk_rclone "$server_ip" "$folder_to_bckp" "$dest" "${extra_options[@]}" "$@"
-    local exit_code=$?
-    [[ $exit_code -eq 0 ]] && _funk_record_sync "$selected_task"
-    return $exit_code
-}
-
-function funk_rsync_cron() {
-    local out_machine="$1"
-    local config_file="$HOME/.funk_rsync_config.json"
-
-    if [[ -z "$out_machine" ]]; then
-        echo "Usage: funk_rsync_cron <out_machine_name>"
-        return 1
-    fi
-
-    if ! command -v jq &>/dev/null; then
-        echo "Error: 'jq' is not installed."
-        return 1
-    fi
-
-    if [[ ! -f "$config_file" ]]; then
-        echo "Error: Configuration file '$config_file' not found."
-        return 1
-    fi
-
-    jq -c --arg out_machine "$out_machine" \
-        '.tasks[] | select(.name | test("OUT:" + $out_machine + "$"))' "$config_file" | \
-    while read -r task_json; do
-        local name
-        name=$(jq -r '.name' <<< "$task_json")
-        
-        # Skip if disable_auto_rsync is true
-        local disable
-        disable=$(jq -r '.disable_auto_rsync // false' <<< "$task_json")
-        if [[ "$disable" == "true" ]]; then
-            echo "[$name] Skipping (disable_auto_rsync is true)"
-            continue
-        fi
-
-        local server_ip
-        server_ip=$(jq -r '.server' <<< "$task_json")
-        local folder_to_bckp
-        folder_to_bckp=$(jq -r '.source' <<< "$task_json")
-        local dest
-        dest=$(jq -r '.destination' <<< "$task_json")
-        local src="/data/$folder_to_bckp"
-        local target="$dest/$folder_to_bckp"
-
-        mkdir -p "$target"
-
-        local extra_rsync_options=()
-        while IFS= read -r line; do
-            extra_rsync_options+=("$line")
-        done < <(jq -r '.rsync_options[]?' <<< "$task_json")
-
-        local rsync_base=(
-            rsync -auvh -P --delete-after --delete-excluded
-            -e "ssh -i ~/.ssh/id_rsa -p 9000 -l root"
-            "${extra_rsync_options[@]}"
-            --stats --progress
-            --exclude ".*lrprev" --exclude jellyfin/
-            --exclude "uploaded_piwigo" --exclude "piwigo" --exclude='*.tmp'
-            --exclude="*.jpg_original*"
-            --exclude="docker_photoprism"
-            --exclude="photoprism"
-            --exclude="komga/logs/.*"
-            --exclude="komga/lucene/.*"
-            --exclude="komga/artemis/.*"
-            --exclude='.bazarr.log.*'
-            --exclude='lidarr/logs/*'
-            --exclude='radarr/logs/*'
-            --exclude='radarr_fr/logs/.*'
-            --exclude='MediaCover/*'
-            --exclude='Navidrome/cache/.*'
-            --exclude="*.log" --exclude="*.log\..*\.gz"
-            --exclude="*.page" --exclude="*.amq"
-            --exclude=".deleted"
-        )
-
-        echo "[$name] Running dry-run..."
-        if "${rsync_base[@]}" --dry-run "$server_ip:$src/" "$target/"; then
-            echo "[$name] Dry-run succeeded. Starting sync..."
-            if "${rsync_base[@]}" --bwlimit 1500 "$server_ip:$src/" "$target/"; then
-                _funk_record_sync "$name"
-            fi
-        else
-            echo "[$name] Dry-run failed. Skipping task."
-        fi
-    done
-}
-
-
-
-
-# crowdsec
-alias cscli="docker exec -t crowdsec cscli"
-alias cscli_decisions_list="cscli decisions list"
-alias cscli_alerts_list="cscli alerts list"
-alias cscli_metrics="cscli metrics"
-alias cscli_bouncer_list="cscli bouncers list"
+[ -f ~/.alias_sync ] && source ~/.alias_sync
 
 alias beet_install="uv tool install --force --with python3-discogs-client --with flask --with \"$HOME/.config/beets/whatlastgenre_org/[discogs]\" \"beets[lyrics,lastgenre,discogs,chroma,web]==2.13.1\""
-
-
-# # Generic SSHFS mount helper
-# _mount_sshfs_share () {
-#   local remote_target="$1"
-#   local local_target="$2"
-#
-#   mkdir -p "$local_target"
-#   sshfs "$remote_target" "$local_target" \
-#     -o ServerAliveInterval=15 \
-#     -o ServerAliveCountMax=3 \
-#     -o reconnect \
-#     -o ConnectTimeout=10 \
-#     -o auto_cache \
-#     -o attr_timeout=3600 \
-#     -o entry_timeout=3600 \
-#     -o negative_timeout=10 \
-#     -o Ciphers=aes128-gcm@openssh.com \
-#     -o Compression=no
-# }
-
-## Specific target functions
-#mount_beefunk_pics () {
-#  _mount_sshfs_share "lbesnard@beefunk.local:/media/lbesnard/beefunk_12tb_c/pictures" "$HOME/beefunk_pictures"
-#}
-
-## Mount only when close to efunk server
-#mount_efunknuc_pics () {
-#  _mount_sshfs_share "lbesnard@evrynucfunk.lan:/media/beefunk_12tb_1/pictures" "$HOME/beefunk_pictures"
-#}
-
-# specific target functions
-mount_beefunk_pics () {
-    mkdir -p "$HOME/beefunk_pictures"
-    local ip
-    ip=$(getent hosts beefunk.lan | awk '{print $1}')
-    sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr="$ip" "$ip".local:/media/lbesnard/beefunk_12tb_c/pictures "$home/beefunk_pictures"
-}
-
-# mount only when close to efunknuc server
-mount_efunknuc_pics () {
-  mkdir -p $HOME/beefunk_pictures
-  local ip
-  ip=$(getent hosts efunknuc.lan | awk '{print $1}')
-  sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,addr=efunknuc.lan efunknuc.lan:/media/beefunk_12tb_1/pictures "$home/beefunk_pictures"
-}
-
-# ping speed choice of server to mount
-mount_best_pics() {
-    mkdir -p "$HOME/beefunk_pictures"
-
-    local host1="beefunk.lan"
-    local ip1=$(getent hosts $host1| awk '{print $1}')
-    local path1="$ip1:/media/lbesnard/beefunk_12tb_c/pictures"
-
-    local host2="efunknuc.lan"
-    local ip2=$(getent hosts $host2| awk '{print $1}')
-    local path2="$ip2:/media/beefunk_12tb_1/pictures"
-
-    # Get round-trip time (RTT) in ms, default to 9999 if unreachable
-    local rtt1 rtt2
-    rtt1=$(ping -c 1 -W 1 "$host1" 2>/dev/null | awk -F'/' 'END {print $5}')
-    rtt1=${rtt1:-9999}
-
-    rtt2=$(ping -c 1 -W 1 "$host2" 2>/dev/null | awk -F'/' 'END {print $5}')
-    rtt2=${rtt2:-9999}
-
-    # Pick the one with the lowest ping
-    local target_host target_path
-    local faster
-    faster=$(awk -v r1="$rtt1" -v r2="$rtt2" 'BEGIN {if (r1+0 < r2+0) print "1"; else print "2"}')
-
-    if [[ "$faster" == "1" ]]; then
-        target_host="$host1"
-        target_path="$path1"
-    else
-        target_host="$host2"
-        target_path="$path2"
-    fi
-
-    # Resolve IP and mount
-    local ip
-    ip=$(getent hosts "$target_host" | awk '{print $1}')
-    
-    echo "Connecting to the fastest server: $target_host ($ip)..."
-    sudo mount -t nfs -o nfsvers=3,proto=tcp,nolock,soft,timeo=30,retrans=2,addr="$ip" "$target_path" "$HOME/beefunk_pictures"
-}
-
-alias sync_export_pics_beefunk_2_efunk_immich='rsync -av --progress --delete-after /media/lbesnard/beefunk_12tb_c/pictures/Export/ evryfunk:/media/efunk_4tb_1/pictures_laurent_export/'
-
-
-dask_tunnel() {
-  if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
-    echo "Usage: dask_tunnel <ssh_host> <dask_url> [local_port]"
-    return 1
-  fi
-
-  ssh_host="$1"
-  dask_url="$2"
-
-  # Optional explicit local port
-  if [ -n "$3" ]; then
-    local_port="$3"
-  else
-    # Find free port using Python (checks both IPv4 and IPv6 when possible)
-    local_port=$(python - <<'PY'
-import socket
-def try_bind(af, addr, p):
-    s = socket.socket(af, socket.SOCK_STREAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    try:
-        s.bind((addr, p))
-        s.close()
-        return True
-    except OSError:
-        return False
-# Try ports in range; require IPv4 bind to succeed. If IPv6 is unsupported, ignore IPv6.
-for p in range(8080, 8192):
-    v4 = try_bind(socket.AF_INET, '127.0.0.1', p)
-    try:
-        v6 = try_bind(socket.AF_INET6, '::1', p)
-    except Exception:
-        v6 = True
-    if v4 and v6:
-        print(p)
-        break
-else:
-    # fallback: get an ephemeral port from the OS
-    s = socket.socket()
-    s.bind(('', 0))
-    print(s.getsockname()[1])
-    s.close()
-PY
-)
-  fi
-
-  # Parse target host and token from URL
-  target_host=$(printf '%s' "$dask_url" | sed -E 's#https?://([^/]+)/?.*#\1#')
-  token=$(printf '%s' "$dask_url" | sed -nE 's/.*[?&]token=([^&]+).*/\1/p')
-
-  full_url="https://localhost:${local_port}/status?token=${token}"
-  echo "Connecting to Dask cluster at: $full_url"
-
-  # Use absolute ssh path to avoid tmux aliasing; ExitOnForwardFailure forces failure if port in use.
-  /usr/bin/ssh -f -o ExitOnForwardFailure=yes -L "${local_port}:${target_host}:443" "${ssh_host}" -N
-  rc=$?
-  if [ "$rc" -ne 0 ]; then
-    echo "SSH failed to set up the tunnel (exit code $rc). Port ${local_port} may already be in use."
-    return $rc
-  fi
-
-  # short wait and check listener
-  sleep 0.2
-  if command -v ss >/dev/null 2>&1; then
-    if ! ss -ltn | grep -qE "(:|\\.)${local_port}(\s|$)"; then
-      echo "Warning: no local listener found on port ${local_port} -- tunnel may not be active."
-    fi
-  elif command -v lsof >/dev/null 2>&1; then
-    if ! lsof -iTCP:"${local_port}" -sTCP:LISTEN -P -n >/dev/null 2>&1; then
-      echo "Warning: no local listener found on port ${local_port} -- tunnel may not be active."
-    fi
-  fi
-
-  # Try to find the backgrounded ssh pid
-  ssh_pid=$(pgrep -f "/usr/bin/ssh -L ${local_port}:${target_host}:443 ${ssh_host}" | head -n1)
-  echo "Please open: $full_url"
-  echo "SSH tunnel established (pid: ${ssh_pid:-unknown})"
-}
-
-
-jupyter_tunnel(){
-
-  unset -f ssh 
-  # 1. Kill any existing ssh tunnel on port 8080 to prevent "Address already in use"
-  lsof -ti:8080 | xargs kill -9 2>/dev/null
-
-  # 2. Start the tunnel
-  # -f: Requests SSH to go to background just before command execution
-  # -N: Do not execute a remote command (useful for just forwarding ports)
-  # -M: ControlMaster for connection sharing
-  ssh -f -N -L 8080:localhost:8888 laptop-work
-  
-  echo "Jupyter tunnel established on http://localhost:8080"
-}
 
 # function to create the norwegian diary to Nextcloud
 diary_anki() {
     cd ~/github_repos/LingoAnki/ || return
 
-    # Create a temporary directory
+    local temp_dir
     temp_dir=$(mktemp -d)
-    temp_shell_nix="$temp_dir/shell.nix"
+    local temp_shell_nix="$temp_dir/shell.nix"
 
-    # Write the temporary shell.nix
     cat > "$temp_shell_nix" <<EOF
 {
   pkgs ? import <nixpkgs> { },
@@ -1248,10 +514,7 @@ in
 fhs.env
 EOF
 
-    # Run nix-shell using the temporary shell.nix
     nix-shell "$temp_shell_nix"
-
-    # Remove the temporary directory and its contents
     rm -rf "$temp_dir"
 }
 
@@ -1259,11 +522,10 @@ EOF
 diary_tprs() {
     cd ~/github_repos/LingoAnki/ || return
 
-    # Create a temporary directory
+    local temp_dir
     temp_dir=$(mktemp -d)
-    temp_shell_nix="$temp_dir/shell.nix"
+    local temp_shell_nix="$temp_dir/shell.nix"
 
-    # Write the temporary shell.nix
     cat > "$temp_shell_nix" <<EOF
 {
   pkgs ? import <nixpkgs> { },
@@ -1300,210 +562,14 @@ in
 fhs.env
 EOF
 
-    # Run nix-shell using the temporary shell.nix
     nix-shell "$temp_shell_nix"
-
-    # Remove the temporary directory and its contents
     rm -rf "$temp_dir"
 }
- 
-## taskwarrior
-# Short alias for general use
-alias t='task'
 
-# Interactive "Task Done" with Project Label
-td() {
-    local task_id=$(task status:pending export | jq -r '.[] | "\(.id) [\(.project // "no project")] \(.description)"' | \
-        fzf --height 40% --reverse --header "Select task to complete" --preview 'task {1} info' | awk '{print $1}')
-    
-    if [[ -n "$task_id" ]]; then
-        task "$task_id" done
-    fi
-}
-
-# Quick view of today's specific deadlines
-alias tt='task due:today list'
-#
-# Work Tomorrow
-alias twt='task add pro:Work due:tomorrow'
-# Personal Tomorrow
-alias tpt='task add pro:Personal due:tomorrow'
-
-# --- BACKLOG PILLAR (No Due Date) ---
-# Work Backlog
-alias twb='task add pro:Work'
-# Personal Backlog
-alias tpb='task add pro:Personal'
-
-# --- TODAY PILLAR (For consistency) ---
-alias tw='task add pro:Work due:today'
-alias tp='task add pro:Personal due:today'
-
-# Shows everything due in the next 48 hours
-alias tnext='task due.before:today+2d list'
-
-t2t() {
-    # Added 'due.not:today' to the filter
-    local task_ids=$(task status:pending due.not:today export | jq -r '.[] | "\(.id) [\(.project // "no project")] \(.description)"' | \
-        fzf --multi \
-            --reverse \
-            --header "TAB to select multiple / ENTER to set to Today" \
-            --preview 'task {1} info' \
-            --height 40% | awk '{print $1}')
-
-    if [[ -n "$task_ids" ]]; then
-        echo "$task_ids" | while read -r id; do
-            task "$id" modify due:today
-        done
-        echo "✅ Selected tasks moved to Today."
-        task today
-    else
-        echo "No tasks selected (or all pending tasks are already due today)."
-    fi
-}
-
-tnot() {
-    # 1. Get IDs, Project, and Description for today's pending tasks
-    local selected=$(task due:today status:pending export | \
-        jq -r '.[] | "\(.id) [\(.project // "none")] \(.description)"' | \
-        fzf -m --reverse --header "Remove from Today (Clear Due Date)" --height 40%)
-
-    # 2. Extract the IDs
-    local ids=$(echo "$selected" | awk '{print $1}')
-
-    # 3. If IDs exist, remove the due date
-    if [[ -n "$ids" ]]; then
-        local id_list=$(echo $ids | tr '\n' ' ')
-        # Setting due: with nothing after it removes the date in Taskwarrior
-        task $id_list modify due:
-        echo "\e[38;5;208mTasks moved back to backlog.\e[0m"
-    fi
-}
-
-alias thist='task status:completed end.after:today-1wk list'
-
-# Purge/Delete
-tpurge() {
-    # 1. Fetch data using UUID (column 1) but hide it from view using --with-nth
-    local gen_list='task status:pending export | jq -r ".[] | \"\(.uuid) [\(.project // \"none\")] \(.description) \(if .annotations then \" | NOTES: \" + ([.annotations[] | .description] | join(\" | \")) else \"\" end)\""'
-
-    local selected=$(eval $gen_list | fzf --multi --ansi --reverse \
-        --header "TRASH CAN: TAB to select multiple | ENTER to Delete" \
-        --with-nth=2.. \
-        --preview 'task {1} info' \
-        --height 70%)
-
-    if [[ -n "$selected" ]]; then
-        # Extract UUIDs and delete them all in ONE command to avoid ID-shifting and prompts
-        local uuids=$(echo "$selected" | awk '{print $1}' | tr '\n' ' ')
-        
-        # rc.confirmation=no bypasses the "Are you sure?" prompt
-        task $uuids delete rc.confirmation=no
-        
-        # Optional: Run the actual system purge to clean the database immediately
-        task purge rc.confirmation=no
-        echo "✅ Selected tasks have been permanently deleted."
-    else
-        echo "Nothing deleted."
-    fi
-}
-
-# Select a task and set a due time for today
-ttime() {
-    local task_id=$(task status:pending export | jq -r '.[] | "\(.id) [\(.project)] \(.description)"' | fzf --reverse --header "Set time for today (HH:MM)")
-    if [[ -n "$task_id" ]]; then
-        echo -n "Enter time (e.g., 14:00): "
-        read task_time
-        task ${task_id%% *} modify due:todayT$task_time
-    fi
-}
-#
-#
-# Wait until tomorrow (or a date) to see this task again
-alias twait='task $(task status:pending export | jq -r ".[] | \"\(.id) \(.description)\"" | fzf --reverse --header "Wait until when?") modify wait:tomorrow'
-
-tann() {
-    local task_id=$(task status:pending export | jq -r '.[] | "\(.id) \(.description)"' | fzf --reverse --header "Add note/annotation")
-    if [[ -n "$task_id" ]]; then
-        echo -n "Annotation: "
-        read note
-        task ${task_id%% *} annotate "$note"
-    fi
-}
-
-alias twork='task project:Work list'
-alias tpers='task project:Personal list'
-
-# Interactive "Task Edit" with fzf
-te() {
-    # Select task, then open the full metadata in your $EDITOR (nvim/vim)
-    local task_id=$(task status:pending export | jq -r '.[] | "\(.id) [\(.project // "no project")] \(.description)"' | \
-        fzf --reverse --header "Select task to EDIT" --preview 'task {1} info' | awk '{print $1}')
-    
-    if [[ -n "$task_id" ]]; then
-        task "$task_id" edit
-    fi
-}
-
-ttd() {
-    # 1. Get IDs of tasks due today
-    # 2. Use fzf to select (Tab to select multiple)
-    # 3. Extract the ID and mark as done
-    local ids=$(task due:today status:pending export | \
-                jq -r '.[] | "\(.id) \(.description)"' | \
-                fzf -m --header "Select tasks to complete (Tab to multi-select)" --height 40% | \
-                awk '{print $1}')
-
-    if [[ -n "$ids" ]]; then
-        # Convert newline-separated IDs to space-separated
-        local id_list=$(echo $ids | tr '\n' ' ')
-        task $id_list done
-    fi
-}
-#
-# Today List: The definitive interactive browser for today's tasks
-ttl() {
-    # 1. Filter strictly for pending tasks due today
-    local gen_list='task due:today status:pending export | jq -r ".[] | \"\(.id) [\(.project // \"none\")] \(.description)\""'
-
-    # 2. Open FZF with full management capabilities
-    eval $gen_list | fzf \
-        --reverse --multi \
-        --height 80% \
-        --header "TAB: Select | ENTER: Info | CTRL-D: Done | CTRL-P: Postpone | CTRL-E: Edit" \
-        --preview 'task {1} info' \
-        --preview-window=right:65%:wrap \
-        --bind "ctrl-d:execute(task {1} done)+reload($gen_list)" \
-        --bind "ctrl-p:execute(task {1} modify due:tomorrow)+reload($gen_list)" \
-        --bind "ctrl-e:execute(task {1} edit)+reload($gen_list)" \
-        --bind "enter:execute(task {1} info | less -R)"
-}
-
-# List of tasks worked on
-tlog() {
-    # Today
-    echo -e "\n## Today ($(date +%Y-%m-%d))"
-    task project:Work modified.after:today all rc.verbose=nothing rc.report.all.columns=description rc.report.all.labels= | perl -pe 's/^([^\s\-])/* $1/'
-
-    # Yesterday
-    echo -e "\n## Yesterday ($(date -d "yesterday" +%Y-%m-%d))"
-    task project:Work modified.after:today-1d modified.before:today all rc.verbose=nothing rc.report.all.columns=description rc.report.all.labels= | perl -pe 's/^([^\s\-])/* $1/'
-
-    # 2nd Day Ago
-    echo -e "\n## $(date -d "2 days ago" +%A) ($(date -d "2 days ago" +%Y-%m-%d))"
-    task project:Work modified.after:today-2d modified.before:today-1d all rc.verbose=nothing rc.report.all.columns=description rc.report.all.labels= | perl -pe 's/^([^\s\-])/* $1/'
-
-    # 3rd Day Ago
-    echo -e "\n## $(date -d "3 days ago" +%A) ($(date -d "3 days ago" +%Y-%m-%d))"
-    task project:Work modified.after:today-3d modified.before:today-2d all rc.verbose=nothing rc.report.all.columns=description rc.report.all.labels= | perl -pe 's/^([^\s\-])/* $1/'
-
-    # 4th Day Ago
-    echo -e "\n## $(date -d "4 days ago" +%A) ($(date -d "4 days ago" +%Y-%m-%d))"
-    task project:Work modified.after:today-4d modified.before:today-3d all rc.verbose=nothing rc.report.all.columns=description rc.report.all.labels= | perl -pe 's/^([^\s\-])/* $1/'
-}
-
-alias tui=task-tui
-
+##########################
+# Taskwarrior
+##########################
+[ -f ~/.alias_taskwarrior ] && source ~/.alias_taskwarrior
 
 ##########################
 # Hugo
@@ -1518,13 +584,11 @@ falias() {
   local tmpdir
   tmpdir=$(mktemp -d /tmp/falias.XXXXXX)
 
-  # Store alias definitions (skip names with special chars that break filenames)
   alias | while IFS='=' read -r name def; do
     [[ "$name" =~ [^a-zA-Z0-9_.:@-] ]] && continue
     printf '%s' "${def#\'}" | sed "s/'$//" > "$tmpdir/alias_${name}"
   done
 
-  # Store ONLY user-defined functions from ~/.alias (not zinit/plugin internals)
   local user_fns
   user_fns=$(grep -oE '^[a-zA-Z_][a-zA-Z0-9_-]*[[:space:]]*\(\)' ~/.alias 2>/dev/null \
              | sed 's/[[:space:]]*()$//')
@@ -1567,7 +631,6 @@ archive_dir() {
     local target="${1%/}"
     local date_stamp=$(date +%Y-%m-%d)
 
-    # Validation
     if [[ -z "$target" ]]; then
         echo "Usage: archive <directory>"
         return 1
@@ -1578,7 +641,6 @@ archive_dir() {
         return 1
     fi
 
-    # Calculate size
     local dir_kb=$(du -sk "$target" | cut -f1)
 
     if (( dir_kb > threshold )); then
@@ -1592,153 +654,15 @@ archive_dir() {
         fi
     fi
 
-    # Execute tar
     local archive_name="${target}_${date_stamp}.tar.gz"
     echo "Creating $archive_name..."
     tar -czf "$archive_name" "$target" && echo "Done: $archive_name"
 }
 
-
-# Nintendo 5300 V64 to Z64 converter (byte swap)
-v64toz64() {
-    if [[ -z "$1" ]]; then
-        echo "Usage: v64toz64 input.v64"
-        return 1
-    fi
-    local out="${1%.v64}.z64"
-    python3 -c "
-with open('$1', 'rb') as f_in, open('$out', 'wb') as f_out:
-    while chunk := f_in.read(2):
-        f_out.write(bytes([chunk[1], chunk[0]]) if len(chunk) == 2 else chunk)
-" && echo "Converted successfully to $out"
-}
-
-
-zip2chd() {
-    local delete_input=0
-    local outdir=""
-    local input=""
-    local disc=""
-    local outfile=""
-    local outfile_name=""
-    local tmpdir=""
-    local chd_type=""
-
-    while getopts "do:" opt; do
-        case "$opt" in
-            d)
-                delete_input=1
-                ;;
-            o)
-                outdir="$OPTARG"
-                ;;
-            *)
-                echo "Usage: zip2chd [-d] [-o output_dir] <zip|cue|gdi|ccd|iso>"
-                return 1
-                ;;
-        esac
-    done
-    shift $((OPTIND - 1))
-
-    if [[ $# -ne 1 ]]; then
-        echo "Usage: zip2chd [-d] [-o output_dir] <zip|cue|gdi|ccd|iso>"
-        return 1
-    fi
-
-    input="$1"
-
-    case "$input" in
-        *.zip|*.ZIP)
-            tmpdir=$(mktemp -d) || return 1
-
-            echo "Extracting: $input"
-
-            unzip -qq "$input" -d "$tmpdir" || {
-                echo "Failed to extract $input"
-                rm -rf "$tmpdir"
-                return 1
-            }
-
-            # Prefer descriptor files.
-            # GDI/CUE/CCD reference other files, so we must pass
-            # the descriptor to chdman rather than the BIN/RAW files.
-            disc=$(find "$tmpdir" -type f \( \
-                -iname "*.gdi" -o \
-                -iname "*.cue" -o \
-                -iname "*.ccd" -o \
-                -iname "*.iso" \
-            \) -print | head -n1)
-
-            if [[ -z "$disc" ]]; then
-                echo "No supported disc image found in:"
-                echo "  $input"
-                rm -rf "$tmpdir"
-                return 1
-            fi
-
-            # Determine CD/DVD conversion from descriptor
-            case "$disc" in
-                *.iso|*.ISO)
-                    chd_type="createdvd"
-                    ;;
-                *)
-                    chd_type="createcd"
-                    ;;
-            esac
-
-            outfile_name="${input:t:r}.chd"
-            ;;
-        *.gdi|*.GDI|*.cue|*.CUE|*.ccd|*.CCD)
-            disc="$input"
-            chd_type="createcd"
-            outfile_name="${input:t:r}.chd"
-            ;;
-        *.iso|*.ISO)
-            disc="$input"
-            chd_type="createdvd"
-            outfile_name="${input:t:r}.chd"
-            ;;
-        *)
-            echo "Unsupported input: $input"
-            echo "Supported: zip, gdi, cue, ccd, iso"
-            return 1
-            ;;
-    esac
-
-    if [[ -n "$outdir" ]]; then
-        mkdir -p "$outdir" || {
-            rm -rf "$tmpdir"
-            return 1
-        }
-
-        outfile="$outdir/$outfile_name"
-    else
-        outfile="${input:h}/$outfile_name"
-    fi
-
-    echo "Input : $disc"
-    echo "Output: $outfile"
-    echo "Type  : $chd_type"
-
-    chdman "$chd_type" -i "$disc" -o "$outfile"
-
-    if [[ $? -ne 0 ]]; then
-        echo "chdman failed"
-        rm -f "$outfile"
-        rm -rf "$tmpdir"
-        return 1
-    fi
-
-    # Only delete a directly supplied image.
-    # Never delete the ZIP itself.
-    if (( delete_input )) && [[ -z "$tmpdir" ]]; then
-        rm -f "$input"
-    fi
-
-    rm -rf "$tmpdir"
-
-    echo "Done: $outfile"
-}
+##########################
+# Gaming
+##########################
+[ -f ~/.alias_gaming ] && source ~/.alias_gaming
 
 # yazi wrapper
 y() {
@@ -1751,12 +675,12 @@ y() {
             missing=1
         else
             local -a declared_plugins
-            declared_plugins=("${(@f)$(grep -E '^[[:space:]]*use[[:space:]*]=' "$config_file" | sed -E 's/.*"([^"]+)".*/\1/')}")
+            declared_plugins=("${(@f)$(grep -E '^[[:space:]]*use[[:space:]]*=' "$config_file" | sed -E 's/.*"([^"]+)".*/\1/')}")
 
             for plugin in "${declared_plugins[@]}"; do
                 local name="${plugin##*/}"
                 name="${name#*:}"
-                
+
                 if [[ ! -f "$plugins_dir/${name}.yazi/main.lua" ]]; then
                     missing=1
                     break

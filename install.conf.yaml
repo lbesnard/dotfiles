@@ -7,6 +7,10 @@
 - link:
     ~/.alias: { force: true, path: alias, create: true }
     ~/.alias_forgit: { force: true, path: alias_forgit, create: true }
+    ~/.alias_gaming: { force: true, path: alias_gaming, create: true }
+    ~/.alias_netcdf: { force: true, path: alias_netcdf, create: true }
+    ~/.alias_sync: { force: true, path: alias_sync, create: true }
+    ~/.alias_taskwarrior: { force: true, path: alias_taskwarrior, create: true }
     ~/.ansible.cfg: { force: true, path: ansible.cfg, create: true }
     ~/.aws: { create: true, force: true, path: aws/ }
     ~/.bashrc: { force: true, path: bashrc }
