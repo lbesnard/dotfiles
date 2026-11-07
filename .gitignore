@@ -47,7 +47,9 @@ efunk/docker-compose/data/
 /config/redlist/spotify_token.json
 /config/passhole.ini
 /config/Nextcloud/nextcloud*.cfg
-/config/joplin-desktop/settings.json
+/config/joplin-desktop/settings*.json
+/config/digikamrc
+/config/darktable/darktablerc
 /funk_rsync_config
 /pgadmin/pgpass
 /ssh/config

@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Link hostname-specific config files to their canonical ~/.config/ locations.
+#
+# Convention: store configs as  config/APP/name.{hostname}.ext  (or name.{hostname}
+# for extension-less files) and add one _link line below per app.
+#
+# Sensitive files (tokens, server URLs):  also list them in secrets.list.
+# Plain machine-specific files (paths, library locations): just track them in git.
+#
+# To add a new machine:
+#   cp ~/.config/APP/file  ~/.dotfiles/config/APP/file.$(hostname -s)[.ext]
+#   git add config/APP/file.$(hostname -s)[.ext]
+#   ./secrets encrypt   # only if the file is in secrets.list
+#   git commit && git push
+
+set -uo pipefail
+
+HOST=$(hostname -s)
+DOTFILES="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+
+_link() {
+    local src="${DOTFILES}/${1/\{hostname\}/$HOST}"
+    local target="$2"
+
+    if [[ -f "$src" ]]; then
+        mkdir -p "$(dirname "$target")"
+        ln -sfn "$src" "$target"
+        printf 'linked:  %s\n' "$target"
+    else
+        printf 'MISSING: %s\n  fix:  cp %s %s\n' "$src" "$target" "$src"
+        printf '         then: git add + commit'
+        grep -qF "${1/\{hostname\}.$HOST/}" "$DOTFILES/secrets.list" 2>/dev/null \
+            && printf ' (./secrets encrypt first — file is sensitive)'
+        printf '\n'
+    fi
+}
+
+# dotfiles path (with {hostname})                             target
+_link "config/Nextcloud/nextcloud.{hostname}.cfg"             "$HOME/.config/Nextcloud/nextcloud.cfg"
+_link "config/joplin-desktop/settings.{hostname}.json"        "$HOME/.config/joplin-desktop/settings.json"
+_link "config/digikamrc.{hostname}"                           "$HOME/.config/digikamrc"
+_link "config/darktable/darktablerc.{hostname}"               "$HOME/.config/darktable/darktablerc"
