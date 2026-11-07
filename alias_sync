@@ -149,20 +149,19 @@ function funk_rclone() {
 
     mkdir -p "$dest"
 
-    local rclone_conf="$HOME/.config/rclone/rclone.conf"
-    local rclone_src
+    # --sftp-ssh overrides rclone's built-in SSH client entirely; rclone then ignores
+    # port/user/ciphers from the connection string — all must live in the ssh command.
+    local sftp_ssh="ssh -p 9000 -l root \
+        -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+        -o Ciphers=aes128-gcm@openssh.com \
+        -o ServerAliveInterval=60 -o ServerAliveCountMax=5"
 
-    if [[ -f "$rclone_conf" ]]; then
-        rclone_src="funk_sftp,host=$server_ip:$src"
-    else
-        rclone_src=":sftp,host=$server_ip,port=9000,user=root,use_agent_auth=true,skip_hostkey_check=true:$src"
-    fi
+    local rclone_src=":sftp,host=$server_ip:$src"
 
     if [ -d "$dest" ]; then
         rclone sync "$rclone_src" "$dest" \
             --progress \
-            --sftp-ssh "ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=5" \
-            --sftp-ciphers aes128-gcm@openssh.com \
+            --sftp-ssh "$sftp_ssh" \
             --sftp-idle-timeout 0 \
             --transfers 4 \
             --checkers 16 \
