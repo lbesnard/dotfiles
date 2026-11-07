@@ -161,10 +161,9 @@ function funk_rclone() {
     if [ -d "$dest" ]; then
         rclone sync "$rclone_src" "$dest" \
             --progress \
+            --sftp-ssh "ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=5" \
             --sftp-ciphers aes128-gcm@openssh.com \
             --sftp-idle-timeout 0 \
-            --sftp-server-alive-interval 60s \
-            --sftp-server-alive-count-max 5 \
             --transfers 4 \
             --checkers 16 \
             --buffer-size 16M \
