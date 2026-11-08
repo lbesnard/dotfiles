@@ -69,10 +69,11 @@ dotbot_rc=0
 "${BASEDIR}/secrets" install-hook || true
 rc=0
 "${BASEDIR}/secrets" decrypt || rc=$?
-if [ "$rc" -eq 0 ]; then
+if [ "$rc" -ne 2 ]; then
+  if [ "$rc" -ne 0 ]; then
+    echo "secrets: decrypt had problems (rc=$rc); some secrets may be missing — linking what was decrypted." >&2
+  fi
   "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c install.private.conf.yaml "${@}"
-elif [ "$rc" -ne 2 ]; then
-  echo "secrets: decrypt had problems (rc=$rc); private links skipped. See above." >&2
 fi
 "${BASEDIR}/secrets" install-completion || true
 echo
