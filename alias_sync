@@ -163,8 +163,9 @@ function funk_rclone() {
             --progress \
             --sftp-ssh "$sftp_ssh" \
             --sftp-idle-timeout 0 \
-            --transfers 4 \
-            --checkers 16 \
+            --sftp-disable-hashcheck \
+            --transfers 2 \
+            --checkers 4 \
             --buffer-size 16M \
             --retries 10 \
             --retries-sleep 30s \
