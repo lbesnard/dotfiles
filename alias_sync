@@ -177,6 +177,9 @@ function funk_rclone() {
             --low-level-retries 20 \
             --delete-after \
             --track-renames \
+            --exclude "**/.XDG/**" \
+            --exclude "**/*.sock" \
+            --exclude "**/*-runtime" \
             --exclude ".*lrprev" \
             --exclude "jellyfin/**" \
             --exclude "uploaded_piwigo/**" \
