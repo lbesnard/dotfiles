@@ -157,7 +157,7 @@ function funk_rclone() {
     # connection, so the server never hits MaxStartups regardless of concurrency.
     # ServerAliveInterval keeps that single master connection alive through NAT.
     local ctl="/tmp/rclone-funk-$server_ip"
-    local sftp_ssh="ssh -p 9000 -l root"
+    local sftp_ssh="ssh -p 9000 -l backup"
     sftp_ssh+=" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
     sftp_ssh+=" -o Ciphers=aes128-gcm@openssh.com"
     sftp_ssh+=" -o ServerAliveInterval=60 -o ServerAliveCountMax=5"
