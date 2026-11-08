@@ -248,15 +248,15 @@ EnableCM=true
 GamutCheckMaskColor=126,255,255
 LastMismatchBehavior=2049
 LastMissingProfileBehavior=2050
-LastSpecifiedAssignProfile[$e]=/nix/store/3dig29am70y7djq577k8yy5bdv9kzbdq-digikam-9.1.0/share/digikam/profiles/
+LastSpecifiedAssignProfile[$e]=/nix/store/ng2hm5n53w1s1hj5yhml2y5grd873iwr-digikam-9.1.0/share/digikam/profiles/
 LastSpecifiedInputProfile=
 LastUncalibratedBehavior=2080
 ManagedPreviews=true
 ManagedView=true
-MonitorProfileFile[$e]=/nix/store/3dig29am70y7djq577k8yy5bdv9kzbdq-digikam-9.1.0/share/digikam/profiles/srgb-d65.icm
+MonitorProfileFile[$e]=/nix/store/ng2hm5n53w1s1hj5yhml2y5grd873iwr-digikam-9.1.0/share/digikam/profiles/srgb-d65.icm
 ProofingRenderingIntent=3
 RenderingIntent=0
-WorkProfileFile[$e]=/nix/store/3dig29am70y7djq577k8yy5bdv9kzbdq-digikam-9.1.0/share/digikam/profiles/srgb-d65.icm
+WorkProfileFile[$e]=/nix/store/ng2hm5n53w1s1hj5yhml2y5grd873iwr-digikam-9.1.0/share/digikam/profiles/srgb-d65.icm
 
 [Color Names]
 ColorName_black=Black
@@ -1009,7 +1009,7 @@ tagPaths=1
 
 [Database Settings]
 Database Connectoptions=
-Database Encrypted Password=AwL5+fk=
+Database Encrypted Password=AwJBQUE=
 Database Hostname=
 Database Name=/home/lbesnard/Documents/Digikam/
 Database Name Face=/home/lbesnard/Documents/Digikam/
@@ -2232,6 +2232,7 @@ CaseSensitive=0
 [Select Album Dialog]
 1920x1200 screen: Height=1200
 1920x1200 screen: Width=1920
+1920x1200 screen: Window-Maximized=true
 
 [Select Reference]
 AlbumComboBox-Checked=
