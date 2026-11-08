@@ -152,10 +152,16 @@ function funk_rclone() {
     # --sftp-ssh bypasses rclone's built-in SSH client entirely; rclone ignores
     # ALL connection params (host/port/user/ciphers) from the connection string —
     # they must all live in the ssh command itself (see rclone docs example).
+    #
+    # ControlMaster multiplexes all rclone worker subprocesses over ONE TCP
+    # connection, so the server never hits MaxStartups regardless of concurrency.
+    # ServerAliveInterval keeps that single master connection alive through NAT.
+    local ctl="/tmp/rclone-funk-$server_ip"
     local sftp_ssh="ssh -p 9000 -l root"
     sftp_ssh+=" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
     sftp_ssh+=" -o Ciphers=aes128-gcm@openssh.com"
     sftp_ssh+=" -o ServerAliveInterval=60 -o ServerAliveCountMax=5"
+    sftp_ssh+=" -o ControlMaster=auto -o ControlPath=$ctl -o ControlPersist=600"
     sftp_ssh+=" $server_ip"
 
     if [ -d "$dest" ]; then
@@ -163,9 +169,8 @@ function funk_rclone() {
             --progress \
             --sftp-ssh "$sftp_ssh" \
             --sftp-idle-timeout 0 \
-            --sftp-disable-hashcheck \
-            --transfers 2 \
-            --checkers 4 \
+            --transfers 4 \
+            --checkers 16 \
             --buffer-size 16M \
             --retries 10 \
             --retries-sleep 30s \
