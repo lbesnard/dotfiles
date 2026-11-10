@@ -33,6 +33,7 @@ _funk_config_file() {   # portable: sourced by both bash and zsh
     local -a files=()
     while IFS= read -r f; do files+=("$f"); done < <(
         find "$dir" -maxdepth 1 \( -type f -o -type l \) \( -name '_*.json' -o -name "$host.json" \) 2>/dev/null | sort)
+    [ -f "$dir/$host.json" ] || echo "funk: no $dir/$host.json for this machine (create funk/$host.json in the dotfiles repo)" >&2
     if [ "${#files[@]}" -gt 0 ]; then
         mkdir -p "$(dirname "$out")"
         (umask 077; jq -s '{tasks: (map(.tasks // []) | add)}' "${files[@]}" > "$out") || { echo "$dir"; return 1; }
@@ -40,7 +41,6 @@ _funk_config_file() {   # portable: sourced by both bash and zsh
     elif [ -f "$HOME/.funk_rsync_config.json" ]; then
         echo "$HOME/.funk_rsync_config.json"
     else
-        echo "funk: no task file for this machine: create $dir/$host.json ({\"tasks\": [...]}, in the repo funk/)" >&2
         echo "$dir"; return 1
     fi
 }
