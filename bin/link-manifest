@@ -34,6 +34,8 @@ while read -r src target flag; do
     if [[ "$src" == *\** ]]; then
         # a symlinked dir (older layout) would write links back into the repo: make it a real dir
         [[ -L "$target" ]] && rm -f "$target"
+        # drop links whose repo file was renamed/removed since the last run
+        [[ -d "$target" ]] && find "$target" -maxdepth 1 -xtype l -lname "$DOTFILES/*" -delete
         shopt -s nullglob
         for f in $src; do _link "$f" "$target/$(basename "$f")" "$flag"; done
         shopt -u nullglob

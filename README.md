@@ -205,11 +205,12 @@ To encrypt just one file: `./secrets encrypt config/APP/name.<host>.ext`.
 
 ### funk sync tasks (`funk/*.json`)
 
-The `funk_rsync_config` / `funk_rclone_config` / `funk_rsync_cron` tasks live in one encrypted file per destination
-machine or disk (`funk/beefunk.json`, `funk/simpl.json`, ...), each `{"tasks": [...]}`. `./install` links each file into
-`~/.funk_rsync.d`; `alias_sync` merges the files at run time. To add a task, edit the file of its destination
-(a new file `funk/<name>.json` is picked up automatically by `./secrets encrypt`). Tasks whose destination is
-`TO_BE_FILLED_MANUALLY` go in `funk/_unassigned.json`.
+The `funk_rsync_config` / `funk_rclone_config` / `funk_rsync_cron` tasks live in one encrypted file **per machine that
+runs them**, named after its lowercase `hostname -s` (`funk/beefunk.json`, `funk/lbesnard-latitude-7450.json`, ...),
+each `{"tasks": [...]}`. `./install` links the files into `~/.funk_rsync.d`; `alias_sync` loads only this machine's
+file plus any `_*.json` (loaded everywhere, e.g. `_unassigned.json` for tasks whose destination is
+`TO_BE_FILLED_MANUALLY`). Inside, destinations that are mount points are still filtered by what is mounted.
+New machine: create `funk/<hostname>.json`, `./secrets encrypt`, commit.
 
 ### Keep in mind
 

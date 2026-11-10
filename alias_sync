@@ -23,21 +23,21 @@ _funk_state_file() {
     echo "$(_funk_state_dir)/$safe_name"
 }
 
-# Task files live in ~/.funk_rsync.d/*.json (one per destination). Merge them into one {tasks:[...]}
-# document so the jq below keeps working unchanged. Falls back to the old single ~/.funk_rsync_config.json.
+# Task files live in ~/.funk_rsync.d/<hostname>.json (one per machine that runs them) plus any _*.json that
+# applies everywhere. Only this machine's file is loaded, then merged into one {tasks:[...]} document so the jq
+# below keeps working unchanged. Falls back to the old single ~/.funk_rsync_config.json.
 _funk_config_file() {
     local dir="$HOME/.funk_rsync.d" out="${XDG_RUNTIME_DIR:-$HOME/.cache}/funk_merged.json"
-    local files=("$dir"/*.json(N))
+    local host="${$(hostname -s 2>/dev/null):l}"
+    local files=("$dir"/_*.json(N) "$dir/$host.json"(N))
     if [[ ${#files[@]} -gt 0 ]]; then
         mkdir -p "${out:h}"
-        # a task with "only_on": "<hostname>" (string or list) is dropped on other machines
-        local host="${$(hostname -s 2>/dev/null):l}"
-        (umask 077; jq -s --arg host "$host" '{tasks: (map(.tasks // []) | add
-            | map(select(.only_on == null or ((.only_on | if type == "array" then . else [.] end | map(ascii_downcase)) | index($host)))))}' "${files[@]}" > "$out") || { echo "$dir"; return 1; }
+        (umask 077; jq -s '{tasks: (map(.tasks // []) | add)}' "${files[@]}" > "$out") || { echo "$dir"; return 1; }
         echo "$out"
     elif [[ -f "$HOME/.funk_rsync_config.json" ]]; then
         echo "$HOME/.funk_rsync_config.json"
     else
+        print -u2 "funk: no task file for this machine: create $dir/$host.json ({\"tasks\": [...]}, in the repo funk/)"
         echo "$dir"; return 1
     fi
 }
