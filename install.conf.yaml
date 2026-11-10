@@ -25,7 +25,7 @@
     ~/.config/beets: { create: true, force: false, path: config/beets/ }
     ~/.config/cheat/conf.yml: { create: true, force: true, path: cheat.yml }
     ~/.config/cmus/autosave: { create: true, force: true, path: cmus/autosave }
-    # ~/.config/digikamrc is handled by bin/link-hostname-configs (machine-specific)
+    # ~/.config/digikamrc is handled by bin/link-manifest (machine-specific)
     ~/.config/gh: { create: true, force: true, path: config/gh/ }
     ~/.config/starship.toml: { create: true, force: true, path: config/starship.toml }
     ~/.config/ghostty/config:
@@ -97,4 +97,3 @@
     ~/Mobac/mapsources: { path: mobac/mapsources, create: true, force: true }
 - shell:
     - [chmod -R 0755 ~/.zsh_alias, Making SSH-folder read-only]
-    - ["~/.dotfiles/bin/link-hostname-configs", Link hostname-specific configs]

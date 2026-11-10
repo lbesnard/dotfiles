@@ -113,7 +113,7 @@ Without it you get the public dotfiles only and everything else still works.
 `./install` does it all: it offers to install zerobrew + `age` (and `pre-commit` via pip),
 asks you to paste the key (hidden; the `AGE-SECRET-KEY-1...` line is enough, it is checked against
 `recipients.txt`), decrypts, installs the git hooks and links the secret files
-([`install.private.conf.yaml`](install.private.conf.yaml)). Press Enter at the key prompt to skip.
+(`bin/link-manifest`, from [`manifest.list`](manifest.list)). Press Enter at the key prompt to skip.
 
 ### Changing a secret
 
@@ -141,9 +141,10 @@ It never overwrites a local edit that was not encrypted yet: you get a `CONFLICT
 
 ### Adding a secret
 
-1. Add a row to `manifest.list` with the flag `secret` (`encrypt` adds the `.gitignore` pattern itself).
+1. Add one row to `manifest.list`: path, link target (or `-`), `secret`. `encrypt` adds the `.gitignore` pattern itself, `link-manifest` makes the symlink.
 2. `./secrets encrypt`, then commit the new `.age` file.
-3. If it needs a symlink, add it to `install.private.conf.yaml` (not `install.conf.yaml`).
+
+A secret is listed only in `manifest.list`. Whole-folder links like `~/.aws` stay in `install.conf.yaml` (they don't need the key).
 
 ### Commands
 
@@ -163,7 +164,7 @@ It never overwrites a local edit that was not encrypted yet: you get a `CONFLICT
 Some apps (Nextcloud, Joplin, Digikam, Darktable) silently update their own config
 on each machine, causing `CONFLICT` warnings after every pull.
 They are stored as `config/APP/name.<hostname>.ext` and symlinked at install time by
-[`bin/link-hostname-configs`](bin/link-hostname-configs).
+[`bin/link-manifest`](bin/link-manifest).
 
 **Adding a new machine** (run on the new machine after cloning):
 
@@ -186,7 +187,7 @@ git add -A && git commit -m "hostname configs: $(hostname -s | tr A-Z a-z)" && g
 ./install
 ```
 
-`bin/link-hostname-configs` prints `MISSING: …` with the exact copy command for any
+`bin/link-manifest` prints `MISSING: …` with the exact copy command for any
 file not yet present, so you know exactly what to do on a fresh machine.
 
 The hostname is always lowercased (`hostname -s | tr A-Z a-z`), so `Latitude-7450` becomes `latitude-7450`.
@@ -199,13 +200,13 @@ config/APP/name.{hostname}.ext   ~/.config/APP/name.ext   secret
 
 `{hostname}` is the lowercased `hostname -s` and each machine only uses its own file. Add `secret` if
 the file has credentials: `./secrets` then encrypts it and adds the gitignore pattern itself.
-`bin/link-hostname-configs` does the linking; `install.private.conf.yaml` is not involved.
+`bin/link-manifest` does the linking.
 To encrypt just one file: `./secrets encrypt config/APP/name.<host>.ext`.
 
 ### funk sync tasks (`funk/*.json`)
 
 The `funk_rsync_config` / `funk_rclone_config` / `funk_rsync_cron` tasks live in one encrypted file per destination
-machine or disk (`funk/beefunk.json`, `funk/simpl.json`, ...), each `{"tasks": [...]}`. `./install` links the folder to
+machine or disk (`funk/beefunk.json`, `funk/simpl.json`, ...), each `{"tasks": [...]}`. `./install` links each file into
 `~/.funk_rsync.d`; `alias_sync` merges the files at run time. To add a task, edit the file of its destination
 (a new file `funk/<name>.json` is picked up automatically by `./secrets encrypt`). Tasks whose destination is
 `TO_BE_FILLED_MANUALLY` go in `funk/_unassigned.json`.
@@ -256,8 +257,7 @@ initsys.sh, Brewfile            bootstrap for fresh machines
 termux-install.sh               bootstrap for Termux (Android)
 zsh/ tmux/ nvim/ config/        tool configs (config/* is linked into ~/.config)
 bin/                            scripts, put on $PATH as ~/bin
-  link-hostname-configs         symlinks machine-specific app configs (Nextcloud, Joplin, …)
+  link-manifest                 symlinks the manifest.list rows that have a target (secrets, per-machine configs)
 alias, alias_*                  shell aliases split by domain (sync, taskwarrior, gaming, netcdf)
 secrets, manifest.list           age-encrypted secrets: tool, manifest of files (+ *.age, recipients.txt)
-install.private.conf.yaml       links for decrypted secrets (only used when the age key is present)
 ```

@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Symlink every manifest.list row that has a link target. Run by ./install after the secrets are
+# decrypted, and by the post-pull hook. Safe to re-run.
+#
+#   plain row     config/digikamrc.{hostname}   ~/.config/digikamrc   -        -> link the file
+#   glob row      funk/*.json                   ~/.funk_rsync.d       secret   -> target is a DIRECTORY;
+#                                                                                each matching file is linked into it
+# {hostname} = lowercase `hostname -s`. A `secret` row whose plaintext is not there yet (no age key on
+# this machine) is skipped quietly; ./secrets status shows it.
+set -uo pipefail
+
+HOST=$(hostname -s | tr '[:upper:]' '[:lower:]')
+DOTFILES="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+cd "$DOTFILES" || exit 1
+
+_link() {   # _link <repo-relative file> <target file> <flag>
+    local rel="$1" target="$2" flag="$3"
+    if [[ -f "$rel" ]]; then
+        [[ "$flag" == secret ]] && chmod 600 "$rel"
+        mkdir -p "$(dirname "$target")"
+        ln -sfn "$DOTFILES/$rel" "$target"
+        printf 'linked:  %s\n' "$target"
+    elif [[ "$flag" == secret && -f "$rel.age" ]]; then
+        :   # encrypted but not decrypted here (no key)
+    else
+        printf 'MISSING: %s\n  fix:  cp %s %s\n         then: git add + commit' "$rel" "$target" "$rel"
+        [[ "$flag" == secret ]] && printf ' (./secrets encrypt first — file is sensitive)'
+        printf '\n'
+    fi
+}
+
+while read -r src target flag; do
+    src="${src//\{hostname\}/$HOST}"; target="${target/#\~/$HOME}"
+    if [[ "$src" == *\** ]]; then
+        # a symlinked dir (older layout) would write links back into the repo: make it a real dir
+        [[ -L "$target" ]] && rm -f "$target"
+        shopt -s nullglob
+        for f in $src; do _link "$f" "$target/$(basename "$f")" "$flag"; done
+        shopt -u nullglob
+    else
+        _link "$src" "$target" "$flag"
+    fi
+done < <(awk '$1!~/^#/ && NF && $2!="-"' manifest.list)

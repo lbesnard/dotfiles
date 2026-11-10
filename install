@@ -73,8 +73,9 @@ if [ "$rc" -ne 2 ]; then
   if [ "$rc" -ne 0 ]; then
     echo "secrets: decrypt had problems (rc=$rc); some secrets may be missing — linking what was decrypted." >&2
   fi
-  "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c install.private.conf.yaml "${@}"
 fi
+# Link manifest.list rows (secrets that were decrypted + per-machine configs).
+"${BASEDIR}/bin/link-manifest" || true
 "${BASEDIR}/secrets" install-completion || true
 echo
 "${BASEDIR}/secrets" status || true
