@@ -119,8 +119,8 @@
     contributors = shortlog -sn
     # Stash only unstaged changes
     stash-unstaged = stash --keep-index
-    # Default branch name: origin/HEAD, else local main, else local master
-    default-branch = "!f() { b=$(git symbolic-ref -q --short refs/remotes/origin/HEAD 2>/dev/null); b=${b#origin/}; if [ -z \"$b\" ]; then for c in main master; do git show-ref -q --verify refs/heads/$c && b=$c && break; done; fi; [ -n \"$b\" ] && echo \"$b\"; }; f"
+    # Default branch name: local main, else local master, else origin/HEAD (can be stale after clone)
+    default-branch = "!f() { for c in main master; do git show-ref -q --verify refs/heads/$c && { echo $c; return; }; done; b=$(git symbolic-ref -q --short refs/remotes/origin/HEAD 2>/dev/null); [ -n \"$b\" ] && echo \"${b#origin/}\"; }; f"
     # Checkout default branch, fetch all remotes ONCE (one ssh auth per remote), fast-forward, delete merged branches
     com = "!f() { b=$(git default-branch) || { echo 'No default branch found'; return 1; }; git checkout \"$b\" && git fetch --all --prune && { if git rev-parse --abbrev-ref @{u} >/dev/null 2>&1; then git merge --ff-only @{u}; fi; } && git bclean \"$b\"; }; f"
     # Fetch and checkout PR by number
