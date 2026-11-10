@@ -119,8 +119,10 @@
     contributors = shortlog -sn
     # Stash only unstaged changes
     stash-unstaged = stash --keep-index
-    # Checkout main/master, fetch all remotes ONCE (one ssh auth per remote), fast-forward, delete merged branches
-    com = "!f() { if git show-ref --verify --quiet refs/heads/main; then git checkout main; elif git show-ref --verify --quiet refs/heads/master; then git checkout master; else echo 'No main or master branch found'; return 1; fi && git fetch --all --prune && { if git rev-parse --abbrev-ref @{u} >/dev/null 2>&1; then git merge --ff-only @{u}; fi; } && git branch --merged | grep -v 'main' | grep -v 'master' | xargs -r git branch -d; }; f"
+    # Default branch name: origin/HEAD, else local main, else local master
+    default-branch = "!f() { b=$(git symbolic-ref -q --short refs/remotes/origin/HEAD 2>/dev/null); b=${b#origin/}; if [ -z \"$b\" ]; then for c in main master; do git show-ref -q --verify refs/heads/$c && b=$c && break; done; fi; [ -n \"$b\" ] && echo \"$b\"; }; f"
+    # Checkout default branch, fetch all remotes ONCE (one ssh auth per remote), fast-forward, delete merged branches
+    com = "!f() { b=$(git default-branch) || { echo 'No default branch found'; return 1; }; git checkout \"$b\" && git fetch --all --prune && { if git rev-parse --abbrev-ref @{u} >/dev/null 2>&1; then git merge --ff-only @{u}; fi; } && git bclean \"$b\"; }; f"
     # Fetch and checkout PR by number
     co-pr = !sh -c 'git fetch origin pull/$1/head:pr/$1 && git checkout pr/$1' -
     # WIP commit then squash-auto
@@ -128,9 +130,9 @@
     # Soft-reset N commits and recommit with combined messages
     squash-auto = !"f(){ git reset --soft HEAD~${1} && git commit --edit -m\"$(git log --format=%B --reverse HEAD..HEAD@{1})\"; };f"
     # Force-push current branch to origin
-    push-force-branch = !"f() { git branch  | grep '*' | sed 's/* //g'  | xargs git push -f origin; }; f"
+    push-force-branch = push -f origin HEAD
     # Push current branch to origin
-    push-branch = !"f() { git branch  | grep '*' | sed 's/* //g'  | xargs git push origin; }; f"
+    push-branch = push origin HEAD
     # WIP commit and push current branch
     co-wip-and-push-branch = !git co-wip && git push-branch
     # Interactive rebase squashing last N commits
@@ -154,13 +156,13 @@
     # Discard all changes (kept in a WIPE SAVEPOINT commit)
     wipe = !git add -A && git commit -qm 'WIPE SAVEPOINT' && git reset HEAD~1 --hard
     # Delete branches merged into main (or given branch)
-    bclean = "!f() { git branch --merged ${1-main} | grep -v " ${1-main}$" | xargs -r git branch -d; }; f"
+    bclean = "!f() { b=${1:-$(git default-branch)}; git branch --merged \"$b\" --format='%(refname:short)' | grep -vxF \"$b\" | xargs -r git branch -d; }; f"
     # Checkout main/given branch, update, clean merged branches
-    bdone = "!f() { git checkout ${1-master} && git up && git bclean ${1-master}; }; f"
+    bdone = "!f() { b=${1:-$(git default-branch)}; git checkout \"$b\" && git up && git bclean \"$b\"; }; f"
     # Hard-reset current branch to origin
-    reset-branch-like-remote = "!f() { branch=`git branch  | grep '*' | sed 's/* //g'`; git fetch --all; git reset --hard origin/$branch; }; f"
+    reset-branch-like-remote = "!f() { git fetch origin && git reset --hard origin/$(git branch --show-current); }; f"
     # gh repo sync current branch, keeping local changes stashed/popped
-	sync-and-stash = "!f() { \\\n    branch=$(git symbolic-ref --short HEAD); \\\n    gh repo sync --branch \"$branch\" && \\\n    git stash --all && \\\n    git stash pop; \\\n}; f"
+    sync-and-stash = "!f() { git stash push --all -q && gh repo sync --branch \"$(git branch --show-current)\"; r=$?; git stash pop -q; return $r; }; f"
 [color "diff-highlight"]
 	oldNormal = red bold
 	oldHighlight = red bold 52
