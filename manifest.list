@@ -1,0 +1,29 @@
+# One manifest for everything that is machine-specific or secret.   Columns:
+#   <path in repo>   <link target, or ->   <flag, or ->
+# {hostname} in a path = lowercase `hostname -s`: each machine only uses its own file.
+# link target : bin/link-hostname-configs symlinks the repo file there (a `-` means dotbot or nothing links it).
+# flag secret : gitignored plaintext, only <file>.age is committed; ./secrets encrypts/decrypts it and
+#               adds the .gitignore pattern itself. Edit the plaintext, commit (hook re-encrypts), push.
+# New machine: cp <target> <path with this host>; ./secrets encrypt; commit; ./install
+
+# --- secrets (linked by install.private.conf.yaml / dotbot) ---
+aws/config                                      -                                       secret
+aws/credentials                                 -                                       secret
+config/beets/discogs_token.json                 -                                       secret
+config/beets/spotify_token.json                 -                                       secret
+config/passhole.ini                             -                                       secret
+config/rclone/rclone.conf                       -                                       secret
+config/redlist/spotify_token.json               -                                       secret
+funk_rsync_config                               -                                       secret
+hosts                                           -                                       secret
+pgadmin/pgpass                                  -                                       secret
+pgadmin/pgpass_encrypted.tar                    -                                       secret
+ssh/config                                      -                                       secret
+taskrc                                          -                                       secret
+whatlastgenre/config                            -                                       secret
+
+# --- per-machine configs (linked by bin/link-hostname-configs) ---
+config/Nextcloud/nextcloud.{hostname}.cfg       ~/.config/Nextcloud/nextcloud.cfg       secret
+config/joplin-desktop/settings.{hostname}.json  ~/.config/joplin-desktop/settings.json  secret
+config/digikamrc.{hostname}                     ~/.config/digikamrc                     -
+config/darktable/darktablerc.{hostname}         ~/.config/darktable/darktablerc         -

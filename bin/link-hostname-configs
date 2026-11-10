@@ -2,20 +2,19 @@
 # Link hostname-specific config files to their canonical ~/.config/ locations.
 #
 # Convention: store configs as  config/APP/name.{hostname}.ext  (or name.{hostname}
-# for extension-less files) and add one _link line below per app.
+# for extension-less files) and list it in manifest.list (one line per app).
 #
-# Sensitive files (tokens, server URLs):  also list them in secrets.list.
-# Plain machine-specific files (paths, library locations): just track them in git.
+# Mark credentials files `secret` in manifest.list: ./secrets then encrypts + gitignores them.
 #
 # To add a new machine:
-#   cp ~/.config/APP/file  ~/.dotfiles/config/APP/file.$(hostname -s)[.ext]
-#   git add config/APP/file.$(hostname -s)[.ext]
-#   ./secrets encrypt   # only if the file is in secrets.list
+#   cp ~/.config/APP/file  ~/.dotfiles/config/APP/file.$(hostname -s | tr A-Z a-z)[.ext]
+#   git add config/APP/file.$(hostname -s | tr A-Z a-z)[.ext]
+#   ./secrets encrypt   # only if the line is marked `secret` in manifest.list
 #   git commit && git push
 
 set -uo pipefail
 
-HOST=$(hostname -s)
+HOST=$(hostname -s | tr '[:upper:]' '[:lower:]')
 DOTFILES="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 
 _link() {
@@ -29,14 +28,12 @@ _link() {
     else
         printf 'MISSING: %s\n  fix:  cp %s %s\n' "$src" "$target" "$src"
         printf '         then: git add + commit'
-        grep -qF "${1/\{hostname\}.$HOST/}" "$DOTFILES/secrets.list" 2>/dev/null \
+        awk -v p="$1" '$1==p && $3=="secret"{f=1} END{exit !f}' "$DOTFILES/manifest.list" \
             && printf ' (./secrets encrypt first — file is sensitive)'
         printf '\n'
     fi
 }
 
-# dotfiles path (with {hostname})                             target
-_link "config/Nextcloud/nextcloud.{hostname}.cfg"             "$HOME/.config/Nextcloud/nextcloud.cfg"
-_link "config/joplin-desktop/settings.{hostname}.json"        "$HOME/.config/joplin-desktop/settings.json"
-_link "config/digikamrc.{hostname}"                           "$HOME/.config/digikamrc"
-_link "config/darktable/darktablerc.{hostname}"               "$HOME/.config/darktable/darktablerc"
+while read -r src target flag; do
+    _link "$src" "${target/#\~/$HOME}"
+done < <(awk '$1!~/^#/ && NF && $2!="-"' "$DOTFILES/manifest.list")

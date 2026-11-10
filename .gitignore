@@ -40,7 +40,7 @@ config/pgcli/log
 efunk/docker-compose/tandoor/mediafiles/
 efunk/docker-compose/data/
 
-# --- secrets: plaintext is ignored, only *.age is committed (see secrets.list) ---
+# --- secrets: plaintext is ignored, only *.age is committed (see manifest.list) ---
 /aws/config
 /aws/credentials
 /config/beets/discogs_token.json

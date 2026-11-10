@@ -100,7 +100,7 @@ lazygit, gh, ...) with `pkg`; packages missing from the Termux repo are skipped 
 ## Secrets
 
 This repo is public, but credentials live in it **encrypted** with [age](https://age-encryption.org).
-Everything listed in [`secrets.list`](secrets.list) (aws, ssh config, tokens, taskrc, ...) exists as:
+Everything listed in [`manifest.list`](manifest.list) (aws, ssh config, tokens, taskrc, ...) exists as:
 
 * a plaintext file in the usual place: **gitignored**, so `git status` never shows it;
 * a `<file>.age` next to it: encrypted to the public key in [`recipients.txt`](recipients.txt), **committed**.
@@ -141,7 +141,7 @@ It never overwrites a local edit that was not encrypted yet: you get a `CONFLICT
 
 ### Adding a secret
 
-1. Add its path to `secrets.list` **and** to `.gitignore` (`encrypt` refuses a path that is not ignored).
+1. Add a row to `manifest.list` with the flag `secret` (`encrypt` adds the `.gitignore` pattern itself).
 2. `./secrets encrypt`, then commit the new `.age` file.
 3. If it needs a symlink, add it to `install.private.conf.yaml` (not `install.conf.yaml`).
 
@@ -169,28 +169,38 @@ They are stored as `config/APP/name.<hostname>.ext` and symlinked at install tim
 
 ```bash
 cp ~/.config/Nextcloud/nextcloud.cfg \
-   ~/.dotfiles/config/Nextcloud/nextcloud.$(hostname -s).cfg
+   ~/.dotfiles/config/Nextcloud/nextcloud.$(hostname -s | tr A-Z a-z).cfg
 
 cp ~/.config/joplin-desktop/settings.json \
-   ~/.dotfiles/config/joplin-desktop/settings.$(hostname -s).json
+   ~/.dotfiles/config/joplin-desktop/settings.$(hostname -s | tr A-Z a-z).json
 
 cp ~/.config/digikamrc \
-   ~/.dotfiles/config/digikamrc.$(hostname -s)
+   ~/.dotfiles/config/digikamrc.$(hostname -s | tr A-Z a-z)
 
 cp ~/.config/darktable/darktablerc \
-   ~/.dotfiles/config/darktable/darktablerc.$(hostname -s)
+   ~/.dotfiles/config/darktable/darktablerc.$(hostname -s | tr A-Z a-z)
 
 cd ~/.dotfiles
-./secrets encrypt   # for Nextcloud and Joplin (they are in secrets.list)
-git add -A && git commit -m "hostname configs: $(hostname -s)" && git push
+./secrets encrypt   # for Nextcloud and Joplin (they are flagged secret in manifest.list)
+git add -A && git commit -m "hostname configs: $(hostname -s | tr A-Z a-z)" && git push
 ./install
 ```
 
 `bin/link-hostname-configs` prints `MISSING: …` with the exact copy command for any
 file not yet present, so you know exactly what to do on a fresh machine.
 
-**Adding a new app** to this mechanism: add one `_link` line to `bin/link-hostname-configs`,
-and add the file to `secrets.list` + `.gitignore` only if it contains credentials.
+The hostname is always lowercased (`hostname -s | tr A-Z a-z`), so `Latitude-7450` becomes `latitude-7450`.
+
+**Adding a new app** to this mechanism: add one line to [`manifest.list`](manifest.list), nothing else:
+
+```
+config/APP/name.{hostname}.ext   ~/.config/APP/name.ext   secret
+```
+
+`{hostname}` is the lowercased `hostname -s` and each machine only uses its own file. Add `secret` if
+the file has credentials: `./secrets` then encrypts it and adds the gitignore pattern itself.
+`bin/link-hostname-configs` does the linking; `install.private.conf.yaml` is not involved.
+To encrypt just one file: `./secrets encrypt config/APP/name.<host>.ext`.
 
 ### Keep in mind
 
@@ -240,6 +250,6 @@ zsh/ tmux/ nvim/ config/        tool configs (config/* is linked into ~/.config)
 bin/                            scripts, put on $PATH as ~/bin
   link-hostname-configs         symlinks machine-specific app configs (Nextcloud, Joplin, …)
 alias, alias_*                  shell aliases split by domain (sync, taskwarrior, gaming, netcdf)
-secrets, secrets.list           age-encrypted secrets: tool, list of files (+ *.age, recipients.txt)
+secrets, manifest.list           age-encrypted secrets: tool, manifest of files (+ *.age, recipients.txt)
 install.private.conf.yaml       links for decrypted secrets (only used when the age key is present)
 ```
