@@ -202,6 +202,14 @@ the file has credentials: `./secrets` then encrypts it and adds the gitignore pa
 `bin/link-hostname-configs` does the linking; `install.private.conf.yaml` is not involved.
 To encrypt just one file: `./secrets encrypt config/APP/name.<host>.ext`.
 
+### funk sync tasks (`funk/*.json`)
+
+The `funk_rsync_config` / `funk_rclone_config` / `funk_rsync_cron` tasks live in one encrypted file per destination
+machine or disk (`funk/beefunk.json`, `funk/simpl.json`, ...), each `{"tasks": [...]}`. `./install` links the folder to
+`~/.funk_rsync.d`; `alias_sync` merges the files at run time. To add a task, edit the file of its destination
+(a new file `funk/<name>.json` is picked up automatically by `./secrets encrypt`). Tasks whose destination is
+`TO_BE_FILLED_MANUALLY` go in `funk/_unassigned.json`.
+
 ### Keep in mind
 
 * The ciphertext is public and permanent. If the key leaks, anything ever pushed can be read, and changing

@@ -3,8 +3,8 @@
     ~/.config/passhole.ini:
       { create: true, force: true, path: config/passhole.ini }
     # Nextcloud/Joplin configs are hostname-specific; handled by bin/link-hostname-configs
-    ~/.funk_rsync_config.json:
-      { force: true, path: funk_rsync_config.json, create: true }
+    ~/.funk_rsync.d:
+      { force: true, path: funk, create: true }   # dir of per-destination task files, merged by alias_sync
     ~/.pgpass: { create: true, force: true, path: pgadmin/pgpass }
     ~/.ssh/config: { force: true, path: ssh/config, create: true }
     ~/.taskrc: { create: true, force: true, path: taskrc }

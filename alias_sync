@@ -23,6 +23,22 @@ _funk_state_file() {
     echo "$(_funk_state_dir)/$safe_name"
 }
 
+# Task files live in ~/.funk_rsync.d/*.json (one per destination). Merge them into one {tasks:[...]}
+# document so the jq below keeps working unchanged. Falls back to the old single ~/.funk_rsync_config.json.
+_funk_config_file() {
+    local dir="$HOME/.funk_rsync.d" out="${XDG_RUNTIME_DIR:-$HOME/.cache}/funk_merged.json"
+    local files=("$dir"/*.json(N))
+    if [[ ${#files[@]} -gt 0 ]]; then
+        mkdir -p "${out:h}"
+        (umask 077; jq -s '{tasks: (map(.tasks // []) | add)}' "${files[@]}" > "$out") || { echo "$dir"; return 1; }
+        echo "$out"
+    elif [[ -f "$HOME/.funk_rsync_config.json" ]]; then
+        echo "$HOME/.funk_rsync_config.json"
+    else
+        echo "$dir"; return 1
+    fi
+}
+
 _funk_mounts_cache=""
 
 _funk_dest_is_available() {
@@ -218,7 +234,7 @@ function funk_rsync_config() {
         return 1
     fi
 
-    local config_file="$HOME/.funk_rsync_config.json"
+    local config_file; config_file="$(_funk_config_file)"
     if [[ ! -f "$config_file" ]]; then
         echo "Error: Configuration file '$config_file' not found."
         return 1
@@ -267,7 +283,7 @@ function funk_rclone_config() {
         return 1
     fi
 
-    local config_file="$HOME/.funk_rsync_config.json"
+    local config_file; config_file="$(_funk_config_file)"
     if [[ ! -f "$config_file" ]]; then
         echo "Error: Configuration file '$config_file' not found."
         return 1
@@ -312,7 +328,7 @@ function funk_rclone_config() {
 
 function funk_rsync_cron() {
     local out_machine="$1"
-    local config_file="$HOME/.funk_rsync_config.json"
+    local config_file; config_file="$(_funk_config_file)"
 
     if [[ -z "$out_machine" ]]; then
         echo "Usage: funk_rsync_cron <out_machine_name>"
