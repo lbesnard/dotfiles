@@ -1,12 +1,25 @@
-# One manifest for everything that is machine-specific or secret.   Columns:
-#   <path in repo>   <link target, or ->   <flag, or ->
-# {hostname} in a path = lowercase `hostname -s`: each machine only uses its own file.
-# link target : bin/link-hostname-configs symlinks the repo file there (a `-` means dotbot or nothing links it).
-# flag secret : gitignored plaintext, only <file>.age is committed; ./secrets encrypts/decrypts it and
-#               adds the .gitignore pattern itself. Edit the plaintext, commit (hook re-encrypts), push.
-# New machine: cp <target> <path with this host>; ./secrets encrypt; commit; ./install
+# manifest.list: which files are secret and/or differ per machine.
+# Read by ./secrets (encryption) and bin/link-hostname-configs (per-machine links). NOT by dotbot.
+#
+# Columns (whitespace separated):   <path in repo>   <link target or ->   <secret or ->
+#
+#   path    relative to the repo root. `{hostname}` = lowercase `hostname -s`, so each machine only
+#           uses its own file. A `*` matches several files (e.g. funk/*.json).
+#   target  ONLY for {hostname} rows: bin/link-hostname-configs symlinks the repo file there.
+#           For every other row use `-`: links of fixed files stay in install.conf.yaml (public)
+#           or install.private.conf.yaml (secrets), like any other dotbot link.
+#   secret  gitignored plaintext, only <file>.age is committed. ./secrets encrypts/decrypts it and adds
+#           the .gitignore pattern itself. Use `-` for a per-machine file that is not sensitive.
+#
+# Examples
+#   taskrc                                    -                   secret   # fixed secret; dotbot links it
+#   funk/*.json                               -                   secret   # several secret files at once
+#   config/APP/app.{hostname}.ini             ~/.config/APP/app.ini  secret   # per-machine secret + link
+#   config/digikamrc.{hostname}               ~/.config/digikamrc    -        # per-machine, public, linked
+#
+# New machine:  cp <target> <repo path with this host>;  ./secrets encrypt;  commit;  ./install
 
-# --- secrets (linked by install.private.conf.yaml / dotbot) ---
+# --- fixed secrets (linked by install.private.conf.yaml) ---
 aws/config                                      -                                       secret
 aws/credentials                                 -                                       secret
 config/beets/discogs_token.json                 -                                       secret
@@ -14,7 +27,7 @@ config/beets/spotify_token.json                 -                               
 config/passhole.ini                             -                                       secret
 config/rclone/rclone.conf                       -                                       secret
 config/redlist/spotify_token.json               -                                       secret
-funk/*.json                                         ~/.funk_rsync.d                         secret
+funk/*.json                                     -                                       secret
 hosts                                           -                                       secret
 pgadmin/pgpass                                  -                                       secret
 pgadmin/pgpass_encrypted.tar                    -                                       secret
