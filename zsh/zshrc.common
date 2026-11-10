@@ -95,8 +95,9 @@ export SHELL="${HOMEBREW_PREFIX:+$HOMEBREW_PREFIX/bin/zsh}"
 # History
 export HISTSIZE=32768
 export HISTFILESIZE=$HISTSIZE
+export SAVEHIST=$HISTSIZE   # without this zsh writes no history file
 export HISTFILE=$HOME/.zsh_history
-setopt append_history hist_expire_dups_first hist_ignore_all_dups hist_reduce_blanks hist_save_no_dups hist_lex_words hist_fcntl_lock
+setopt inc_append_history share_history append_history hist_expire_dups_first hist_ignore_all_dups hist_reduce_blanks hist_save_no_dups hist_lex_words hist_fcntl_lock
 
 # -----------------------------
 # pyenv
