@@ -26,18 +26,21 @@ _funk_state_file() {
 # Task files live in ~/.funk_rsync.d/<hostname>.json (one per machine that runs them) plus any _*.json that
 # applies everywhere. Only this machine's file is loaded, then merged into one {tasks:[...]} document so the jq
 # below keeps working unchanged. Falls back to the old single ~/.funk_rsync_config.json.
-_funk_config_file() {
+_funk_config_file() {   # portable: sourced by both bash and zsh
     local dir="$HOME/.funk_rsync.d" out="${XDG_RUNTIME_DIR:-$HOME/.cache}/funk_merged.json"
-    local host="${$(hostname -s 2>/dev/null):l}"
-    local files=("$dir"/_*.json(N) "$dir/$host.json"(N))
-    if [[ ${#files[@]} -gt 0 ]]; then
-        mkdir -p "${out:h}"
+    local host f
+    host="$(hostname -s 2>/dev/null | tr '[:upper:]' '[:lower:]')"
+    local -a files=()
+    while IFS= read -r f; do files+=("$f"); done < <(
+        find "$dir" -maxdepth 1 \( -type f -o -type l \) \( -name '_*.json' -o -name "$host.json" \) 2>/dev/null | sort)
+    if [ "${#files[@]}" -gt 0 ]; then
+        mkdir -p "$(dirname "$out")"
         (umask 077; jq -s '{tasks: (map(.tasks // []) | add)}' "${files[@]}" > "$out") || { echo "$dir"; return 1; }
         echo "$out"
-    elif [[ -f "$HOME/.funk_rsync_config.json" ]]; then
+    elif [ -f "$HOME/.funk_rsync_config.json" ]; then
         echo "$HOME/.funk_rsync_config.json"
     else
-        print -u2 "funk: no task file for this machine: create $dir/$host.json ({\"tasks\": [...]}, in the repo funk/)"
+        echo "funk: no task file for this machine: create $dir/$host.json ({\"tasks\": [...]}, in the repo funk/)" >&2
         echo "$dir"; return 1
     fi
 }
