@@ -30,7 +30,10 @@ _funk_config_file() {
     local files=("$dir"/*.json(N))
     if [[ ${#files[@]} -gt 0 ]]; then
         mkdir -p "${out:h}"
-        (umask 077; jq -s '{tasks: (map(.tasks // []) | add)}' "${files[@]}" > "$out") || { echo "$dir"; return 1; }
+        # a task with "only_on": "<hostname>" (string or list) is dropped on other machines
+        local host="${$(hostname -s 2>/dev/null):l}"
+        (umask 077; jq -s --arg host "$host" '{tasks: (map(.tasks // []) | add
+            | map(select(.only_on == null or ((.only_on | if type == "array" then . else [.] end | map(ascii_downcase)) | index($host)))))}' "${files[@]}" > "$out") || { echo "$dir"; return 1; }
         echo "$out"
     elif [[ -f "$HOME/.funk_rsync_config.json" ]]; then
         echo "$HOME/.funk_rsync_config.json"
