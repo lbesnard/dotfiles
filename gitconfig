@@ -119,8 +119,8 @@
     contributors = shortlog -sn
     # Stash only unstaged changes
     stash-unstaged = stash --keep-index
-    # Checkout main/master, pull, delete merged branches, fetch all
-    com = "!f() { if git show-ref --verify --quiet refs/heads/main; then git checkout main; elif git show-ref --verify --quiet refs/heads/master; then git checkout master; else echo 'No main or master branch found'; return 1; fi && git pull && git branch --merged | grep -v 'main' | grep -v 'master' | xargs -r git branch -d && git fetch --all; }; f"
+    # Checkout main/master, fetch all remotes ONCE (one ssh auth per remote), fast-forward, delete merged branches
+    com = "!f() { if git show-ref --verify --quiet refs/heads/main; then git checkout main; elif git show-ref --verify --quiet refs/heads/master; then git checkout master; else echo 'No main or master branch found'; return 1; fi && git fetch --all --prune && { if git rev-parse --abbrev-ref @{u} >/dev/null 2>&1; then git merge --ff-only @{u}; fi; } && git branch --merged | grep -v 'main' | grep -v 'master' | xargs -r git branch -d; }; f"
     # Fetch and checkout PR by number
     co-pr = !sh -c 'git fetch origin pull/$1/head:pr/$1 && git checkout pr/$1' -
     # WIP commit then squash-auto

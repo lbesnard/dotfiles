@@ -434,7 +434,21 @@ git() {
 # Long-lived tmux panes keep a stale forwarded-agent socket; ~/.ssh/rc maintains a stable symlink
 # to the current one on each ssh login, so follow it at every prompt (remote sessions only).
 if [[ -n $SSH_CONNECTION || -n $TMUX ]]; then
-    _follow_ssh_agent() { [[ -S $HOME/.ssh/ssh_auth_sock ]] && export SSH_AUTH_SOCK=$HOME/.ssh/ssh_auth_sock }
+    # Keep SSH_AUTH_SOCK pointing at a LIVE agent socket. Order: current (if alive) ->
+    # stable symlink from ~/.ssh/rc -> newest live forwarded socket in /tmp.
+    _follow_ssh_agent() {
+        [[ -S $SSH_AUTH_SOCK ]] && return 0
+        local s
+        for s in $HOME/.ssh/ssh_auth_sock /tmp/ssh-*/agent.*(N=om); do
+            [[ -S $s ]] || continue
+            SSH_AUTH_SOCK=$s ssh-add -l &>/dev/null
+            (( $? == 2 )) && continue   # 2 = agent unreachable (0/1 = alive, with/without keys)
+            export SSH_AUTH_SOCK=$s
+            [[ -n $TMUX ]] && tmux set-environment -g SSH_AUTH_SOCK "$s" 2>/dev/null
+            return 0
+        done
+        return 1
+    }
     autoload -Uz add-zsh-hook && add-zsh-hook precmd _follow_ssh_agent
 fi
 

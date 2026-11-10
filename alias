@@ -103,12 +103,12 @@ function aws_okta_forward_port() {
 }
 
 function ssh-agent-fix() {
-    if [[ -n "$SSH_AUTH_SOCK" ]]; then
-        tmux set-environment -g SSH_AUTH_SOCK "$SSH_AUTH_SOCK" 2>/dev/null
-        export SSH_AUTH_SOCK=$(tmux show-environment -s SSH_AUTH_SOCK 2>/dev/null | sed 's/^SSH_AUTH_SOCK=//')
-        echo "SSH_AUTH_SOCK refreshed for tmux"
+    [[ -S $SSH_AUTH_SOCK ]] || unset SSH_AUTH_SOCK
+    if (( $+functions[_follow_ssh_agent] )) && _follow_ssh_agent; then
+        echo "SSH_AUTH_SOCK -> $SSH_AUTH_SOCK"
+        ssh-add -l
     else
-        echo "No SSH agent found"
+        echo "No live SSH agent found: reconnect with ForwardAgent (not mosh), or run: eval \$(ssh-agent) && ssh-add"
     fi
 }
 
