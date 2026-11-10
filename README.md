@@ -200,7 +200,9 @@ config/APP/name.{hostname}.ext   ~/.config/APP/name.ext   secret
 
 `{hostname}` is the lowercased `hostname -s` and each machine only uses its own file. Add `secret` if
 the file has credentials: `./secrets` then encrypts it and adds the gitignore pattern itself.
-`bin/link-manifest` does the linking.
+`bin/link-manifest` does the linking. It replaces existing symlinks but never a real file or directory: it reports
+`EXISTS:` and exits 1 (`./install` prints a reminder); after checking, `bin/link-manifest --force` moves it to
+`<target>.bak.<timestamp>` and links.
 To encrypt just one file: `./secrets encrypt config/APP/name.<host>.ext`.
 
 ### funk sync tasks (`funk/*.json`)

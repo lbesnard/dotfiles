@@ -7,7 +7,14 @@
 #                                                                                each matching file is linked into it
 # {hostname} = lowercase `hostname -s`. A `secret` row whose plaintext is not there yet (no age key on
 # this machine) is skipped quietly; ./secrets status shows it.
+#
+# Safe by default: an existing symlink is replaced (relinked), but a real file or directory at the target
+# is NOT touched: it is reported and the exit code is 1. After checking it, run `bin/link-manifest --force`
+# to move it aside to <target>.bak.<timestamp> and link. MISSING repo files are only a warning (exit 0).
 set -uo pipefail
+
+FORCE=0; [[ "${1:-}" == "--force" ]] && FORCE=1
+rc=0
 
 HOST=$(hostname -s | tr '[:upper:]' '[:lower:]')
 DOTFILES="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
@@ -17,9 +24,21 @@ _link() {   # _link <repo-relative file> <target file> <flag>
     local rel="$1" target="$2" flag="$3"
     if [[ -f "$rel" ]]; then
         [[ "$flag" == secret ]] && chmod 600 "$rel"
-        mkdir -p "$(dirname "$target")"
-        ln -sfn "$DOTFILES/$rel" "$target"
-        printf 'linked:  %s\n' "$target"
+        if [[ -L "$target" && "$(readlink -f "$target")" == "$DOTFILES/$rel" ]]; then
+            printf 'ok:      %s\n' "$target"; return
+        fi
+        if [[ -e "$target" && ! -L "$target" ]]; then      # a real file or directory is there
+            if [[ "$FORCE" = 1 ]]; then
+                mv -- "$target" "$target.bak.$(date +%Y%m%d%H%M%S)" || { rc=1; return; }
+                printf 'moved:   %s -> %s.bak.*\n' "$target" "$target"
+            else
+                printf 'EXISTS:  %s is a real file/dir, not linked (check it, then: bin/link-manifest --force)\n' "$target" >&2
+                rc=1; return
+            fi
+        fi
+        mkdir -p "$(dirname "$target")" && ln -sfn "$DOTFILES/$rel" "$target" \
+            && printf 'linked:  %s\n' "$target" \
+            || { printf 'FAILED:  %s\n' "$target" >&2; rc=1; }
     elif [[ "$flag" == secret && -f "$rel.age" ]]; then
         :   # encrypted but not decrypted here (no key)
     else
@@ -43,3 +62,4 @@ while read -r src target flag; do
         _link "$src" "$target" "$flag"
     fi
 done < <(awk '$1!~/^#/ && NF && $2!="-"' manifest.list)
+exit $rc

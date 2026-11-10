@@ -75,12 +75,17 @@ if [ "$rc" -ne 2 ]; then
   fi
 fi
 # Link manifest.list rows (secrets that were decrypted + per-machine configs).
-"${BASEDIR}/bin/link-manifest" || true
+link_rc=0
+"${BASEDIR}/bin/link-manifest" || link_rc=$?
 "${BASEDIR}/secrets" install-completion || true
 echo
 "${BASEDIR}/secrets" status || true
 
+if [ "$link_rc" -ne 0 ]; then
+  echo "install: some files were not linked (see EXISTS/FAILED above); after checking them: bin/link-manifest --force" >&2
+fi
 if [ "$dotbot_rc" -ne 0 ]; then
   echo "install: dotbot reported failed links (rc=$dotbot_rc); see the output above." >&2
   exit "$dotbot_rc"
 fi
+exit "$link_rc"
