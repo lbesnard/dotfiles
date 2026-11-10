@@ -14,7 +14,7 @@ config/beets/spotify_token.json                 -                               
 config/passhole.ini                             -                                       secret
 config/rclone/rclone.conf                       -                                       secret
 config/redlist/spotify_token.json               -                                       secret
-funk_rsync_config                               -                                       secret
+funk_rsync_config.json                               -                                       secret
 hosts                                           -                                       secret
 pgadmin/pgpass                                  -                                       secret
 pgadmin/pgpass_encrypted.tar                    -                                       secret

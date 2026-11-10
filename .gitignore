@@ -50,7 +50,7 @@ efunk/docker-compose/data/
 /config/joplin-desktop/settings*.json
 /config/digikamrc
 /config/darktable/darktablerc
-/funk_rsync_config
+/funk_rsync_config.json
 /pgadmin/pgpass
 /ssh/config
 /taskrc
