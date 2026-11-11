@@ -411,7 +411,7 @@ def main():
             with tempfile.NamedTemporaryFile("wb", delete=False) as tmp:
                 tmp.write(b"\0".join(rel.encode() for rel, *_ in g.send) + b"\0")
             cmd = tgt.rsync_base() + ["-rt", "--no-perms", "--no-owner", "--no-group", "--partial", "--from0",
-                                      f"--files-from={tmp.name}", "--info=progress2", "-h"]
+                                      f"--files-from={tmp.name}", "--info=name1,progress2,stats1", "-h"]
             if tgt.bwlimit:
                 cmd.append(f"--bwlimit={tgt.bwlimit}")
             cmd += [str(g.src_dir) + "/", tgt.remote(rdir + "/")]
