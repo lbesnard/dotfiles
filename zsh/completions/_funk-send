@@ -1,0 +1,45 @@
+#compdef funk-send
+# zsh completion for bin/funk-send: targets, shows (read live from source_root) and seasons.
+
+_funk_send_cfg() { print -r -- ${XDG_CONFIG_HOME:-$HOME/.config}/funk-send/config.json }
+
+_funk_send_root() {
+  local i; for (( i = 1; i < $#words; i++ )); do
+    [[ $words[i] == --source-root ]] && { print -r -- ${~words[i+1]}; return }
+  done
+  jq -r '.source_root' "$(_funk_send_cfg)" 2>/dev/null
+}
+
+_funk_send_targets() {
+  local -a t; t=(${(f)"$(jq -r '.targets | keys[]' "$(_funk_send_cfg)" 2>/dev/null)"})
+  _describe -t targets 'target' t
+}
+
+_funk_send_shows() {
+  local root=$(_funk_send_root); [[ -d $root ]] || return 1
+  local -a shows; shows=(${root}/*(/N:t))
+  compadd -Q -a shows
+}
+
+_funk_send_seasons() {
+  local root=$(_funk_send_root) s i; local -a seas
+  for (( i = 1; i < $#words; i++ )); do [[ $words[i] == (-s|--show) ]] && s=$words[i+1]; done
+  [[ -n $s && -d $root/$s ]] && seas=(${(M)${root}/$s/*(/N:t)##*[0-9]*})
+  seas=(${(u)${seas//[^0-9]/}##0#}); compadd -a seas
+}
+
+_arguments -s \
+  '(-t --to)'{-t,--to}'[target machine]:target:_funk_send_targets' \
+  '*'{-s,--show}'[show name, substring or glob]:show:_funk_send_shows' \
+  '*--season[season number]:season:_funk_send_seasons' \
+  '--all-seasons[all seasons]' \
+  '--delete-dest[delete the destination video this one replaces]' \
+  '--only-smaller[only send when the source is smaller]' \
+  '(-n --dry-run)'{-n,--dry-run}'[show the plan, change nothing]' \
+  '--bwlimit[rate limit (5M, 800K)]:rate:' \
+  '--source-root[override source_root]:dir:_files -/' \
+  '--dest-root[override dest_root]:path:' \
+  '(-y --yes)'{-y,--yes}'[no confirmation]' \
+  '--config[config file]:file:_files' \
+  '--edit-config[open the config in $EDITOR]' \
+  '(- *)'{-h,--help}'[help]'

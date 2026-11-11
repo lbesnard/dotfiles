@@ -1,0 +1,438 @@
+#!/usr/bin/env python3
+"""funk-send: push (already converted) TV shows from this machine to another funk machine.
+
+Typical use, on the powerful machine (beefunk), after Unmanic converted everything:
+
+    cd "/media/.../TV Shows" && funk-send               # inside a show/season dir: sends that one
+    funk-send                                           # fzf multi-select of shows
+    funk-send -s "Stargate (1995)" --all-seasons --delete-dest -n
+    funk-send -s Stargate --season 1 --season 2 --bwlimit 5M
+
+What is sent: video files only (subtitles are never sent, nor deleted, on the destination).
+Per file, compared with what is already on the destination (listed over ssh):
+  NEW   not there                                  -> sent
+  REPL  same path, different size                  -> sent (with --only-smaller: only if the source is smaller)
+  SWAP  same episode, different name/extension     -> sent; the old file is deleted only with --delete-dest
+  same  same path and size                         -> skipped
+Files that exist only on the destination (e.g. episodes it already got) are NEVER touched.
+Season folders are matched by number ("Season 1" == "Season 01"), episodes by name, then by SxxEyy.
+
+Config: ~/.config/funk-send/config.json (created on first run; in the dotfiles it is the encrypted
+config/funk-send/config.json). Command line options override it.
+Needs: python3, rsync (both ends), ssh, and fzf for the interactive pickers.
+"""
+import argparse
+import fnmatch
+import json
+import os
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+import tempfile
+from collections import defaultdict
+from pathlib import Path
+
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "funk-send" / "config.json"
+PLACEHOLDER = "TO_BE_FILLED_MANUALLY"
+EP_RE = re.compile(r"[Ss](\d{1,3})[Ee](\d{1,4})")
+NUM_RE = re.compile(r"(\d+)")
+
+
+def die(msg, code=1):
+    print(f"funk-send: {msg}", file=sys.stderr)
+    sys.exit(code)
+
+
+def human(n):
+    for unit in ("B", "KB", "MB", "GB", "TB"):
+        if n < 1024 or unit == "TB":
+            return f"{n:.0f} {unit}" if unit == "B" else f"{n:.1f} {unit}"
+        n /= 1024
+
+
+# ---------------------------------------------------------------------------- config
+def default_config():
+    """Template; the brownfunk address is borrowed from the funk rsync tasks when they exist."""
+    host = PLACEHOLDER
+    try:
+        for f in sorted((Path.home() / ".funk_rsync.d").glob("*.json")):
+            for t in json.loads(f.read_text()).get("tasks", []):
+                if "brownfunk" in t.get("name", "").lower() and t.get("server"):
+                    host = t["server"]
+                    break
+            if host != PLACEHOLDER:
+                break
+    except Exception:
+        pass
+    return {
+        "default_target": "brownfunk",
+        "source_root": "/media/lbesnard/beefunk_12tb_d/movies/TV Shows",
+        "targets": {
+            "brownfunk": {
+                "host": host,
+                "port": 9000,
+                "user": "backup",
+                # path INSIDE the rsync-server container (writable mount of /media/lbesnard/bfunk_10tb_2/movies/TV Shows)
+                "dest_root": "/upload/TV Shows",
+                "bwlimit": "",
+                "identity_file": "",
+            }
+        },
+        "video_ext": ["mkv", "mp4", "m4v", "avi", "mov", "wmv", "ts", "mpg", "mpeg", "webm"],
+        "subtitle_ext": ["srt", "ass", "ssa", "sub", "idx", "vtt"],
+    }
+
+
+def load_config(path):
+    if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(default_config(), indent=2) + "\n")
+        path.chmod(0o600)
+        print(f"funk-send: created {path}. Check it (host, dest_root, source_root), then re-run.")
+        sys.exit(0)
+    try:
+        return json.loads(path.read_text())
+    except json.JSONDecodeError as e:
+        die(f"{path}: {e}")
+
+
+# ---------------------------------------------------------------------------- ssh / rsync
+class Target:
+    def __init__(self, name, c, bwlimit):
+        self.name = name
+        self.host = c.get("host", PLACEHOLDER)
+        if self.host == PLACEHOLDER:
+            die(f"target '{name}': host not set in the config")
+        self.user = c.get("user", "")
+        self.port = c.get("port", 22)
+        self.dest_root = c["dest_root"].rstrip("/")
+        self.bwlimit = bwlimit or c.get("bwlimit") or ""
+        ssh = ["ssh", "-p", str(self.port), "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null",
+               "-o", "LogLevel=ERROR", "-o", "ServerAliveInterval=60", "-o", "ControlMaster=auto",
+               "-o", f"ControlPath=/tmp/funk-send-{os.getuid()}-%C", "-o", "ControlPersist=300"]
+        if c.get("identity_file"):
+            ssh += ["-i", os.path.expanduser(c["identity_file"])]
+        if self.user:
+            ssh += ["-l", self.user]
+        self.ssh = ssh
+
+    def rsync_base(self):
+        return ["rsync", "-s", "-e", " ".join(shlex.quote(x) for x in self.ssh)]
+
+    def remote(self, path):
+        return f"{self.host}:{path}"
+
+    def run(self, shell_cmd):
+        return subprocess.run(self.ssh + [self.host, shell_cmd], capture_output=True, text=True)
+
+    def list_dir(self, path):
+        """{relpath: size} of files under a remote dir, or None when it does not exist."""
+        r = subprocess.run(self.rsync_base() + ["-r", "--list-only", "--no-human-readable", self.remote(path + "/")],
+                           capture_output=True, text=True)
+        if r.returncode != 0:
+            if "No such file" in r.stderr or "change_dir" in r.stderr or r.returncode == 23:
+                return None
+            die(f"cannot list {self.host}:{path}\n{r.stderr.strip()}")
+        out = {}
+        for line in r.stdout.splitlines():
+            m = re.match(r"^(\S{10})\s+([\d,]+)\s+\d{4}/\d\d/\d\d \d\d:\d\d:\d\d (.*)$", line)
+            if m and m.group(1).startswith("-"):
+                out[m.group(3)] = int(m.group(2).replace(",", ""))
+        return out
+
+
+# ---------------------------------------------------------------------------- selection
+def fzf(items, prompt, multi=True, preview=None, query=None, env=None):
+    if not shutil.which("fzf"):
+        die("fzf not found (needed for the interactive picker; pass --show instead)")
+    if not sys.stdin.isatty():
+        die("need a terminal for the interactive picker; pass --show instead")
+    cmd = ["fzf", "--prompt", prompt, "--height=70%", "--reverse", "--border"]
+    if multi:
+        cmd += ["-m", "--bind", "ctrl-a:select-all,ctrl-d:deselect-all", "--header", "TAB select, ctrl-a all"]
+    if preview:
+        cmd += ["--preview", preview]
+    if query:
+        cmd += ["--query", query]
+    r = subprocess.run(cmd, input="\n".join(items), text=True, stdout=subprocess.PIPE, env={**os.environ, **(env or {})})
+    return [x for x in r.stdout.splitlines() if x]
+
+
+def season_num(name):
+    m = NUM_RE.search(name)
+    return int(m.group(1)) if m else (0 if "special" in name.lower() else None)
+
+
+def resolve_shows(args, root):
+    all_shows = sorted(p.name for p in root.iterdir() if p.is_dir() and not p.name.startswith("."))
+    chosen, seasons_from_cwd = [], []
+    if args.show:
+        for pat in args.show:
+            if any(c in pat for c in "*?["):
+                hits = [s for s in all_shows if fnmatch.fnmatch(s.casefold(), pat.casefold())]
+            else:
+                hits = [s for s in all_shows if s.casefold() == pat.casefold()] or \
+                       [s for s in all_shows if pat.casefold() in s.casefold()]
+            if not hits:
+                die(f"no show matches '{pat}' in {root}")
+            if len(hits) > 1 and not any(h.casefold() == pat.casefold() for h in hits):
+                hits = fzf(hits, f"'{pat}' matches several > ", query=pat, env={})
+            chosen += hits
+    else:
+        try:
+            parts = Path.cwd().resolve().relative_to(root.resolve()).parts
+        except ValueError:
+            parts = ()
+        if parts:
+            chosen = [parts[0]]
+            if len(parts) > 1 and season_num(parts[1]) is not None:
+                seasons_from_cwd = [season_num(parts[1])]
+        else:
+            chosen = fzf(all_shows, "Shows to send > ", preview='ls -1 "$FUNK_ROOT"/{}', env={"FUNK_ROOT": str(root)})
+    chosen = list(dict.fromkeys(chosen))
+    if not chosen:
+        die("nothing selected", 0)
+    return chosen, seasons_from_cwd
+
+
+def resolve_seasons(args, root, shows, from_cwd):
+    """None = all seasons, else a set of season numbers."""
+    if args.all_seasons:
+        return None
+    if args.season:
+        return set(args.season)
+    if from_cwd:
+        return set(from_cwd)
+    if len(shows) == 1 and sys.stdin.isatty() and shutil.which("fzf"):
+        names = sorted(p.name for p in (root / shows[0]).iterdir() if p.is_dir())
+        if len(names) > 1:
+            picked = fzf(["[ALL SEASONS]"] + names, f"{shows[0]} seasons > ")
+            if not picked:
+                die("nothing selected", 0)
+            if "[ALL SEASONS]" in picked:
+                return None
+            return {season_num(n) for n in picked if season_num(n) is not None}
+    return None
+
+
+# ---------------------------------------------------------------------------- planning
+class Group:
+    """One source dir -> one destination dir (a season, or the show root for loose files)."""
+    def __init__(self, src_dir, dest_rel, recursive):
+        self.src_dir, self.dest_rel, self.recursive = src_dir, dest_rel, recursive
+        self.send = []     # (rel, size, kind, note)
+        self.delete = []   # rel paths (relative to dest dir)
+        self.same = 0
+        self.skipped = []  # (rel, why)
+
+
+def walk_videos(d, recursive, vexts):
+    if recursive:
+        for p in sorted(d.rglob("*")):
+            if p.is_file() and p.suffix.lower().lstrip(".") in vexts:
+                yield p.relative_to(d).as_posix(), p.stat().st_size
+    else:
+        for p in sorted(d.iterdir()):
+            if p.is_file() and p.suffix.lower().lstrip(".") in vexts:
+                yield p.name, p.stat().st_size
+
+
+def plan_show(show, seasons, root, tgt, cfg, args):
+    vexts = set(cfg["video_ext"])
+    dest_show = f"{tgt.dest_root}/{show}"
+    dest = tgt.list_dir(dest_show)
+    groups, warnings = [], []
+    if dest is None:
+        warnings.append(f"'{show}' does not exist on {tgt.name}: whole folder will be created "
+                        f"(check the name matches what Jellyfin/Sonarr use there)")
+        dest = {}
+    dest_seasons = {}  # number -> dir name on destination
+    for rel in dest:
+        top = rel.split("/")[0]
+        if "/" in rel and season_num(top) is not None:
+            dest_seasons.setdefault(season_num(top), top)
+
+    src_show = root / show
+    todo = []
+    if seasons is None:
+        todo.append(("", False))  # loose files at the show root
+    for d in sorted(p for p in src_show.iterdir() if p.is_dir()):
+        n = season_num(d.name)
+        if seasons is None or n in seasons:
+            todo.append((d.name, True))
+    if seasons is not None:
+        missing = seasons - {season_num(d) for d, _ in todo if d}
+        if missing:
+            warnings.append(f"{show}: no source season {sorted(missing)}")
+
+    for sname, recursive in todo:
+        src_dir = src_show / sname if sname else src_show
+        n = season_num(sname) if sname else None
+        dname = sname
+        if sname and not any(r.startswith(sname + "/") for r in dest) and n in dest_seasons:
+            dname = dest_seasons[n]
+            warnings.append(f"{show}: '{sname}' -> '{dname}' (destination spelling)")
+        g = Group(src_dir, f"{show}/{dname}" if dname else show, recursive)
+        prefix = f"{dname}/" if dname else ""
+        dmap = {r[len(prefix):]: s for r, s in dest.items()
+                if r.startswith(prefix) and (recursive or "/" not in r[len(prefix):])}
+        by_dir = defaultdict(list)
+        for r in dmap:
+            if Path(r).suffix.lower().lstrip(".") in vexts:
+                by_dir[os.path.dirname(r)].append(r)
+        claimed = set()
+        for rel, size in walk_videos(src_dir, recursive, vexts):
+            d, p = os.path.dirname(rel), Path(rel)
+            siblings = [x for x in by_dir.get(d, []) if x != rel]
+            victims = [x for x in siblings if Path(x).stem == p.stem]
+            m = EP_RE.search(p.name)
+            by_ep = []
+            if rel not in dmap and not victims and m:
+                key = (int(m.group(1)), int(m.group(2)))
+                by_ep = [x for x in siblings if (e := EP_RE.search(Path(x).name))
+                         and (int(e.group(1)), int(e.group(2))) == key]
+            victims = [v for v in (victims or by_ep) if v not in claimed]
+            if rel in dmap:
+                if dmap[rel] == size:
+                    g.same += 1
+                    kind = None
+                elif args.only_smaller and size >= dmap[rel]:
+                    g.skipped.append((rel, f"source not smaller ({human(size)} >= {human(dmap[rel])})"))
+                    kind = None
+                else:
+                    kind, note = "REPL", f"{human(dmap[rel])} -> {human(size)}"
+            elif victims:
+                old = min(dmap[v] for v in victims)
+                if args.only_smaller and size >= old:
+                    g.skipped.append((rel, f"source not smaller than {victims[0]}"))
+                    kind = None
+                else:
+                    kind = "SWAP"
+                    note = f"replaces {', '.join(victims)} ({human(old)} -> {human(size)})"
+                    if by_ep:
+                        note += "  [matched by SxxEyy, names differ!]"
+            else:
+                kind, note = "NEW", human(size)
+            if kind:
+                g.send.append((rel, size, kind, note))
+            # delete the old file only once its replacement is (or will be) on the destination
+            if args.delete_dest and victims and (kind or (rel in dmap and dmap[rel] == size)):
+                for v in victims:
+                    claimed.add(v)
+                    g.delete.append(v)
+        if g.send or g.delete or g.same or g.skipped:
+            groups.append(g)
+    return groups, warnings
+
+
+# ---------------------------------------------------------------------------- main
+def main():
+    ap = argparse.ArgumentParser(prog="funk-send", description="Push converted TV shows to another funk machine.",
+                                 epilog=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("-t", "--to", help="target from the config (default: default_target)")
+    ap.add_argument("-s", "--show", action="append", help="show name, substring or glob (repeatable). Omit for fzf")
+    ap.add_argument("--season", action="append", type=int, help="season number (repeatable)")
+    ap.add_argument("--all-seasons", action="store_true", help="all seasons (skips the season picker)")
+    ap.add_argument("--delete-dest", action="store_true",
+                    help="delete the destination video that a sent file replaces (other extension/name); never subtitles")
+    ap.add_argument("--only-smaller", action="store_true", help="only send when the source is smaller than what is there")
+    ap.add_argument("-n", "--dry-run", action="store_true", help="show the plan, change nothing")
+    ap.add_argument("--bwlimit", help="rsync rate limit: 5M, 800K, or plain KiB/s (default: target's bwlimit)")
+    ap.add_argument("--source-root", help="override config source_root")
+    ap.add_argument("--dest-root", help="override the target's dest_root")
+    ap.add_argument("-y", "--yes", action="store_true", help="do not ask for confirmation")
+    ap.add_argument("--config", type=Path, default=CONFIG, help=f"config file (default {CONFIG})")
+    ap.add_argument("--edit-config", action="store_true", help="open the config in $EDITOR")
+    args = ap.parse_args()
+
+    cfg_path = args.config
+    cfg = load_config(cfg_path)
+    if args.edit_config:
+        os.execvp(os.environ.get("EDITOR", "vi"), [os.environ.get("EDITOR", "vi"), str(cfg_path.resolve())])
+
+    for tool in ("rsync", "ssh"):
+        if not shutil.which(tool):
+            die(f"{tool} not found")
+    tname = args.to or cfg.get("default_target")
+    if tname not in cfg.get("targets", {}):
+        die(f"unknown target '{tname}'; known: {', '.join(cfg.get('targets', {}))}")
+    tc = dict(cfg["targets"][tname])
+    if args.dest_root:
+        tc["dest_root"] = args.dest_root
+    tgt = Target(tname, tc, args.bwlimit)
+
+    root = Path(args.source_root or cfg["source_root"]).expanduser()
+    if not root.is_dir():
+        die(f"source_root {root} is not a directory")
+
+    shows, cwd_seasons = resolve_shows(args, root)
+    seasons = resolve_seasons(args, root, shows, cwd_seasons)
+
+    print(f"{root}  ->  {tgt.name} ({tgt.host}:{tgt.dest_root})" + (f"  [bwlimit {tgt.bwlimit}]" if tgt.bwlimit else ""))
+    groups, total, ndel = [], 0, 0
+    for show in shows:
+        gs, warns = plan_show(show, seasons, root, tgt, cfg, args)
+        print(f"\n== {show}")
+        for w in warns:
+            print(f"  ! {w}")
+        for g in gs:
+            groups.append(g)
+            label = g.dest_rel.split("/", 1)[1] if "/" in g.dest_rel else "(show root)"
+            print(f"  {label}: {len(g.send)} to send, {g.same} identical, {len(g.skipped)} skipped, {len(g.delete)} to delete")
+            for rel, size, kind, note in g.send:
+                print(f"    {kind:<4} {rel}  {note}")
+                total += size
+            for rel, why in g.skipped:
+                print(f"    skip {rel}  {why}")
+            for rel in g.delete:
+                print(f"    DEL  {rel}")
+                ndel += 1
+    nfiles = sum(len(g.send) for g in groups)
+    print(f"\nTotal: {nfiles} file(s), {human(total)} to send, {ndel} to delete on {tgt.name}.")
+    if args.delete_dest is False and any("replaces" in n for g in groups for *_, n in g.send):
+        print("Note: SWAP entries leave the old file in place (duplicates!) unless you pass --delete-dest.")
+    if nfiles == 0 and ndel == 0:
+        return
+    if args.dry_run:
+        print("Dry run: nothing changed.")
+        return
+    if not args.yes:
+        if not sys.stdin.isatty() or input("Proceed? [y/N] ").strip().lower() not in ("y", "yes"):
+            die("aborted", 0)
+
+    failed = 0
+    for g in groups:
+        rdir = f"{tgt.dest_root}/{g.dest_rel}"
+        if g.send:
+            if (r := tgt.run(f"mkdir -p {shlex.quote(rdir)}")).returncode:
+                die(f"mkdir {rdir}: {r.stderr.strip()}")
+            with tempfile.NamedTemporaryFile("wb", delete=False) as tmp:
+                tmp.write(b"\0".join(rel.encode() for rel, *_ in g.send) + b"\0")
+            cmd = tgt.rsync_base() + ["-rt", "--no-perms", "--no-owner", "--no-group", "--partial", "--from0",
+                                      f"--files-from={tmp.name}", "--info=progress2", "-h"]
+            if tgt.bwlimit:
+                cmd.append(f"--bwlimit={tgt.bwlimit}")
+            cmd += [str(g.src_dir) + "/", tgt.remote(rdir + "/")]
+            print(f"\n>> {g.dest_rel}")
+            rc = subprocess.run(cmd).returncode
+            os.unlink(tmp.name)
+            if rc:
+                print(f"funk-send: rsync failed (exit {rc}) for {g.dest_rel}; its deletions are skipped", file=sys.stderr)
+                failed += 1
+                continue
+        for i in range(0, len(g.delete), 40):
+            quoted = " ".join(shlex.quote(f"{rdir}/{p}") for p in g.delete[i:i + 40])
+            r = tgt.run(f"rm -v -- {quoted}")
+            print(r.stdout.strip() or r.stderr.strip())
+            failed += bool(r.returncode)
+    print("\nDone." if not failed else f"\nFinished with {failed} failed group(s).")
+    sys.exit(1 if failed else 0)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(130)

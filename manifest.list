@@ -24,6 +24,7 @@ aws/config                                      -                               
 aws/credentials                                 -                                       secret
 config/beets/discogs_token.json                 -                                       secret
 config/beets/spotify_token.json                 -                                       secret
+config/funk-send/config.json                    ~/.config/funk-send/config.json         secret
 config/passhole.ini                             ~/.config/passhole.ini                  secret
 config/rclone/rclone.conf                       -                                       secret
 config/redlist/spotify_token.json               -                                       secret
