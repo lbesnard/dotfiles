@@ -1,0 +1,69 @@
+# Global mise config: CLI tools for any machine, no sudo needed.
+# Linked to ~/.config/mise/config.toml by dotbot; installed with `mise install` (see bin/mise-bootstrap).
+# Add a tool:  mise use -g <tool>   (edits this file through the symlink)   Upgrade: mise upgrade
+# Find a name: mise registry | grep <name>   or use a backend directly: aqua:owner/repo, github:owner/repo, pipx:pkg
+#
+# NOT here (need compiling or system libs; use apt / the distro): zsh (see bin/mise-bootstrap), git, tig, vim,
+#   htop, ncdu, tree, xclip, openssh, curl, coreutils, p7zip, gcc, cmake, midnight-commander, urlview, grc, fpp,
+#   pyenv, rbenv, ruby, thefuck, ansible (pinned/managed by Fleet-Control).
+
+[tools]
+# shell
+tmux = "latest"
+starship = "latest"
+zoxide = "latest"
+fzf = "latest"
+"aqua:skim-rs/skim" = "latest"        # sk
+
+# editor
+"aqua:neovim/neovim" = "latest"
+
+# search / files / viewing
+fd = "latest"
+ripgrep = "latest"
+bat = "latest"
+eza = "latest"
+"aqua:lsd-rs/lsd" = "latest"
+yazi = "latest"
+"aqua:gokcehan/lf" = "latest"
+"aqua:sharkdp/hexyl" = "latest"
+"aqua:bootandy/dust" = "latest"
+"aqua:Canop/dysk" = "latest"
+"aqua:ms-jpq/sad" = "latest"
+"ubi:atanunq/viu" = "latest"
+"aqua:charmbracelet/glow" = "latest"
+"aqua:tealdeer-rs/tealdeer" = "latest"   # tldr
+lnav = "latest"
+cheat = "latest"
+jq = "latest"
+yq = "latest"
+
+# git / github
+gh = "latest"
+"aqua:dandavison/delta" = "latest"    # git-delta
+"aqua:jesseduffield/lazygit" = "latest"
+"aqua:gitui-org/gitui" = "latest"
+"aqua:mislav/hub" = "latest"
+age = "latest"
+"aqua:nektos/act" = "latest"          # run github actions locally
+
+# system / network
+"aqua:aristocratos/btop" = "latest"
+"aqua:schollz/croc" = "latest"
+rclone = "latest"
+"github:gcla/termshark" = "latest"
+"aqua:rcoh/angle-grinder" = "latest"
+"github:yt-dlp/yt-dlp" = "latest"
+"aqua:jesseduffield/lazydocker" = "latest"
+"aqua:aws/aws-cli" = "latest"
+"aqua:gohugoio/hugo" = "latest"
+"aqua:go-task/task" = "latest"        # taskfile runner (not taskwarrior)
+
+# python tooling / runtimes
+uv = "latest"
+node = "lts"
+"pipx:pgcli" = "latest"
+"pipx:mycli" = "latest"
+"pipx:httpie" = "latest"
+"pipx:ranger-fm" = "latest"
+"pipx:pre-commit" = "latest"

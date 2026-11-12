@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# Install mise (https://mise.jdx.dev) into ~/.local/bin and every tool in mise/config.toml. No sudo.
+#
+# Usage: mise-bootstrap [--zsh] [-h]
+#   --zsh   also install a static zsh (romkatv/zsh-bin) into ~/.local when there is no usable zsh.
+#           mise has no zsh package, and zerobrew's zsh breaks (baked-in module path). Prefer
+#           `sudo apt install zsh` when you can; this is the no-sudo fallback.
+#
+# Safe to re-run. The tool list is mise/config.toml in the repo (linked to ~/.config/mise/config.toml).
+set -euo pipefail
+
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+export PATH="$HOME/.local/bin:$PATH"
+log() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
+
+want_zsh=0
+for arg in "$@"; do
+    case "$arg" in
+        --zsh) want_zsh=1 ;;
+        -h|--help) sed -n '2,11p' "$0"; exit 0 ;;
+        *) echo "unknown option: $arg" >&2; exit 2 ;;
+    esac
+done
+
+command -v curl >/dev/null || { echo "missing required command: curl" >&2; exit 1; }
+
+# 1. mise itself (the installer only downloads the binary; it does not touch shell rc files)
+if ! command -v mise >/dev/null; then
+    log "Installing mise into ~/.local/bin"
+    mkdir -p "$HOME/.local/bin"
+    curl -fsSL https://mise.run | MISE_INSTALL_PATH="$HOME/.local/bin/mise" sh
+fi
+mise --version
+
+# 2. config: normally linked by dotbot; fall back to the repo copy when ./install has not run yet
+if [ ! -e "$HOME/.config/mise/config.toml" ]; then
+    mkdir -p "$HOME/.config/mise"
+    ln -s "$DOTFILES_DIR/mise/config.toml" "$HOME/.config/mise/config.toml"
+fi
+
+# 3. the tools. One failing tool must not abort the rest, so report at the end.
+log "Installing tools from mise/config.toml"
+mise install --jobs 8 || echo "mise-bootstrap: some tools failed to install (see above); re-run to retry." >&2
+
+# 4. optional static zsh
+if [ "$want_zsh" = 1 ]; then
+    if command -v zsh >/dev/null && zsh -fc 'zmodload zsh/parameter zsh/zle' >/dev/null 2>&1; then
+        log "zsh already works ($(command -v zsh)); skipping"
+    else
+        log "Installing static zsh (romkatv/zsh-bin) into ~/.local"
+        tmp="$(mktemp)"
+        curl -fsSL https://raw.githubusercontent.com/romkatv/zsh-bin/master/install -o "$tmp"
+        sh "$tmp" -d "$HOME/.local" -e no -c no   # -e no: leave rc files alone; they come from the dotfiles
+        rm -f "$tmp"
+    fi
+elif ! command -v zsh >/dev/null; then
+    echo "mise-bootstrap: no zsh found. Install it with 'sudo apt install zsh', or re-run with --zsh for a static build." >&2
+fi
+
+log "Done. Open a new shell (tools are on PATH through ~/.local/share/mise/shims)."

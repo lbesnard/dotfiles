@@ -25,6 +25,7 @@
     ~/.config/bdnex: { create: true, force: true, path: config/bdnex/ }
     ~/.config/beets: { create: true, force: false, path: config/beets/ }
     ~/.config/cheat/conf.yml: { create: true, force: true, path: cheat.yml }
+    ~/.config/mise/config.toml: { create: true, force: true, path: mise/config.toml }
     ~/.config/cmus/autosave: { create: true, force: true, path: cmus/autosave }
     # ~/.config/digikamrc is handled by bin/link-manifest (machine-specific)
     ~/.config/gh: { create: true, force: true, path: config/gh/ }

@@ -19,7 +19,7 @@ a phone (Termux). One repo, linked into `$HOME` with [dotbot](https://github.com
   [gh](https://cli.github.com) with custom aliases (`bin/git-alias`, `bin/gh-aliases`)
 * **Desktop**: i3, i3blocks, rofi
 * **Misc**: [cheat](https://github.com/cheat/cheat), [lnav](https://lnav.org), taskwarrior, beets, cmus
-* **Packages**: [zerobrew](https://zerobrew.rs) (fast, sudo-free Homebrew-compatible client), listed in [`Brewfile`](Brewfile)
+* **Packages**: [mise](https://mise.jdx.dev) (sudo-free, prebuilt binaries), listed in [`mise/config.toml`](mise/config.toml)
 
 ## Install
 
@@ -35,9 +35,11 @@ eval "$(ssh-agent -s)" && ssh-add     # ~/.ssh/id_rsa
 curl -fsSL https://raw.githubusercontent.com/lbesnard/dotfiles/main/initsys.sh | bash
 ```
 
-This installs zerobrew, makes a **shallow** clone of this repo into `~/github_repo/dotfiles`,
-installs the `Brewfile` packages and links everything into `$HOME`. It is safe to re-run (it
+This installs mise, makes a **shallow** clone of this repo into `~/github_repo/dotfiles`,
+installs the `mise/config.toml` tools and links everything into `$HOME`. It is safe to re-run (it
 updates instead of cloning again).
+
+Add `-s -- --zsh` to also install a static zsh into `~/.local` (mise has no zsh; prefer `sudo apt install zsh` when you can).
 
 Add `-s -- --ansible` to also run the user-level roles of
 [Fleet-Control](https://github.com/lbesnard/Fleet-Control/tree/master/ansible)
@@ -110,7 +112,7 @@ Without it you get the public dotfiles only and everything else still works.
 
 ### New machine
 
-`./install` does it all: it offers to install zerobrew + `age` (and `pre-commit` via pip),
+`./install` does it all: it offers to install mise + `age` (and `pre-commit` via pip),
 asks you to paste the key (hidden; the `AGE-SECRET-KEY-1...` line is enough, it is checked against
 `recipients.txt`), decrypts, installs the git hooks and links the secret files
 (`bin/link-manifest`, from [`manifest.list`](manifest.list)). Press Enter at the key prompt to skip.
@@ -230,7 +232,7 @@ New machine: create `funk/<hostname>.json`, `./secrets encrypt`, commit.
 | File | Role |
 | --- | --- |
 | `zsh/zshrc` | Detects the machine profile once (`termux`, `server`, `homeserver`, `laptop`; override with `ZSH_PROFILE_NAME`) and sources the right files |
-| `zsh/zshrc.common` | Shared config: tmux autostart (first, so the outer shell does no wasted work), zerobrew PATH, prompt, turbo-loaded plugins, fzf, completion styling |
+| `zsh/zshrc.common` | Shared config: tmux autostart (first, so the outer shell does no wasted work), mise PATH, prompt, turbo-loaded plugins, fzf, completion styling |
 | `zsh/zshrc.laptop`, `.server`, `.homeserver` | Per-machine additions |
 | `zsh/zshrc.termux` | Standalone Termux config |
 | `zsh/functions/`, `zsh/completions/` | Autoloaded functions and completions |
@@ -248,15 +250,15 @@ Profile startup with `ZSH_PROFILE=1 zsh -i -c exit` (prints a zprof report), or
 ## Adding a package
 
 ```bash
-zb install <formula>
-zb bundle dump -f Brewfile --force     # keep Brewfile in sync
+mise use -g <tool>      # edits mise/config.toml through the symlink; find names with: mise registry | grep <name>
+mise upgrade            # update everything
 ```
 
 ## Layout
 
 ```
 install, install.conf.yaml      dotbot entrypoint and link map
-initsys.sh, Brewfile            bootstrap for fresh machines
+initsys.sh, mise/config.toml    bootstrap for fresh machines
 termux-install.sh               bootstrap for Termux (Android)
 zsh/ tmux/ nvim/ config/        tool configs (config/* is linked into ~/.config)
 bin/                            scripts, put on $PATH as ~/bin
