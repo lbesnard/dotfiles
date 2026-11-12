@@ -556,8 +556,12 @@ let g:autopep8_select="W293,E261,E302,F405,E225,E203,E231,E305,E502,E124,E303,E2
 "Remove all trailing whitespace by pressing F8
 nnoremap <F8> :let _s=@/<Bar>:%s/\s\+$//e<Bar>:let @/=_s<Bar><CR>
 
-" the silver searcher integration
-let g:ackprg = 'ag --nogroup --nocolor --column'
+" ripgrep (or the silver searcher as a fallback) for ack.vim. A real binary: vim does not see shell aliases.
+if executable('rg')
+  let g:ackprg = 'rg --vimgrep --smart-case'
+else
+  let g:ackprg = 'ag --nogroup --nocolor --column'
+endif
 
 " save file as root :Sw
 command! -nargs=0 Sw w !sudo tee % > /dev/null
