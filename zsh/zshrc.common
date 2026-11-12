@@ -355,6 +355,17 @@ zstyle ':completion:*:*:git:*' tag-order 'common-commands alias-commands' all-co
 # -----------------------------
 [ -f ~/.cheat/fzf.bash ] && source ~/.cheat/fzf.bash
 
+# fzf ssh/telnet completion: list only the `Host` aliases from ~/.ssh/config
+# (not HostName values, known_hosts or /etc/hosts), so completion never picks a
+# raw hostname that bypasses the Host block's config. Must be defined before
+# fzf's completion is sourced (it only defines its own if this is missing).
+__fzf_list_hosts() {
+    setopt localoptions nonomatch
+    command cat ~/.ssh/config ~/.ssh/config.d/* 2> /dev/null \
+        | awk 'tolower($1) == "host" {for (i = 2; i <= NF; i++) if ($i !~ /[*?!%]/) print $i}' \
+        | sort -u
+}
+
 # Cache fzf shell integration — regenerate only when fzf binary changes
 if (( $+commands[fzf] )); then
     _fzf_cache="$HOME/.cache/zsh/fzf_init.zsh"

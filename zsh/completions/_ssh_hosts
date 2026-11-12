@@ -1,0 +1,36 @@
+#autoload
+# Replaces zsh's stock _ssh_hosts (shadows it via fpath order) so that ssh/scp/
+# sftp/rsync Tab completion offers only the `Host` aliases from ~/.ssh/config
+# (and ~/.ssh/config.d/*, or the file given with -F), never HostName values,
+# known_hosts or /etc/hosts entries. Those would bypass the Host block's config.
+# Wildcard patterns (Host *-nec-hob) can't be completed and are skipped.
+# Keeps the same extra args as the stock one (e.g. -S: -r:) via "$@".
+# Mirrors the fzf `**` completion, see __fzf_list_hosts in zsh/zshrc.common.
+
+local -a config_hosts files
+local config key line host
+integer ind
+
+if (( ind = ${words[(I)-F]} )); then
+  config=${~words[ind+1]} 2>/dev/null
+  files=($config)
+else
+  files=(~/.ssh/config ~/.ssh/config.d/*(N))
+fi
+
+local -a lines
+for config in $files; do
+  [[ -r $config ]] && lines+=("${(@f)$(<"$config")}")
+done
+
+for line in "${lines[@]}"; do
+  IFS=$'=\t ' read -r key line <<<"$line"
+  [[ ${(L)key} == host ]] || continue
+  for host in ${(Z.C.)line}; do
+    [[ $host != *[*?%!]* ]] && config_hosts+=( ${(Q)host} )
+  done
+done
+
+(( ${#config_hosts} )) || return 1
+_wanted hosts expl 'remote host name' \
+  compadd -M 'm:{a-zA-Z}={A-Za-z} r:|.=* r:|=*' "$@" ${(u)config_hosts}
