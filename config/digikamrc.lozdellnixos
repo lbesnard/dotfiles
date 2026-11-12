@@ -12,7 +12,7 @@ Album Collections=,Category,Friends,Holidays,Miscellaneous,Nature,Party,Todo,Tra
 Album Monitoring=false
 Album Sort Role=0
 All Groups Open=false
-Default Icon Size=142
+Default Icon Size=124
 Default Tree Face Size=48
 Default Tree Icon Size=22
 Icon Show Aspect Ratio=false
@@ -92,10 +92,10 @@ TreeView Font=Montserrat,12,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,,0,0
 Update Type=0
 
 [AlbumFolderView Sidebar]
-CurrentIndex=1640
-Expansion=0,1,1306,1322,1640,1639,1340,1336,1339,1338,1337,1315,1313,1312,1283,1300,1288,1291,1290,1289,1287,1286,1285,1279,1269,1258,1249,1238,1237,1236,1208,1198,1199,1197,1196,1195,1182,1163,1162,1161,1155,903,759,598,528,514,516,513,511,508,506,501,496,495,421,419,420,417,416,415,414,413,412,409,408,346,318,339,338,337,325,324,321,320,319,317,316,315,300,299,293,130,129,128,127,124,120,123,122,111,108,106,1325,1332,1333
+CurrentIndex=2487
+Expansion=0,1,1306,1322,2487,2486,2485,2481,1640,1639,1340,1336,1339,1338,1337,1315,1313,1312,1283,1300,1288,1291,1290,1289,1287,1286,1285,1279,1269,1258,1249,1238,1237,1236,1208,1198,1199,1197,1196,1195,1182,1163,1162,1161,1155,903,759,598,528,514,516,513,511,508,506,501,496,495,421,419,420,417,416,415,414,413,412,409,408,318,339,338,337,321,320,319,317,300,299,293,130,129,128,127,124,120,123,122,111,108,106,1325,1332,1333
 RestoreChecked=false
-Selection=1640
+Selection=2487
 SortColumn=0
 SortOrder=1
 
@@ -130,7 +130,7 @@ TagComboBox-Checked=
 TagComboBox-CurrentIndex=237
 TagComboBox-Expansion=
 TagComboBox-RestoreChecked=true
-TagComboBox-Selection=407,364
+TagComboBox-Selection=560,364
 TagComboBox-SortColumn=0
 TagComboBox-SortOrder=0
 UseWholeAlbumsEntry=true
@@ -142,7 +142,7 @@ Sync Digikam to Baloo=false
 
 [Batch Queue Manager Settings]
 BqmBottomSplitter=AAAA/wAAAAEAAAACAAAAnQAAAJ0B/////wEAAAABAA==
-BqmTopSplitter=AAAA/wAAAAEAAAADAAAAnQAAAIoAAADAAf////8BAAAAAQA=
+BqmTopSplitter=AAAA/wAAAAEAAAADAAAAnQAAAJQAAADAAf////8BAAAAAQA=
 BqmVerticalSplitter=AAAA/wAAAAEAAAACAAAAlAAAAI8B/////wEAAAACAA==
 ToolBarsMovable=Disabled
 
@@ -1009,7 +1009,7 @@ tagPaths=1
 
 [Database Settings]
 Database Connectoptions=
-Database Encrypted Password=AwJBQUE=
+Database Encrypted Password=AwIeHh4=
 Database Hostname=
 Database Name=/home/lbesnard/Documents/Digikam/
 Database Name Face=/home/lbesnard/Documents/Digikam/
@@ -1042,7 +1042,7 @@ Minimized=false
 RestoreSize=-1
 
 [Digikam Right Sidebar]
-ActiveTab=0
+ActiveTab=7
 DigikamProperties Expanded=true
 FileProperties Expanded=true
 ItemProperties Expanded=true
@@ -1239,7 +1239,7 @@ TagComboBox-Checked=
 TagComboBox-CurrentIndex=4
 TagComboBox-Expansion=
 TagComboBox-RestoreChecked=true
-TagComboBox-Selection=407,364
+TagComboBox-Selection=560,364
 TagComboBox-SortColumn=0
 TagComboBox-SortOrder=0
 Use Full CPU=false
@@ -1262,10 +1262,10 @@ Last search album tag relation=0
 Last search results restriction=0
 Lower bound for minimum similarity=40
 TagComboBox-Checked=
-TagComboBox-CurrentIndex=407
+TagComboBox-CurrentIndex=560
 TagComboBox-Expansion=
 TagComboBox-RestoreChecked=true
-TagComboBox-Selection=407
+TagComboBox-Selection=560
 TagComboBox-SortColumn=0
 TagComboBox-SortOrder=0
 UseWholeAlbumsEntry=false
@@ -1368,29 +1368,28 @@ Version=8.5.0
 [Geolocation Edit Settings]
 1920x1200 screen: Height=1200
 1920x1200 screen: Width=1920
-1920x1200 screen: Window-Maximized=true
 Bookmarks visible=false
-Current Tab=4
+Current Tab=1
 Map Layout=0
 Show oldest images first=false
 Splitter H1 CollapsedSize=0
-SplitterState H1=AAAA/wAAAAEAAAACAAABdQAAAgsB/////wEAAAABAA==
+SplitterState H1=AAAA/wAAAAEAAAACAAABagAAAgsB/////wEAAAABAA==
 SplitterState V1=AAAA/wAAAAEAAAACAAADYAAAASEB/////wEAAAACAA==
 
 [Geolocation Edit Settings][Correlator Widget]
-GPX File Open Last Directory=/home/lbesnard/Nextcloud/3. resources/Gps_tracks
-Interpolate=true
+GPX File Open Last Directory=/home/lbesnard/Downloads
+Interpolate=false
 Max Gap Time=00:00:30
 Max Inter Dist Time=00:15:00
 Offset Sign=0
 Offset Time=00:00:00
 SelectedImages=false
 ShowTracksOnMap=true
-Time Zone=32
+Time Zone=34
 
 [Geolocation Edit Settings][Map Widget]
 Backend=marble
-Center=geo:46.6999562,1.2137945
+Center=geo:-43.0835043218,147.206823464
 GoogleMaps Map Type=ROADMAP
 GoogleMaps Show Map Type Control=true
 GoogleMaps Show Navigation Control=true
@@ -1409,7 +1408,7 @@ Show Thumbnails=true
 Show numbers on items=true
 Thumbnail Grouping Radius=30
 Thumbnail Size=60
-Zoom=marble:2911
+Zoom=marble:3188
 
 [Geolocation Edit Settings][Reverse Geocoding Widget]
 Hide options=true
@@ -1424,7 +1423,7 @@ Keep old results=false
 Search backend=osm
 
 [Geolocation Edit Settings][Tree View]
-Header State=AAAA/wAAAAAAAAABAAAAAQAAAAABAAAAAAAAAAAAAAANAA4AAAADAAAACwAAAGQAAAAKAAAAZAAAAAkAAABkAAAFRQAAAA0BAQABAAAAAAAAAAAAAAAAZP////8AAACBAAAAAAAAAA0AAACHAAAAAQAAAAAAAABkAAAAAQAAAAAAAADOAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAE0AAAAAQAAAAAAAAPoAAAAAGQAAAAAAAAAAAAAAAAAAAAB
+Header State=AAAA/wAAAAAAAAABAAAAAQAAAAABAAAAAAAAAAAAAAANAA4AAAADAAAACQAAAGQAAAALAAAAZAAAAAoAAABkAAAFLAAAAA0BAQABAAAAAAAAAAAAAAAAZP////8AAACBAAAAAAAAAA0AAACHAAAAAQAAAAAAAABkAAAAAQAAAAAAAADOAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAEbAAAAAQAAAAAAAAPoAAAAAGQAAAAAAAAAAAAAAAAAAAAB
 Image List Thumbnail Size=135
 
 [Grouping Behaviour]
@@ -1486,7 +1485,7 @@ TagComboBox-Checked=
 TagComboBox-CurrentIndex=237
 TagComboBox-Expansion=
 TagComboBox-RestoreChecked=true
-TagComboBox-Selection=407,364
+TagComboBox-Selection=560,364
 TagComboBox-SortColumn=0
 TagComboBox-SortOrder=0
 UseWholeAlbumsEntry=true
@@ -1542,7 +1541,7 @@ ShowImageSettingsDialog=true
 SixteenBitsImage=true
 SplitterState=AAAA/wAAAAEAAAACAAAHXAAAAVUB/////wAAAAABAQ==
 TIFFCompression=false
-ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAAAAAEIAAAD0/wCAAAAAfsAAAAeAGUAZABpAHQAbwByAF8AdABoAHUAbQBiAGIAYQByAAAAAAAAAAPTAAAASgD///8AAAdcAAAEZQAAAAQAAAAEAAAACAAAAAj8AAAAAA==
+ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAAAAAEIAAAD0/wCAAAAAfsAAAAeAGUAZABpAHQAbwByAF8AdABoAHUAbQBiAGIAYQByAAAAAAAAAAPTAAAAVwD///8AAAdcAAAEZQAAAAQAAAAEAAAACAAAAAj8AAAAAA==
 Unclip Color=0
 UnderExposureColor=255,255,255
 UnderExposureIndicator=false
@@ -1642,6 +1641,7 @@ Version Properties Tab=versions
 Version Properties View Mode=2
 
 [Import Filters]
+CurrentFilter=2
 Filter0=All Files|false|||
 Filter1=Only New Files|true|||
 Filter2=Raw Files|false|||image/x-nikon-nef;image/x-fuji-raf;image/x-adobe-dng;image/x-panasonic-raw;image/x-olympus-orf;image/x-kodak-dcr;image/x-kodak-k25;image/x-sony-arw;image/x-minolta-mrw;image/x-kodak-kdc;image/x-sigma-x3f;image/x-sony-srf;image/x-pentax-pef;image/x-panasonic-raw2;image/x-canon-crw;image/x-sony-sr2;image/x-canon-cr2
@@ -1652,7 +1652,7 @@ IgnoreNames=mgr_data pgr_mgr
 
 [Import MainWindow]
 SplitterState=AAAA/wAAAAEAAAABAAABoAH/////AAAAAAEB
-ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAIAAAIMAAAAd/wBAAAAAfsAAAAeAGkAbQBwAG8AcgB0AF8AdABoAHUAbQBiAGIAYQByCAAAAAAAAAIMAAAASgD///8AAAIMAAABxgAAAAQAAAAEAAAACAAAAAj8AAAAAA==
+ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAIAAAIXAAAAhPwBAAAAAfsAAAAeAGkAbQBwAG8AcgB0AF8AdABoAHUAbQBiAGIAYQByCAAAAAAAAAIXAAAAVwD///8AAAIXAAAEFQAAAAQAAAAEAAAACAAAAAj8AAAAAA==
 
 [Import Settings]
 Default Icon Size=142
@@ -1761,10 +1761,10 @@ Clear On Close=false
 FullScreen Hide SideBars=false
 FullScreen Hide StatusBar=false
 FullScreen Hide ToolBars=false
-Horizontal Splitter State=AAAA/wAAAAEAAAADAAABdQAAAFQAAAF1Af////8AAAAAAQE=
+Horizontal Splitter State=AAAA/wAAAAEAAAADAAABdQAAAFcAAAF1Af////8AAAAAAQE=
 Navigate By Pair=false
 Show Thumbbar=true
-ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAIAAANmAAAAwPwBAAAAAfsAAAAmAGwAaQBnAGgAdAB0AGEAYgBsAGUAXwB0AGgAdQBtAGIAYgBhAHIAAAAAAAAAA2YAAABKAP///wAAA2YAAAQIAAAABAAAAAQAAAAIAAAACPwAAAAA
+ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAIAAANmAAAAwPwBAAAAAfsAAAAmAGwAaQBnAGgAdAB0AGEAYgBsAGUAXwB0AGgAdQBtAGIAYgBhAHIAAAAAAAAAA2YAAABXAP///wAAA2YAAAQIAAAABAAAAAQAAAAIAAAACPwAAAAA
 
 [LightTable Settings][Left Sidebar]
 ActiveTab=0
@@ -1774,7 +1774,7 @@ ItemProperties Expanded=true
 LocationProperties Expanded=true
 Minimized=true
 PhotographProperties Expanded=true
-RestoreSize=29
+RestoreSize=31
 RightsProperties Expanded=true
 TagsProperties Expanded=true
 VideoProperties Expanded=true
@@ -1856,7 +1856,7 @@ ItemProperties Expanded=true
 LocationProperties Expanded=true
 Minimized=true
 PhotographProperties Expanded=true
-RestoreSize=28
+RestoreSize=30
 RightsProperties Expanded=true
 TagsProperties Expanded=true
 VideoProperties Expanded=true
@@ -1931,9 +1931,9 @@ Version Properties Tab=versions
 Version Properties View Mode=2
 
 [MainWindow]
-InitialAlbumID=1640
-SplitterState=AAAA/wAAAAEAAAADAAABXgAABGEAAAFVAf////8AAAAAAQE=
-ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAIAAAHPAAAAd/wBAAAAAfsAAAAmAG0AYQBpAG4AdwBpAG4AZABvAHcAXwB0AGgAdQBtAGIAYgBhAHIIAAAAAAAAAc8AAABKAP///wAAAR0AAAQIAAAABAAAAAQAAAAIAAAACPwAAAAA
+InitialAlbumID=2487
+SplitterState=AAAA/wAAAAEAAAADAAABXgAABHMAAAFVAf////8AAAAAAQE=
+ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAIAAARzAAAAhPwBAAAAAfsAAAAmAG0AYQBpAG4AdwBpAG4AZABvAHcAXwB0AGgAdQBtAGIAYgBhAHIIAAAAAAAABHMAAABXAP///wAABHMAAAQVAAAABAAAAAQAAAAIAAAACPwAAAAA
 
 [MaintenanceDlg Settings]
 1920x1200 screen: Window-Maximized=true
@@ -2045,7 +2045,7 @@ pano_modifyBinary[$e]=
 
 [People Sidebar]
 CurrentIndex=7
-Expansion=383,201,528,55,54,26,539,69,23,4,7,5,6,396,395,565,71,270,93,390,112,31,398,364,375
+Expansion=383,26,201,528,55,54,539,69,23,4,7,5,6,396,395,565,71,270,93,390,112,398,364,375
 FaceScanWidgetExpanded=true
 RestoreChecked=false
 Selection=7
@@ -2286,9 +2286,9 @@ TranslatorLang=de-DE,en-US,es-ES,fr-FR,it-IT,pt-PT
 FullScreen Hide SideBars=false
 FullScreen Hide StatusBar=false
 FullScreen Hide ToolBars=false
-Horizontal Splitter State=AAAA/wAAAAEAAAACAAAA9QAAAVUB/////wAAAAABAQ==
+Horizontal Splitter State=AAAA/wAAAAEAAAACAAAA/wAAAVUB/////wAAAAABAQ==
 Show Thumbbar=true
-ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAMAAAAAAAAAAPwBAAAAAfsAAAAeAHMAdQByAHYAZQB5AF8AdABoAHUAbQBiAGIAYQByAQAAAAD/////AAAASgD///8AAAAAAAAAAAAAAAQAAAAEAAAACAAAAAj8AAAAAA==
+ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAMAAAAAAAAAAPwBAAAAAfsAAAAeAHMAdQByAHYAZQB5AF8AdABoAHUAbQBiAGIAYQByAQAAAAD/////AAAAVwD///8AAAAAAAAAAAAAAAQAAAAEAAAACAAAAAj8AAAAAA==
 
 [Survey Settings][Sidebar]
 ActiveTab=0
@@ -2298,7 +2298,7 @@ ItemProperties Expanded=true
 LocationProperties Expanded=true
 Minimized=true
 PhotographProperties Expanded=true
-RestoreSize=46
+RestoreSize=48
 RightsProperties Expanded=true
 TagsProperties Expanded=true
 VideoProperties Expanded=true
