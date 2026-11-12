@@ -324,6 +324,7 @@ alias tz_utc='TZ="UTC" date'
 if command -v htop > /dev/null; then alias top='htop'; fi
 if command -v btop > /dev/null; then alias top='btop'; fi  # replace htop with btop
 if command -v dfc > /dev/null; then alias df='dfc'; fi
+if command -v dysk > /dev/null; then alias df='dysk'; fi  # if dfc exists, use dfc, but if dysk, use dysk
 
 if command -v ncdu > /dev/null; then
     alias gt5=ncdu
