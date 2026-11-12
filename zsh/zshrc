@@ -10,7 +10,7 @@ if [[ -z $ZSH_PROFILE_NAME ]]; then
     ZSH_PROFILE_NAME=termux
   else
     case "$HOST" in
-      *aws*|*nec*)             ZSH_PROFILE_NAME=server ;;
+      *aws*|*nec*|ip-[0-9]*-[0-9]*) ZSH_PROFILE_NAME=server ;;  # ip-172-31-x-x = default EC2 hostname
       dev|*funk*|*-X202EP*)    ZSH_PROFILE_NAME=homeserver ;;  # dev = docker-dev container (nested under laptop's C-a, so C-b)
       *) [[ $USER == ubuntu ]] && ZSH_PROFILE_NAME=homeserver || ZSH_PROFILE_NAME=laptop ;;
     esac
