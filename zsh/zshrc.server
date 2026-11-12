@@ -23,6 +23,3 @@ for _file in "$HOME/.zsh_functions/pipelines.zsh" "$HOME/.zsh_functions/imos_ard
     [[ -r "$_file" ]] && source "$_file"
 done
 unset _file
-
-# Load docker fzf completion LAST
-source ~/.zsh_complete/docker-fzf-completion.zsh
