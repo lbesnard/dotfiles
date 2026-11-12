@@ -2,8 +2,8 @@
 # Install mise (https://mise.jdx.dev) into ~/.local/bin and every tool in mise/config.toml. No sudo.
 #
 # Usage: mise-bootstrap [--zsh] [-h]
-#   --zsh   also install a static zsh (romkatv/zsh-bin) into ~/.local when there is no usable zsh.
-#           mise has no zsh package, and zerobrew's zsh breaks (baked-in module path). Prefer
+#   --zsh   also build zsh from source into ~/.local (bin/install-zsh-from-source) when there is no usable zsh.
+#           mise has no zsh package, and zerobrew's zsh breaks (baked-in module path). Needs gcc and make. Prefer
 #           `sudo apt install zsh` when you can; this is the no-sudo fallback.
 #
 # Safe to re-run. The tool list is mise/config.toml in the repo (linked to ~/.config/mise/config.toml).
@@ -47,14 +47,11 @@ if [ "$want_zsh" = 1 ]; then
     if command -v zsh >/dev/null && zsh -fc 'zmodload zsh/parameter zsh/zle' >/dev/null 2>&1; then
         log "zsh already works ($(command -v zsh)); skipping"
     else
-        log "Installing static zsh (romkatv/zsh-bin) into ~/.local"
-        tmp="$(mktemp)"
-        curl -fsSL https://raw.githubusercontent.com/romkatv/zsh-bin/master/install -o "$tmp"
-        sh "$tmp" -d "$HOME/.local" -e no -c no   # -e no: leave rc files alone; they come from the dotfiles
-        rm -f "$tmp"
+        log "Building zsh from source into ~/.local"
+        "$DOTFILES_DIR/bin/install-zsh-from-source" --prefix "$HOME/.local"
     fi
 elif ! command -v zsh >/dev/null; then
-    echo "mise-bootstrap: no zsh found. Install it with 'sudo apt install zsh', or re-run with --zsh for a static build." >&2
+    echo "mise-bootstrap: no zsh found. Install it with 'sudo apt install zsh', or re-run with --zsh to build it from source." >&2
 fi
 
 log "Done. Open a new shell (tools are on PATH through ~/.local/share/mise/shims)."

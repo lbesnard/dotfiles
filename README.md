@@ -39,7 +39,7 @@ This installs mise, makes a **shallow** clone of this repo into `~/github_repo/d
 installs the `mise/config.toml` tools and links everything into `$HOME`. It is safe to re-run (it
 updates instead of cloning again).
 
-Add `-s -- --zsh` to also install a static zsh into `~/.local` (mise has no zsh; prefer `sudo apt install zsh` when you can).
+Add `-s -- --zsh` to also build zsh from source into `~/.local` with `bin/install-zsh-from-source` (mise has no zsh; needs gcc and make; prefer `sudo apt install zsh` when you can).
 
 Add `-s -- --ansible` to also run the user-level roles of
 [Fleet-Control](https://github.com/lbesnard/Fleet-Control/tree/master/ansible)

@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# Build zsh from source into a user prefix. No sudo, no package manager.
+# Based on https://blog.jinli.io/en/p/compile-and-install-zsh-from-source-without-sudo-permission/
+# with pinned versions, TLS verification, an rpath (no LD_LIBRARY_PATH needed) and
+# ncurses built only when the machine has no usable development copy.
+#
+# Usage: install-zsh-from-source [--prefix DIR] [--zsh-version X.Y] [--ncurses-version X.Y] [--force-ncurses] [--keep]
+#   --prefix DIR           install under DIR (default: ~/.local)
+#   --zsh-version X.Y.Z    default 5.9.2 (older ones are fetched from zsh.org/pub/old)
+#   --ncurses-version X.Y  default 6.5
+#   --force-ncurses        build ncurses even if the system one works
+#   --keep                 keep the build directory (default: removed on success)
+#
+# Needs: a C compiler (gcc/cc), make, tar, xz, and curl or wget.
+# If you can use sudo, `sudo apt install zsh` is simpler. This is the no-sudo fallback.
+set -euo pipefail
+
+PREFIX="$HOME/.local"
+ZSH_VERSION_WANTED="5.9.2"
+NCURSES_VERSION="6.5"
+force_ncurses=0
+keep=0
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --prefix) PREFIX="${2:?--prefix needs a directory}"; shift 2 ;;
+        --zsh-version) ZSH_VERSION_WANTED="${2:?}"; shift 2 ;;
+        --ncurses-version) NCURSES_VERSION="${2:?}"; shift 2 ;;
+        --force-ncurses) force_ncurses=1; shift ;;
+        --keep) keep=1; shift ;;
+        -h|--help) sed -n '2,16p' "$0"; exit 0 ;;
+        *) echo "unknown option: $1" >&2; exit 2 ;;
+    esac
+done
+
+log() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
+die() { echo "install-zsh-from-source: $*" >&2; exit 1; }
+
+CC_BIN="${CC:-}"
+[ -n "$CC_BIN" ] || { command -v gcc >/dev/null && CC_BIN=gcc; } || true
+[ -n "$CC_BIN" ] || { command -v cc >/dev/null && CC_BIN=cc; } || true
+[ -n "$CC_BIN" ] || die "no C compiler found (need gcc or cc)"
+for c in make tar xz; do command -v "$c" >/dev/null || die "missing required command: $c"; done
+
+fetch() {  # <url> <output>
+    if command -v curl >/dev/null; then curl -fsSL --retry 3 -o "$2" "$1"
+    elif command -v wget >/dev/null; then wget -q -O "$2" "$1"
+    else die "need curl or wget"; fi
+}
+
+PREFIX="$(mkdir -p "$PREFIX" && cd "$PREFIX" && pwd)"
+jobs="$( (nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2) )"
+work="$(mktemp -d "${TMPDIR:-/tmp}/zsh-build.XXXXXX")"
+cleanup() { [ "$keep" = 1 ] && log "kept build dir: $work" || rm -rf "$work"; }
+trap cleanup EXIT
+
+# Can we compile and link against a system curses already? Then skip building ncurses.
+have_curses() {
+    printf '#include <curses.h>\nint main(void){return 0;}\n' >"$work/c.c"
+    for lib in -lncursesw -lncurses -lcurses; do
+        "$CC_BIN" "$work/c.c" "$lib" -o "$work/c.out" >/dev/null 2>&1 && return 0
+    done
+    return 1
+}
+
+CPPFLAGS_EXTRA=""
+LDFLAGS_EXTRA=""
+if [ "$force_ncurses" = 1 ] || ! have_curses; then
+    log "Building ncurses $NCURSES_VERSION into $PREFIX (no usable system curses development files)"
+    fetch "https://ftp.gnu.org/pub/gnu/ncurses/ncurses-${NCURSES_VERSION}.tar.gz" "$work/ncurses.tar.gz"
+    mkdir "$work/ncurses" && tar -xzf "$work/ncurses.tar.gz" -C "$work/ncurses" --strip-components=1
+    (
+        cd "$work/ncurses"
+        # Wide-char shared libs. The database installs under the prefix (never /usr: no root), and the
+        # search list also covers the system terminfo, so every TERM the machine knows keeps working.
+        ./configure --prefix="$PREFIX" --with-shared --without-debug --without-ada --without-cxx-binding \
+            --enable-widec --enable-pc-files --with-pkg-config-libdir="$PREFIX/lib/pkgconfig" \
+            --with-default-terminfo-dir="$PREFIX/share/terminfo" \
+            --with-terminfo-dirs="$PREFIX/share/terminfo:/etc/terminfo:/lib/terminfo:/usr/share/terminfo" \
+            CFLAGS="-O2 -fPIC" CXXFLAGS="-O2 -fPIC"
+        make -j"$jobs"
+        make install
+    )
+    # zsh's configure looks for -lncurses/-lcurses; point those names at the wide-char libs.
+    for n in ncurses curses; do
+        [ -e "$PREFIX/lib/lib${n}.so" ] || ln -s libncursesw.so "$PREFIX/lib/lib${n}.so" 2>/dev/null || true
+    done
+    mkdir -p "$PREFIX/include"
+    [ -e "$PREFIX/include/curses.h" ] || ln -s ncursesw/curses.h "$PREFIX/include/curses.h" 2>/dev/null || true
+    [ -e "$PREFIX/include/term.h" ] || ln -s ncursesw/term.h "$PREFIX/include/term.h" 2>/dev/null || true
+    CPPFLAGS_EXTRA="-I$PREFIX/include -I$PREFIX/include/ncursesw"
+    LDFLAGS_EXTRA="-L$PREFIX/lib -Wl,-rpath,$PREFIX/lib"
+else
+    log "System curses development files found; not building ncurses"
+fi
+
+log "Building zsh $ZSH_VERSION_WANTED into $PREFIX"
+fetch "https://www.zsh.org/pub/zsh-${ZSH_VERSION_WANTED}.tar.xz" "$work/zsh.tar.xz" ||
+    fetch "https://www.zsh.org/pub/old/zsh-${ZSH_VERSION_WANTED}.tar.xz" "$work/zsh.tar.xz" ||
+    die "cannot download zsh ${ZSH_VERSION_WANTED} from zsh.org"
+mkdir "$work/zsh" && tar -xJf "$work/zsh.tar.xz" -C "$work/zsh" --strip-components=1
+(
+    cd "$work/zsh"
+    ./configure --prefix="$PREFIX" --enable-multibyte --enable-pcre=no \
+        CPPFLAGS="$CPPFLAGS_EXTRA" LDFLAGS="$LDFLAGS_EXTRA"
+    make -j"$jobs"
+    make install
+)
+
+# Verify: it starts and its dynamically loaded modules are found (the failure zerobrew's zsh had).
+zsh_bin="$PREFIX/bin/zsh"
+[ -x "$zsh_bin" ] || die "build finished but $zsh_bin is missing"
+"$zsh_bin" -fc 'zmodload zsh/parameter zsh/zle zsh/terminfo zsh/zutil && print -r -- "zsh $ZSH_VERSION OK"' \
+    || die "zsh was built but cannot load its modules"
+
+log "Installed $zsh_bin"
+case ":$PATH:" in *":$PREFIX/bin:"*) ;; *) echo "Add to your PATH:  export PATH=\"$PREFIX/bin:\$PATH\"" ;; esac
+echo "Without sudo you cannot chsh. To make bash hand over to it, put this in ~/.bashrc (interactive shells only):"
+echo "  [ -t 1 ] && [ -x \"$zsh_bin\" ] && exec \"$zsh_bin\" -l"

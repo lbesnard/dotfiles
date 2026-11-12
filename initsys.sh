@@ -11,7 +11,7 @@
 #   curl -fsSL https://raw.githubusercontent.com/lbesnard/dotfiles/main/initsys.sh | bash -s -- --ansible
 #
 # Options:
-#   --zsh       also install a static zsh into ~/.local (no sudo) when none works
+#   --zsh       also build zsh from source into ~/.local (no sudo) when none works
 #   --ansible   also run Fleet-Control's remote.yml (miniforge, neovim, cheat) via ansible-pull
 #   -h, --help  show this help
 #

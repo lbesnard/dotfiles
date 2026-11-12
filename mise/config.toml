@@ -5,7 +5,8 @@
 #
 # NOT here (need compiling or system libs; use apt / the distro): zsh (see bin/mise-bootstrap), git, tig, vim,
 #   htop, ncdu, tree, xclip, openssh, curl, coreutils, p7zip, gcc, cmake, midnight-commander, urlview, grc, fpp,
-#   pyenv, rbenv, ruby, thefuck, ansible (pinned/managed by Fleet-Control).
+#   pyenv, rbenv, ruby, ansible (pinned/managed by Fleet-Control), ffmpeg (no reliable prebuilt; GitHub API
+#   rate limit), thefuck (broken on current Python), nmap, mtr, whois, strace, screen, sshfs.
 
 [tools]
 # shell
@@ -34,6 +35,8 @@ yazi = "latest"
 "aqua:charmbracelet/glow" = "latest"
 "aqua:tealdeer-rs/tealdeer" = "latest"   # tldr
 lnav = "latest"
+"github:swsnr/mdcat" = "latest"
+"aqua:jgm/pandoc" = "latest"
 cheat = "latest"
 jq = "latest"
 yq = "latest"
@@ -44,6 +47,7 @@ gh = "latest"
 "aqua:jesseduffield/lazygit" = "latest"
 "aqua:gitui-org/gitui" = "latest"
 "aqua:mislav/hub" = "latest"
+"npm:diff-so-fancy" = "latest"
 age = "latest"
 "aqua:nektos/act" = "latest"          # run github actions locally
 
@@ -62,8 +66,11 @@ rclone = "latest"
 # python tooling / runtimes
 uv = "latest"
 node = "lts"
+playwright = "latest"                 # CLI only; browsers are a separate download: playwright install chromium
 "pipx:pgcli" = "latest"
 "pipx:mycli" = "latest"
 "pipx:httpie" = "latest"
 "pipx:ranger-fm" = "latest"
 "pipx:pre-commit" = "latest"
+"pipx:poetry" = "latest"
+"pipx:passhole" = "latest"        # KeePass CLI (ph), used by bin/passhole-fzf
