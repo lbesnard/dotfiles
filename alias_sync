@@ -186,6 +186,9 @@ function funk_rclone() {
     sftp_ssh+=" -o ControlMaster=auto -o ControlPath=$ctl -o ControlPersist=600"
     sftp_ssh+=" $server_ip"
 
+    # Multi-thread download (rclone auto-enables it >256MiB) corrupts large
+    # files intermittently over this custom --sftp-ssh/ControlMaster setup,
+    # so --multi-thread-streams 0 forces big files to go single-stream.
     if [ -d "$dest" ]; then
         rclone sync ":sftp:$src" "$dest" \
             --progress \
@@ -194,6 +197,7 @@ function funk_rclone() {
             --transfers 4 \
             --checkers 16 \
             --buffer-size 16M \
+            --multi-thread-streams 0 \
             --retries 10 \
             --retries-sleep 30s \
             --low-level-retries 20 \
