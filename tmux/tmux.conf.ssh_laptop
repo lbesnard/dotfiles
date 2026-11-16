@@ -303,6 +303,12 @@ bind-key t split-window -h "nvim ~/todo.md"
 
 bind-key C-j choose-tree
 
+# yazi image preview
+set -g default-terminal "tmux-256color"
+set -g allow-passthrough on
+set -ga update-environment TERM
+set -ga update-environment TERM_PROGRAM
+
 # fix ssh agent when tmux is detached
 # Only pin the stable symlink (created by ~/.ssh/rc on sshd login) when it is a live socket;
 # otherwise keep tmux's default behaviour (local/container agents).

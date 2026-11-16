@@ -315,6 +315,12 @@ set -g pane-border-format " [ ###P #T  #(sleep 0.25;ps -t #{pane_tty} -o args= |
 bind-key T command-prompt -p "Title for pane: " "select-pane -T '%%'"
 
 
+# yazi image preview
+set -g default-terminal "tmux-256color"
+set -g allow-passthrough on
+set -ga update-environment TERM
+set -ga update-environment TERM_PROGRAM
+
 
 # fix ssh agent when tmux is detached
 # Only pin the stable symlink (created by ~/.ssh/rc on sshd login) when it is a live socket;
