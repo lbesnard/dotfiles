@@ -309,6 +309,9 @@ set -g pane-border-format " [ ###P #T  #(sleep 0.25;ps -t #{pane_tty} -o args= |
 
 bind-key T command-prompt -p "Title for pane: " "select-pane -T '%%'"
 
+# move current pane to another window (prompts for target window index/name)
+bind-key J command-prompt -p "join pane to window:" "join-pane -t ':%%'"
+
 
 bind-key -n C-s run-shell ' \
     current_prefix=$(tmux show-option -gqv prefix); \
@@ -329,6 +332,12 @@ set -g default-terminal "tmux-256color"
 set -g allow-passthrough on
 set -ga update-environment TERM
 set -ga update-environment TERM_PROGRAM
+
+# ranger sixel image preview: tmux only passes Sixel through to terminals it
+# knows support it (terminal-features), it doesn't infer this from allow-passthrough
+set -ag terminal-features ',xterm-ghostty:sixel'
+set -ag terminal-features ',xterm-kitty:sixel'
+set -ag terminal-features ',alacritty:sixel'
 
 # for keyboard missing page up and down key
 # Scroll up one page with Shift+Up

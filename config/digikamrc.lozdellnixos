@@ -93,7 +93,7 @@ Update Type=0
 
 [AlbumFolderView Sidebar]
 CurrentIndex=2487
-Expansion=0,1,1306,1322,2487,2486,2485,2481,1640,1639,1340,1336,1339,1338,1337,1315,1313,1312,1283,1300,1288,1291,1290,1289,1287,1286,1285,1279,1269,1258,1249,1238,1237,1236,1208,1198,1199,1197,1196,1195,1182,1163,1162,1161,1155,903,759,598,528,514,516,513,511,508,506,501,496,495,421,419,420,417,416,415,414,413,412,409,408,318,339,338,337,321,320,319,317,300,299,293,130,129,128,127,124,120,123,122,111,108,106,1325,1332,1333
+Expansion=0,1,1306,1322,2490,2489,2487,2486,2485,2481,1640,1639,1340,1336,1339,1338,1337,1315,1313,1312,1283,1300,1288,1291,1290,1289,1287,1286,1285,1279,1269,1258,1249,1238,1237,1236,1208,1198,1199,1197,1196,1195,1182,1163,1162,1161,1155,903,759,598,528,514,516,513,511,508,506,501,496,495,421,419,420,417,416,415,414,413,412,409,408,318,339,338,337,321,320,319,317,300,299,293,130,129,128,127,124,120,123,122,111,108,106,1325,1332,1333
 RestoreChecked=false
 Selection=2487
 SortColumn=0
@@ -116,7 +116,7 @@ AlbumComboBox-Checked=
 AlbumComboBox-CurrentIndex=1
 AlbumComboBox-Expansion=1325,1
 AlbumComboBox-RestoreChecked=true
-AlbumComboBox-Selection=1
+AlbumComboBox-Selection=1325,1
 AlbumComboBox-SortColumn=0
 AlbumComboBox-SortOrder=0
 AlbumTypeEntry=0
@@ -130,7 +130,7 @@ TagComboBox-Checked=
 TagComboBox-CurrentIndex=237
 TagComboBox-Expansion=
 TagComboBox-RestoreChecked=true
-TagComboBox-Selection=560,364
+TagComboBox-Selection=756,364
 TagComboBox-SortColumn=0
 TagComboBox-SortOrder=0
 UseWholeAlbumsEntry=true
@@ -271,7 +271,7 @@ ColorName_white=White
 ColorName_yellow=Yellow
 
 [CoreDB Settings]
-Recently Used Tags=806,952,882,951,762,774,767,851,761,768
+Recently Used Tags=383,26,626,24,806,952,882,951,762,774
 
 [DMetadata Settings]
 readingAllTags=false
@@ -1009,7 +1009,7 @@ tagPaths=1
 
 [Database Settings]
 Database Connectoptions=
-Database Encrypted Password=AwIeHh4=
+Database Encrypted Password=AwLDw8M=
 Database Hostname=
 Database Name=/home/lbesnard/Documents/Digikam/
 Database Name Face=/home/lbesnard/Documents/Digikam/
@@ -1042,7 +1042,7 @@ Minimized=false
 RestoreSize=-1
 
 [Digikam Right Sidebar]
-ActiveTab=7
+ActiveTab=4
 DigikamProperties Expanded=true
 FileProperties Expanded=true
 ItemProperties Expanded=true
@@ -1059,10 +1059,10 @@ Contact Expanded=true
 ItemDescEdit Tab=1
 ItemDescEditTab CaptionsLang=x-default
 ItemDescEditTab SearchBarCaseSensitive=0
-ItemDescEditTab TagCheckViewCurrentIndex=278
+ItemDescEditTab TagCheckViewCurrentIndex=626
 ItemDescEditTab TagCheckViewExpansion=0,278
 ItemDescEditTab TagCheckViewRestoreChecked=false
-ItemDescEditTab TagCheckViewSelection=278
+ItemDescEditTab TagCheckViewSelection=626
 ItemDescEditTab TagCheckViewSortColumn=0
 ItemDescEditTab TagCheckViewSortOrder=0
 ItemDescEditTab TagCheckViewToggle Auto Tags=0
@@ -1221,7 +1221,7 @@ AlbumComboBox-Checked=1640
 AlbumComboBox-CurrentIndex=1340
 AlbumComboBox-Expansion=1325,1,1306
 AlbumComboBox-RestoreChecked=true
-AlbumComboBox-Selection=1,1340
+AlbumComboBox-Selection=1325,1340
 AlbumComboBox-SortColumn=0
 AlbumComboBox-SortOrder=0
 AlbumTypeEntry=0
@@ -1239,7 +1239,7 @@ TagComboBox-Checked=
 TagComboBox-CurrentIndex=4
 TagComboBox-Expansion=
 TagComboBox-RestoreChecked=true
-TagComboBox-Selection=560,364
+TagComboBox-Selection=756,364
 TagComboBox-SortColumn=0
 TagComboBox-SortOrder=0
 Use Full CPU=false
@@ -1248,10 +1248,10 @@ UseWholeTagsEntry=false
 
 [Find Duplicates View]
 AlbumComboBox-Checked=
-AlbumComboBox-CurrentIndex=1
+AlbumComboBox-CurrentIndex=1325
 AlbumComboBox-Expansion=
 AlbumComboBox-RestoreChecked=true
-AlbumComboBox-Selection=1
+AlbumComboBox-Selection=1325
 AlbumComboBox-SortColumn=0
 AlbumComboBox-SortOrder=0
 AlbumTypeEntry=0
@@ -1262,10 +1262,10 @@ Last search album tag relation=0
 Last search results restriction=0
 Lower bound for minimum similarity=40
 TagComboBox-Checked=
-TagComboBox-CurrentIndex=560
+TagComboBox-CurrentIndex=756
 TagComboBox-Expansion=
 TagComboBox-RestoreChecked=true
-TagComboBox-Selection=560
+TagComboBox-Selection=756
 TagComboBox-SortColumn=0
 TagComboBox-SortOrder=0
 UseWholeAlbumsEntry=false
@@ -1292,7 +1292,7 @@ AlbumComboBox-Checked=
 AlbumComboBox-CurrentIndex=1
 AlbumComboBox-Expansion=1325,1
 AlbumComboBox-RestoreChecked=true
-AlbumComboBox-Selection=1
+AlbumComboBox-Selection=1325,1
 AlbumComboBox-SortColumn=0
 AlbumComboBox-SortOrder=0
 UseWholeAlbumsEntry=true
@@ -1368,6 +1368,8 @@ Version=8.5.0
 [Geolocation Edit Settings]
 1920x1200 screen: Height=1200
 1920x1200 screen: Width=1920
+2 screens: Height=1200
+2 screens: Width=1920
 Bookmarks visible=false
 Current Tab=1
 Map Layout=0
@@ -1377,7 +1379,7 @@ SplitterState H1=AAAA/wAAAAEAAAACAAABagAAAgsB/////wEAAAABAA==
 SplitterState V1=AAAA/wAAAAEAAAACAAADYAAAASEB/////wEAAAACAA==
 
 [Geolocation Edit Settings][Correlator Widget]
-GPX File Open Last Directory=/home/lbesnard/Downloads
+GPX File Open Last Directory=/home/lbesnard/Nextcloud/3. resources/Gps_tracks
 Interpolate=false
 Max Gap Time=00:00:30
 Max Inter Dist Time=00:15:00
@@ -1389,7 +1391,7 @@ Time Zone=34
 
 [Geolocation Edit Settings][Map Widget]
 Backend=marble
-Center=geo:-43.0835043218,147.206823464
+Center=geo:-43.0044735525,146.941128298
 GoogleMaps Map Type=ROADMAP
 GoogleMaps Show Map Type Control=true
 GoogleMaps Show Navigation Control=true
@@ -1408,7 +1410,7 @@ Show Thumbnails=true
 Show numbers on items=true
 Thumbnail Grouping Radius=30
 Thumbnail Size=60
-Zoom=marble:3188
+Zoom=marble:2495
 
 [Geolocation Edit Settings][Reverse Geocoding Widget]
 Hide options=true
@@ -1423,7 +1425,7 @@ Keep old results=false
 Search backend=osm
 
 [Geolocation Edit Settings][Tree View]
-Header State=AAAA/wAAAAAAAAABAAAAAQAAAAABAAAAAAAAAAAAAAANAA4AAAADAAAACQAAAGQAAAALAAAAZAAAAAoAAABkAAAFLAAAAA0BAQABAAAAAAAAAAAAAAAAZP////8AAACBAAAAAAAAAA0AAACHAAAAAQAAAAAAAABkAAAAAQAAAAAAAADOAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAEbAAAAAQAAAAAAAAPoAAAAAGQAAAAAAAAAAAAAAAAAAAAB
+Header State=AAAA/wAAAAAAAAABAAAAAQAAAAABAAAAAAAAAAAAAAANAA4AAAADAAAACwAAAGQAAAAKAAAAZAAAAAkAAABkAAAFLAAAAA0BAQABAAAAAAAAAAAAAAAAZP////8AAACBAAAAAAAAAA0AAACHAAAAAQAAAAAAAABkAAAAAQAAAAAAAADOAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAABkAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAEbAAAAAQAAAAAAAAPoAAAAAGQAAAAAAAAAAAAAAAAAAAAB
 Image List Thumbnail Size=135
 
 [Grouping Behaviour]
@@ -1446,7 +1448,7 @@ AlbumComboBox-Checked=
 AlbumComboBox-CurrentIndex=1
 AlbumComboBox-Expansion=1325,1
 AlbumComboBox-RestoreChecked=true
-AlbumComboBox-Selection=1
+AlbumComboBox-Selection=1325,1
 AlbumComboBox-SortColumn=0
 AlbumComboBox-SortOrder=0
 AlbumTypeEntry=0
@@ -1485,7 +1487,7 @@ TagComboBox-Checked=
 TagComboBox-CurrentIndex=237
 TagComboBox-Expansion=
 TagComboBox-RestoreChecked=true
-TagComboBox-Selection=560,364
+TagComboBox-Selection=756,364
 TagComboBox-SortColumn=0
 TagComboBox-SortOrder=0
 UseWholeAlbumsEntry=true
@@ -1641,7 +1643,7 @@ Version Properties Tab=versions
 Version Properties View Mode=2
 
 [Import Filters]
-CurrentFilter=2
+CurrentFilter=4
 Filter0=All Files|false|||
 Filter1=Only New Files|true|||
 Filter2=Raw Files|false|||image/x-nikon-nef;image/x-fuji-raf;image/x-adobe-dng;image/x-panasonic-raw;image/x-olympus-orf;image/x-kodak-dcr;image/x-kodak-k25;image/x-sony-arw;image/x-minolta-mrw;image/x-kodak-kdc;image/x-sigma-x3f;image/x-sony-srf;image/x-pentax-pef;image/x-panasonic-raw2;image/x-canon-crw;image/x-sony-sr2;image/x-canon-cr2
@@ -1652,7 +1654,7 @@ IgnoreNames=mgr_data pgr_mgr
 
 [Import MainWindow]
 SplitterState=AAAA/wAAAAEAAAABAAABoAH/////AAAAAAEB
-ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAIAAAIXAAAAhPwBAAAAAfsAAAAeAGkAbQBwAG8AcgB0AF8AdABoAHUAbQBiAGIAYQByCAAAAAAAAAIXAAAAVwD///8AAAIXAAAEFQAAAAQAAAAEAAAACAAAAAj8AAAAAA==
+ThumbbarState=AAAA/wAAAAD9AAAAAQAAAAIAAAXpAAAAhPwBAAAAAfsAAAAeAGkAbQBwAG8AcgB0AF8AdABoAHUAbQBiAGIAYQByCAAAAAAAAAXpAAAAVwD///8AAAXpAAAEUQAAAAQAAAAEAAAACAAAAAj8AAAAAA==
 
 [Import Settings]
 Default Icon Size=142
@@ -2044,11 +2046,11 @@ nonaBinary[$e]=
 pano_modifyBinary[$e]=
 
 [People Sidebar]
-CurrentIndex=7
-Expansion=383,26,201,528,55,54,539,69,23,4,7,5,6,396,395,565,71,270,93,390,112,398,364,375
+CurrentIndex=75
+Expansion=75,383,26,23,201,528,55,54,539,69,4,7,5,6,396,395,565,71,270,93,390,112,398,364,375
 FaceScanWidgetExpanded=true
 RestoreChecked=false
-Selection=7
+Selection=75
 SortColumn=0
 SortOrder=0
 
@@ -2236,10 +2238,10 @@ CaseSensitive=0
 
 [Select Reference]
 AlbumComboBox-Checked=
-AlbumComboBox-CurrentIndex=1
+AlbumComboBox-CurrentIndex=1325
 AlbumComboBox-Expansion=
 AlbumComboBox-RestoreChecked=true
-AlbumComboBox-Selection=1
+AlbumComboBox-Selection=1325
 AlbumComboBox-SortColumn=0
 AlbumComboBox-SortOrder=0
 UseWholeAlbumsEntry=false
@@ -2269,7 +2271,7 @@ AlbumComboBox-Checked=
 AlbumComboBox-CurrentIndex=1
 AlbumComboBox-Expansion=1325,1
 AlbumComboBox-RestoreChecked=true
-AlbumComboBox-Selection=1
+AlbumComboBox-Selection=1325,1
 AlbumComboBox-SortColumn=0
 AlbumComboBox-SortOrder=0
 UseWholeAlbumsEntry=true

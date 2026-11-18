@@ -10,7 +10,7 @@ hash = "92b5c58159a51c567f82b618cee2b78"
 
 [[plugin.deps]]
 use = "yazi-rs/plugins:piper"
-rev = "9166202"
+rev = "f703392"
 hash = "d1e0499cae5f3aeb628c267616d4b682"
 
 [[plugin.deps]]
