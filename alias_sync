@@ -144,6 +144,12 @@ function funk_rsync() {
 }
 
 _ensure_ssh_key_loaded() {
+    # FUNK_SSH_KEY: dedicated passphrase-less key (OliveTin service); no agent involved.
+    if [[ -n "$FUNK_SSH_KEY" ]]; then
+        [[ -r "$FUNK_SSH_KEY" ]] && return 0
+        echo "Error: FUNK_SSH_KEY=$FUNK_SSH_KEY is not readable." >&2
+        return 1
+    fi
     export SSH_AUTH_SOCK="$HOME/.ssh/ssh-agent.sock"
 
     ssh-add -l &> /dev/null
@@ -156,6 +162,12 @@ _ensure_ssh_key_loaded() {
     fi
 
     if ! ssh-add -l &> /dev/null; then
+        # Under OliveTin (no terminal): ssh-add would hang on a passphrase prompt, so fail loudly instead.
+        if [[ -n "$OLIVETIN" && ! -t 0 ]]; then
+            echo "Error: no SSH key loaded in $SSH_AUTH_SOCK and no terminal to ask for the passphrase." >&2
+            echo "       Run 'ssh-add -t 10h' from an interactive shell first." >&2
+            return 1
+        fi
         echo "No SSH keys loaded. Running ssh-add..."
         ssh-add -t 10h
     fi
@@ -184,6 +196,7 @@ function funk_rclone() {
     sftp_ssh+=" -o Ciphers=aes128-gcm@openssh.com"
     sftp_ssh+=" -o ServerAliveInterval=60 -o ServerAliveCountMax=5"
     sftp_ssh+=" -o ControlMaster=auto -o ControlPath=$ctl -o ControlPersist=600"
+    [[ -n "$FUNK_SSH_KEY" ]] && sftp_ssh+=" -i $FUNK_SSH_KEY -o IdentitiesOnly=yes"
     sftp_ssh+=" $server_ip"
 
     # Multi-thread download (rclone auto-enables it >256MiB) corrupts large
@@ -194,9 +207,13 @@ function funk_rclone() {
     # dest disk still corrupted large transfers (random differing dest md5
     # each retry, stable src md5) even with multi-thread-streams disabled;
     # serializing writes avoids whatever's racing on that bus/bridge chip.
+    # --progress redraws the screen with escape codes: fine in a terminal, garbage in a log/OliveTin.
+    local progress_opts=(--progress)
+    [[ -n "$OLIVETIN" ]] && progress_opts=(--stats 30s --stats-one-line -v)
+
     if [ -d "$dest" ]; then
         rclone sync ":sftp:$src" "$dest" \
-            --progress \
+            "${progress_opts[@]}" \
             --sftp-ssh "$sftp_ssh" \
             --sftp-idle-timeout 0 \
             --transfers 1 \
@@ -335,6 +352,68 @@ function funk_rclone_config() {
     done < <(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task)) | .rclone_options[]' "$config_file")
 
     print -P "%F{green}❯ $selected_task%f"
+    funk_rclone "$server_ip" "$folder_to_bckp" "$dest" "${extra_options[@]}" "$@"
+    local exit_code=$?
+    [[ $exit_code -eq 0 ]] && _funk_record_sync "$selected_task"
+    return $exit_code
+}
+
+# Non-interactive sibling of funk_rclone_config (no fzf): meant for OliveTin / scripts.
+#   funk_rclone_task TASK [rclone opts...]   run one task by exact name
+#   funk_rclone_task --list                   tasks usable here (destination mounted), plain text
+#   funk_rclone_task --list-jsonl             same as JSON Lines, one {name,source,destination,last_sync} per line
+#                                             (the format OliveTin entity files use)
+function funk_rclone_task() {
+    command -v jq &>/dev/null || { echo "Error: 'jq' is required." >&2; return 1; }
+    local arg="$1" config_file task_name dest
+    config_file="$(_funk_config_file)"
+    [[ -f "$config_file" ]] || { echo "Error: Configuration file '$config_file' not found." >&2; return 1; }
+
+    case "$arg" in
+        --list|--list-jsonl)
+            local items=()
+            while IFS= read -r task_name; do
+                dest=$(jq -r --arg t "$task_name" 'first(.tasks[] | select(.name == $t) | .destination)' "$config_file")
+                _funk_dest_is_available "$dest" || continue
+                if [[ "$arg" == --list ]]; then
+                    items+=("${task_name}  │  $(_funk_last_sync_info "$task_name")")
+                else
+                    items+=("$(jq -c -n --arg n "$task_name" --arg l "$(_funk_last_sync_info "$task_name")" \
+                        --argjson t "$(jq -c --arg t "$task_name" 'first(.tasks[] | select(.name == $t))' "$config_file")" \
+                        '{name: $n, source: $t.source, destination: $t.destination, last_sync: $l}')")
+                fi
+            done < <(jq -r '.tasks[].name' "$config_file")
+            (( ${#items[@]} )) && printf '%s\n' "${items[@]}"
+            return 0 ;;
+        ""|-*)
+            echo "Usage: funk_rclone_task TASK [rclone opts...] | --list | --list-jsonl" >&2
+            return 1 ;;
+    esac
+
+    shift
+    local selected_task="$arg"
+    if ! jq -e --arg t "$selected_task" 'any(.tasks[]; .name == $t)' "$config_file" >/dev/null; then
+        echo "Error: no task named '$selected_task' for this machine (see: funk_rclone_task --list)." >&2
+        return 1
+    fi
+    dest=$(jq -r --arg t "$selected_task" 'first(.tasks[] | select(.name == $t) | .destination)' "$config_file")
+    if ! _funk_dest_is_available "$dest"; then
+        echo "Error: destination '$dest' of '$selected_task' is not available (disk not mounted?)." >&2
+        return 1
+    fi
+
+    _ensure_ssh_key_loaded || return 1
+
+    local server_ip folder_to_bckp
+    server_ip=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .server)' "$config_file")
+    folder_to_bckp=$(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task) | .source)' "$config_file")
+
+    local extra_options=()
+    while IFS= read -r line; do
+        extra_options+=("$line")
+    done < <(jq -r --arg task "$selected_task" 'first(.tasks[] | select(.name == $task)) | .rclone_options[]?' "$config_file")
+
+    echo "❯ $selected_task"
     funk_rclone "$server_ip" "$folder_to_bckp" "$dest" "${extra_options[@]}" "$@"
     local exit_code=$?
     [[ $exit_code -eq 0 ]] && _funk_record_sync "$selected_task"

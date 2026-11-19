@@ -73,18 +73,20 @@ if [[ -d "${XDG_DATA_HOME:-$HOME/.local/share}/zerobrew" || -d /opt/zerobrew ]];
     fi
   fi
 
-  # Helper function to safely append to PATH
+  # Append (not prepend): system dirs must win so toolchain binaries (ld, gcc, as...) resolve to
+  # /usr/bin. A zerobrew `ld` ahead of it broke gcc's collect2 ("posix_spawnp: No such file")
+  # while building nvim-treesitter parsers. zerobrew-only tools are still found.
   _zb_path_append() {
       local argpath="$1"
       case ":${PATH}:" in
           *:"$argpath":*) ;;
-          *) export PATH="$argpath:$PATH" ;;
+          *) export PATH="$PATH:$argpath" ;;
       esac;
   }
 
-  _zb_path_append "$ZEROBREW_BIN"
-  _zb_path_append "$ZEROBREW_PREFIX/sbin"
   _zb_path_append "$ZEROBREW_PREFIX/bin"
+  _zb_path_append "$ZEROBREW_PREFIX/sbin"
+  _zb_path_append "$ZEROBREW_BIN"
 fi
 
 # Homebrew prefix detection

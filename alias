@@ -467,6 +467,7 @@ alias docker_bash='docker exec -it $(  docker ps  --format "{{.Names}}" | fzf | 
 alias docker_rm='docker rm $(  docker ps  --format "{{.Names}}" | fzf | awk '"'"'{print $1;}'"'"'  )'
 alias docker_rma='docker rm $(  docker ps -a  --format "{{.Names}}" | fzf | awk '"'"'{print $1;}'"'"'  )'
 alias docker_prune_images='docker image prune --all --force'
+alias docker-compose='docker compose'  # old tool deprecated, just replacing for muscle memory
 
 ##############################
 ## BFUNK server sync / mounts
