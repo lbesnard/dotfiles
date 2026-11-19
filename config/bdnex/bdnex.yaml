@@ -1,33 +1,103 @@
 config_version: 2
-directory: ~/tmp/comics/
+collection_path: /media/lbesnard/beefunk_12tb_c/ebooks_audiobooks/comics/french
 library: ~/.local/share/bdnex/bdnex.sqlite
 match:
-  strong_threshold: 90
-  medium_threshold: 70
+  strong_threshold: 90                  # title score (0-100): applied without asking
+  medium_threshold: 70                  # between medium and strong: ask; below: no match
+  # use_embedded: true                    # a file's own ComicInfo.xml (its album's web address, series and number) helps to match it
+  # volume_bonus: 5                       # points when the file's volume is the album's (the adjustments after the title score: 0-50)
+  # volume_penalty: 15                    # ... and when it is another volume
+  # year_bonus: 2                         # ... when the album's page has the year of the file
+  # author_bonus: 3                       # ... when it has an author of the file name
+  # min_margin: 10                        # a first choice with another album fewer points behind is asked about, not applied unasked (0: off)
 import:
-  mode: in_place
+  mode: in_place                        # in_place | copy | move
   resume: true
+  # auto: false                           # false: you check every file; true: matches >= strong_threshold are applied unasked
+  workers: 2                            # processes that match names and read each file ahead (check + checksum, once); 0 = CPU cores - 1, 1 = none
+  lookahead: 20                        # files matched ahead of the one you are reviewing
+  # outside: ask                          # files imported from outside `collection_path`: ask | move | copy | leave
+  # sources: []                           # folders to copy or move comics from (see the docs)
+  # thumbnails: auto                      # a picture of the file's first page beside the match question: auto | kitty | iterm2 | never
+  # series: ask                           # several files in a folder: ask | always (assume a series) | never (match each file alone)
 duplicates:
   keys:
   - series
   - volume
-  action: ask
+  action: ask                           # ask | skip | keep_both | replace
+  # prefer: [cbz, cbr, pdf]               # when two files are the same book, the format suggested first
+  # versions_dir: _versions               # spare versions of an album go here, inside `collection_path`
 write:
-  cbr: convert
-  pdf: convert
-  pdf_mode: auto
-  pdf_dpi: 200
-  delete_original: ask
-  conflict: ask
+  cbr: convert                          # convert | skip
+  pdf: tag                          # convert | tag | skip (tag: keep the PDF, write the tags into it; skip: leave it as it is)
+  pdf_mode: auto                        # auto | extract | render
+  pdf_dpi: 200                          # resolution when pages have to be rendered
+  delete_original: ask                  # after a CBR / PDF was converted: ask | yes | no
+  conflict: ask                         # ask | file | database
+  # format_preferred: cbz                 # cbz | none: convert other formats to CBZ (per cbr / pdf below), or never convert
+  # pdf_render_format: auto               # for pages that have to be drawn: auto | png | jpeg (auto: jpeg when the page has photographic pictures)
+  # pdf_jpeg_quality: 90                  # quality (1-100) of a drawn page saved as JPEG: higher = bigger and closer to the PDF
+  # use_trash: true                       # a deleted original goes to the trash folder (false: deleted for good)
+  # min_free_space: 200                   # MiB that must stay free on the disk (and for the database) after writing
+  # corrupted: ask                        # when a damaged archive can't be repaired: ask | leave | move (as is, no tags)
+  # size_tolerance: 20                    # % the new archive may differ in size from the original (0 = no check)
+  # size_change: ask                      # when it differs more than that: ask | accept | refuse
+  # workers: 0                            # files written at once by write / move (0: the cores less one, at most 4; 1: one by one)
 paths:
-  oneshot: OneShot/$language/$title - $authors/$title - $authors
-  series: Series/$series/$series - T$volume:02 - $title
-  missing_field: ask
+  oneshot: $language/OneShot/$title ($authors) [$year]/$title ($authors) [$year]
+  series: $language/Series/$series/$series - T$volume:02 - $title
+  missing_field: ask                    # ask | placeholder | skip
   placeholder: Unknown
+  # rules: []                             # other templates for some albums, first match wins (see the docs)
 bedetheque:
   delay:
   - 3
   - 10
-  pages_dir: ~/.local/share/bdnex/pages
-  fetcher: bdnex.importer.bedetheque:flaresolverr_fetch
-  fetcher_endpoint: http://flaresolverr.funkybeefunk.duckdns.org:8191/v1
+  pages_dir: ~/.local/share/bdnex/pages  # where saved album pages are looked up
+  fetcher: bdnex.importer.bedetheque:flaresolverr_fetch   # "package.module:function": url -> page bytes (write your own)
+  fetcher_endpoint:
+    - http://flaresolverr.funkybeefunk.duckdns.org/v1  # the address your fetcher uses (FlareSolverr: http://localhost:8191/v1), or a list of them; empty: saved pages
+    - http://flaresolverr.funkybrownfunk.duckdns.org/v1  # the address your fetcher uses (FlareSolverr: http://localhost:8191/v1), or a list of them; empty: saved pages
+    - http://flaresolverr.funkyevryfunk.duckdns.org/v1  # the address your fetcher uses (FlareSolverr: http://localhost:8191/v1), or a list of them; empty: saved pages
+  # sitemap_delay: [0.5, 1.5]             # seconds slept between sitemap files (about 55 plain XML files)
+  # parallel: null                        # album pages fetched at once; empty: one per endpoint
+
+# trash:
+  # dir: .bdnex-trash                     # replaced files wait here, inside `collection_path` (see `bdnex trash`)
+
+# watch:
+  # enabled: false                        # `bdnex serve` looks at the import sources by itself and imports what is new, asking nothing
+  # interval: 15                          # minutes between two looks
+
+# hooks:
+  # after_import: []                      # e.g. ["bdnex komga push -y"]: after an import that linked files
+  # after_write: []                       # after `bdnex write` wrote files
+  # after_move: []                        # after `bdnex move` moved or copied files
+
+cover:
+  download: true                        # keep each album's cover as a file in `dir` (linked from the library)
+  dir: ~/.local/share/bdnex/covers      # where the cover files are kept
+  check: auto                           # compare each file's cover with its album's: auto (when OpenCV is installed) | true | false
+  match_percentage: 40                  # similarity (0-100) from which a cover is trusted
+
+api:
+  host: 127.0.0.1                       # `bdnex serve` listens here; anything but this machine needs a token
+  port: 8765
+  token: null                           # when set, requests must send `Authorization: Bearer <token>`
+  username: bdnex                       # the login of the web page, with `password`
+  session_hours: 168                    # how long a browser stays logged in (the page has a login form and a log out)
+  behind_proxy: false                   # true behind your own reverse proxy: the client is the first `X-Forwarded-For` address
+  password: null                        # when set, the web page asks for `username` and this password (HTTP Basic: use HTTPS beyond your LAN)
+  allow_changes: false                  # true: the web page can run jobs and change the library (see the docs)
+
+komga:
+  url: https://komga.funkybeefunk.duckdns.org                             # your Komga server, e.g. http://localhost:25600 (`bdnex komga` sends the library's metadata there)
+  api_key: 9aa0b5e4edab4189b8740c661ae44018  # a Komga API key (Komga: account settings, API keys); used before username / password
+  # username: null                        # or the login of a Komga account that may edit metadata
+  # password: null
+  # lock: true                            # lock the fields bdnex sets, so a Komga rescan does not undo them
+  # timeout: 30                           # seconds to wait for each answer of Komga
+
+# source: bedetheque                      # metadata source: a built-in name, an installed plugin, or 'package.module:factory'
+
+# plugins: {}                             # free-form options of third-party sources, by source name
