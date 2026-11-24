@@ -62,7 +62,11 @@ case "$lower" in
         ;;
     *.png|*.jpg|*.jpeg|*.gif|*.webp|*.bmp|*.tiff)
         if have chafa; then
-            chafa -f symbols -s "${cols}x${FZF_PREVIEW_LINES:-30}" "$f"
+            # Symbols mode works everywhere (incl. tmux). The main quality win is --colors=full:
+            # under TERM=tmux-256color chafa otherwise falls back to a 256-colour palette.
+            # Set FZF_PREVIEW_CHAFA_FORMAT=kitty|sixels|iterm to use a graphics protocol instead.
+            chafa -f "${FZF_PREVIEW_CHAFA_FORMAT:-symbols}" --colors=full --animate=off \
+                  -s "${cols}x${FZF_PREVIEW_LINES:-30}" "$f"
             exit 0
         fi
         ;;
