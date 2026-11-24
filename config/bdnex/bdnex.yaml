@@ -3,18 +3,21 @@ collection_path: /media/lbesnard/beefunk_12tb_c/ebooks_audiobooks/comics/french
 library: ~/.local/share/bdnex/bdnex.sqlite
 match:
   strong_threshold: 90                  # title score (0-100): applied without asking
-  medium_threshold: 70                  # between medium and strong: ask; below: no match
+  medium_threshold: 80                  # between medium and strong: ask; below: no match
   # use_embedded: true                    # a file's own ComicInfo.xml (its album's web address, series and number) helps to match it
   # volume_bonus: 5                       # points when the file's volume is the album's (the adjustments after the title score: 0-50)
   # volume_penalty: 15                    # ... and when it is another volume
   # year_bonus: 2                         # ... when the album's page has the year of the file
   # author_bonus: 3                       # ... when it has an author of the file name
   # min_margin: 10                        # a first choice with another album fewer points behind is asked about, not applied unasked (0: off)
+  # auto_all: strong                      # what `import --auto=all` (never ask) applies: strong (only confident matches, the rest wait) | medium (also the ones in between)
+  # cover_vote: true                      # a file left undecided is decided by its cover: compared with the covers of its best candidates (needs OpenCV)
+  # cover_vote_min: 60                    # similarity (0-100) a candidate's cover needs to win that vote; it must also lead the others by 15
 import:
   mode: in_place                        # in_place | copy | move
   resume: true
   # auto: false                           # false: you check every file; true: matches >= strong_threshold are applied unasked
-  workers: 2                            # processes that match names and read each file ahead (check + checksum, once); 0 = CPU cores - 1, 1 = none
+  workers: 6                            # processes that match names and read each file ahead (check + checksum, once); 0 = CPU cores - 1, 1 = none
   lookahead: 20                        # files matched ahead of the one you are reviewing
   # outside: ask                          # files imported from outside `collection_path`: ask | move | copy | leave
   # sources: []                           # folders to copy or move comics from (see the docs)
@@ -29,7 +32,7 @@ duplicates:
   # versions_dir: _versions               # spare versions of an album go here, inside `collection_path`
 write:
   cbr: convert                          # convert | skip
-  pdf: tag                          # convert | tag | skip (tag: keep the PDF, write the tags into it; skip: leave it as it is)
+  pdf: convert                          # convert | tag | skip (tag: keep the PDF, write the tags into it; skip: leave it as it is)
   pdf_mode: auto                        # auto | extract | render
   pdf_dpi: 200                          # resolution when pages have to be rendered
   delete_original: ask                  # after a CBR / PDF was converted: ask | yes | no
@@ -45,20 +48,22 @@ write:
   # workers: 0                            # files written at once by write / move (0: the cores less one, at most 4; 1: one by one)
 paths:
   oneshot: $language/OneShot/$title ($authors) [$year]/$title ($authors) [$year]
-  series: $language/Series/$series/$series - T$volume:02 - $title
+  # series: $language/Series/$series/$series - T$volume:02 - $title
+  # series: 'Series/%ifdef{collection,$collection}/%ifdef{cycle,Cycle $cycle:02}/$series/$series - T$volume:02 - $title'
+  # series: 'Series/%ifdef{collection,$collection}/%ifdef{cycle,Cycle $cycle:02 - }$series/$series - T$volume:02 - $title'
+  series: 'Series/%ifdef{collection,$collection}/%ifdef{cycle,Cycle $cycle:02 - }$series/$series - %if{$special,$special,T$volume:02} - $title'
+  collections:
+        'series .*ast[ée]rix.*': Astérix et Obélix
+        'series .*tintin.*': Les Aventures de Tintin
   missing_field: ask                    # ask | placeholder | skip
   placeholder: Unknown
   # rules: []                             # other templates for some albums, first match wins (see the docs)
+  # series_year: keep                     # keep | strip: the site names some series with their year (`Batman: Dark Victory (1999)`); strip leaves it out of $series
+  # replace: {}                           # beets' `replace`: '[\u2010]': '-'  (REGEX: replacement, in every folder and file name; bdnex's own safety rules still apply)
+  # rewrite: {}                           # beets' `rewrite`: 'series .*Tintin.*': Tintin  ("FIELD REGEX": the new value of that field, in the paths)
+  # collections: {}                       # 'path .*/Astérix/.*': Astérix  ("FIELD REGEX": the collection of the albums that match; `$collection` in a template)
 bedetheque:
-  delay:
-  - 3
-  - 10
   pages_dir: ~/.local/share/bdnex/pages  # where saved album pages are looked up
-  fetcher: bdnex.importer.bedetheque:flaresolverr_fetch   # "package.module:function": url -> page bytes (write your own)
-  fetcher_endpoint:
-    - http://flaresolverr.funkybeefunk.duckdns.org/v1  # the address your fetcher uses (FlareSolverr: http://localhost:8191/v1), or a list of them; empty: saved pages
-    - http://flaresolverr.funkybrownfunk.duckdns.org/v1  # the address your fetcher uses (FlareSolverr: http://localhost:8191/v1), or a list of them; empty: saved pages
-    - http://flaresolverr.funkyevryfunk.duckdns.org/v1  # the address your fetcher uses (FlareSolverr: http://localhost:8191/v1), or a list of them; empty: saved pages
   # sitemap_delay: [0.5, 1.5]             # seconds slept between sitemap files (about 55 plain XML files)
   # parallel: null                        # album pages fetched at once; empty: one per endpoint
 
@@ -78,7 +83,7 @@ cover:
   download: true                        # keep each album's cover as a file in `dir` (linked from the library)
   dir: ~/.local/share/bdnex/covers      # where the cover files are kept
   check: auto                           # compare each file's cover with its album's: auto (when OpenCV is installed) | true | false
-  match_percentage: 40                  # similarity (0-100) from which a cover is trusted
+  match_percentage: 3                  # similarity (0-100) from which a cover is trusted
 
 api:
   host: 127.0.0.1                       # `bdnex serve` listens here; anything but this machine needs a token
@@ -89,6 +94,7 @@ api:
   behind_proxy: false                   # true behind your own reverse proxy: the client is the first `X-Forwarded-For` address
   password: null                        # when set, the web page asks for `username` and this password (HTTP Basic: use HTTPS beyond your LAN)
   allow_changes: false                  # true: the web page can run jobs and change the library (see the docs)
+  # allowed_hosts: []                     # names the server answers to (the `Host` header): empty = localhost names while it listens on 127.0.0.1, any name otherwise; a DNS-rebinding page is refused
 
 komga:
   url: https://komga.funkybeefunk.duckdns.org                             # your Komga server, e.g. http://localhost:25600 (`bdnex komga` sends the library's metadata there)
@@ -101,3 +107,20 @@ komga:
 # source: bedetheque                      # metadata source: a built-in name, an installed plugin, or 'package.module:factory'
 
 # plugins: {}                             # free-form options of third-party sources, by source name
+
+# aliases: []                             # your own short commands: ["settle-doubtful-matches = review --auto  # what it does", ...]
+
+aliases:
+  - "compare-covers-of-doubtful-matches = candidates --cover --limit 3 --low  # the 3 best albums for each doubtful file, with their covers compared"
+  - "rv = review --batch 50 --unmatched -vv --log-file /tmp/bdnex-review.log  # review with the unmatched files, logging to a file"
+
+fetch:
+  endpoint:
+    - http://flaresolverr.funkybeefunk.duckdns.org/v1  # the address your fetcher uses (FlareSolverr: http://localhost:8191/v1), or a list of them; empty: saved pages
+    - http://flaresolverr.funkybrownfunk.duckdns.org/v1  # the address your fetcher uses (FlareSolverr: http://localhost:8191/v1), or a list of them; empty: saved pages
+    - http://flaresolverr.funkyevryfunk.duckdns.org/v1  # the address your fetcher uses (FlareSolverr: http://localhost:8191/v1), or a list of them; empty: saved pages
+  delay:
+  - 3
+  - 10
+  # parallel: null                        # pages fetched at once; empty: one per endpoint
+  # fetcher: null                         # your own "package.module:function" (url -> page bytes); empty: FlareSolverr
