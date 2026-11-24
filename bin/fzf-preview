@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# fzf preview dispatcher: fzf-preview <path>
+# Picks a previewer by extension, falling back to bat / file info.
+# Each tool is optional: missing ones fall through to the next option.
+
+f="$1"
+cols="${FZF_PREVIEW_COLUMNS:-80}"
+have() { command -v "$1" >/dev/null 2>&1; }
+
+[[ -z "$f" ]] && exit 0
+
+if [[ -d "$f" ]]; then
+    if have eza; then
+        eza -T -L2 --color=always --icons=always "$f" | head -200
+    else
+        tree -C -L 2 "$f" | head -200
+    fi
+    exit 0
+fi
+
+if [[ ! -f "$f" ]]; then
+    echo "$f" | head -200
+    exit 0
+fi
+
+lower="${f,,}"
+case "$lower" in
+    *.md|*.markdown)
+        if have glow; then
+            CLICOLOR_FORCE=1 glow -s dark -w "$cols" "$f" </dev/null
+            exit 0
+        fi
+        ;;
+    *.nc|*.nc.*)
+        have ncdump && { ncdump -h "$f"; exit 0; }
+        ;;
+    *.zip|*.zip.*)
+        have zip && { zip -sf "$f"; exit 0; }
+        ;;
+    *.tar|*.tar.*|*.tgz|*.tbz2|*.txz)
+        tar tf "$f" 2>/dev/null | head -200 && exit 0
+        ;;
+    *.json)
+        if have jq; then
+            jq -C . "$f" 2>/dev/null | head -500 && exit 0
+        fi
+        ;;
+    *.csv|*.tsv)
+        if have csvlook; then
+            csvlook "$f" | head -100
+            exit 0
+        elif [[ "$lower" == *.tsv ]]; then
+            column -s $'\t' -t "$f" | head -100
+            exit 0
+        else
+            column -s, -t "$f" | head -100
+            exit 0
+        fi
+        ;;
+    *.pdf)
+        have pdftotext && { pdftotext -l 2 -layout "$f" - | head -200; exit 0; }
+        ;;
+    *.png|*.jpg|*.jpeg|*.gif|*.webp|*.bmp|*.tiff)
+        if have chafa; then
+            chafa -f symbols -s "${cols}x${FZF_PREVIEW_LINES:-30}" "$f"
+            exit 0
+        fi
+        ;;
+    *.parquet)
+        if have duckdb; then
+            duckdb -c "DESCRIBE SELECT * FROM '$f'; SELECT * FROM '$f' LIMIT 20;"
+            exit 0
+        fi
+        ;;
+esac
+
+# Binary guard: don't dump garbage into the preview
+mime=$(file --brief --mime "$f" 2>/dev/null)
+if [[ "$mime" == *charset=binary* ]]; then
+    file --brief "$f"
+    exit 0
+fi
+
+if have bat; then
+    bat --style=numbers --color=always "$f" 2>/dev/null | head -500
+else
+    head -200 "$f"
+fi

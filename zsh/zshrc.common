@@ -253,8 +253,9 @@ zinit wait"0b" lucid light-mode for \
   "rummik/zsh-tailf" \
   OMZP::"cp" # cp with rsync -> call cpv
 
-# brew only on systems where it is available
-(( $+commands[brew] )) && zinit wait"0b" lucid light-mode for OMZP::"brew"
+# brew plugin only with real Homebrew: zerobrew also provides a `brew` command, but it doesn't
+# implement `brew --prefix`, which the plugin calls at load ("error: `brew --prefix` is not implemented")
+[[ -n $HOMEBREW_PREFIX && -x $HOMEBREW_PREFIX/bin/brew ]] && zinit wait"0b" lucid light-mode for OMZP::"brew"
 
 # Git / Forgit / AWS / Conda / Translate
 # Disable default forgit aliases (conflict with grc); custom aliases in ~/.alias_forgit
@@ -294,16 +295,7 @@ export FZF_DEFAULT_OPTS="
 --info=inline
 --height=80%
 --multi
---preview '
-    ( (echo {} | grep -q -E \"\.nc$\") && ncdump -h {}) || \
-    ( (echo {} | grep -q -E \"\.nc\..*\") && ncdump -h {}) || \
-    ( (echo {} | grep -q -E \"\.zip$\") && zip -sf {}) || \
-    ( (echo {} | grep -q -E \"\.zip\.$FZF_NETCDF_UUID_REGEX\") && zip -sf {}) || \
-    ( (echo {} | grep -q -E \"\.(log|xml|txt)$\") && bat {}) || \
-    ( (echo {} | grep -q -E \"\.(log|xml|txt)\..*\") && bat {}) || \
-    ( [[ -f {} ]] && (bat --style=numbers --color=always {} || cat {})) || \
-    ( [[ -d {} ]] && (tree -C {} | less)) || \
-    echo {} 2> /dev/null | head -200'
+--preview 'fzf-preview {}'
 --color='hl:148,hl+:154,pointer:032,marker:010,bg+:237,gutter:008'
 --prompt='∼ ' --pointer='▶' --marker='✓'
 --bind '?:toggle-preview'
