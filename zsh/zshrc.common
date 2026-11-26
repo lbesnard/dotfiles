@@ -122,7 +122,9 @@ PATH="$PYENV_ROOT/bin:$PATH"
 # the real init then happens once, inside tmux ($TMUX set => plugin is a no-op).
 # Only for local terminals (not SSH). Without -t 0, a plain `ssh host` (no PTY) would
 # also satisfy -z SSH_TTY and crash.
-if [[ -z "${SSH_TTY}" && -t 0 ]]; then
+# NO_TMUX skips this - see notmux() below, for a plain shell to ssh into a remote
+# tmux from without nesting it inside this one.
+if [[ -z "${SSH_TTY}" && -t 0 && -z "${NO_TMUX}" ]]; then
     if (( $+commands[tmux] )) && [[ -z $TMUX ]]; then
         # Guard against a stale/corrupted tmux server socket. If the server is
         # unresponsive, ZSH_TMUX_AUTOQUIT=true would close the terminal instantly
@@ -148,6 +150,21 @@ if [[ -z "${SSH_TTY}" && -t 0 ]]; then
     ZSH_TMUX_FIXTERM=false
     ZSH_TMUX_AUTOQUIT=true
     (( $+commands[tmux] )) && zinit lucid for OMZP::"tmux"
+fi
+
+# Open a new Ghostty window that skips tmux autostart (a plain zsh), callable
+# from inside an existing tmux pane - e.g. to ssh into a remote tmux session
+# without nesting it inside this one (kitty/sixel image passthrough breaks
+# across nested tmux layers; see tmux/tmux.conf.ssh_laptop).
+# NO_TMUX is passed via --command (a config override Ghostty forwards with
+# the new-window request) rather than just exported here, so it applies even
+# if Ghostty hands this off to an already-running instance over IPC instead
+# of forking a fresh process that would inherit our environment directly.
+if (( $+commands[ghostty] )); then
+    notmux() {
+        command ghostty --command="env NO_TMUX=1 zsh -il" >/dev/null 2>&1 &
+        disown
+    }
 fi
 
 # -----------------------------
