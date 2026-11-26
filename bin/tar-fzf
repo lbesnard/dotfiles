@@ -1,0 +1,85 @@
+#!/usr/bin/env zsh
+# Pick files/dirs with fzf (multi-select) and bundle them into a .tar.gz.
+# Directories are archived recursively (tar's default behaviour).
+#
+# Usage: tar-fzf [start-dir]
+#   start-dir   directory to search from (default: current directory)
+
+emulate -L zsh
+setopt pipefail
+
+local start_dir="${1:-.}"
+
+if ! command -v fzf >/dev/null; then
+  print -u2 "fzf not found in PATH"
+  exit 1
+fi
+
+if [[ ! -d "$start_dir" ]]; then
+  print -u2 "Not a directory: $start_dir"
+  exit 1
+fi
+
+# List files and dirs (fd falls back to find if unavailable).
+local -a entries
+if command -v fd >/dev/null; then
+  entries=("${(@f)$(fd . "$start_dir" --hidden --exclude .git)}")
+else
+  entries=("${(@f)$(find "$start_dir" -mindepth 1 \( -name .git -prune \) -o -print)}")
+fi
+
+if (( ${#entries} == 0 )); then
+  print -u2 "No files found under $start_dir"
+  exit 1
+fi
+
+local -a preview_cmd
+if command -v eza >/dev/null; then
+  preview_cmd=(eza --tree --color=always --icons -L2 {})
+elif command -v tree >/dev/null; then
+  preview_cmd=(tree -C -L 2 {})
+else
+  preview_cmd=(ls -la {})
+fi
+
+local -a selected
+selected=("${(@f)$(printf '%s\n' "${entries[@]}" |
+  fzf --multi \
+      --height=80% --border --reverse \
+      --prompt='Archive > ' \
+      --header='TAB/select multiple entries, ENTER to confirm (dirs archived recursively)' \
+      --preview="if [[ -d {} ]]; then ${(j: :)preview_cmd}; else bat --color=always --style=numbers {} 2>/dev/null || cat {}; fi" \
+      --preview-window=right:60%)}")
+
+if (( ${#selected} == 0 )); then
+  print "No files selected, aborting."
+  exit 0
+fi
+
+print "Selected ${#selected} item(s):"
+printf '  %s\n' "${selected[@]}"
+
+local default_name="archive_$(date +%Y%m%d_%H%M%S).tar.gz"
+local out_name
+print -n "Archive filename [$default_name]: "
+read out_name
+out_name="${out_name:-$default_name}"
+
+# Ensure it ends in .tar.gz / .tgz, default to .tar.gz otherwise.
+if [[ "$out_name" != *.tar.gz && "$out_name" != *.tgz ]]; then
+  out_name="${out_name}.tar.gz"
+fi
+
+if [[ -e "$out_name" ]]; then
+  print -n "File '$out_name' already exists, overwrite? [y/N] "
+  local confirm
+  read confirm
+  if [[ "$confirm" != [yY] ]]; then
+    print "Aborted."
+    exit 0
+  fi
+fi
+
+tar -czvf "$out_name" -- "${selected[@]}"
+
+print "Created $out_name ($(du -h "$out_name" | cut -f1))"
