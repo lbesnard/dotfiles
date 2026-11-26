@@ -313,7 +313,7 @@ bind-key C-j choose-tree
 # clobbering out-of-band graphics (e.g. chafa -f kitty) drawn in the pane.
 set -g pane-border-status top
 set -g pane-border-format " [ ###P #T ] "
-run-shell -b "pgrep -x tmux-pane-title-updater.sh >/dev/null 2>&1 || tmux-pane-title-updater.sh >/dev/null 2>&1"
+run-shell -b "pgrep -x tmux-pane-title-updater.sh >/dev/null 2>&1 || \"$HOME/bin/tmux-pane-title-updater.sh\" >/dev/null 2>&1"
 
 bind-key T command-prompt -p "Title for pane: " "select-pane -T '%%'"
 bind-key B run-shell 'tmux set -g pane-border-status $(tmux show -gv pane-border-status 2>/dev/null | grep -qx top && echo off || echo top)'
