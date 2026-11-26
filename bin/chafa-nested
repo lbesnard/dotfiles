@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# chafa, double-wrapped for nested tmux (local tmux -> ssh -> remote tmux).
+#
+# tmux's allow-passthrough only strips ONE layer of its "ESC Ptmux;...ESC\"
+# DCS wrapper. With two tmux layers between chafa and the real terminal,
+# the outer (local) tmux never sees a wrapper to strip and mangles the raw
+# graphics bytes it gets handed as ordinary pane output. Wrapping chafa's
+# normal single-wrapped output in one extra DCS layer here means each tmux
+# layer strips exactly one, and the real terminal gets the same bytes it
+# would from a single (non-nested) tmux hop.
+#
+# Use this only when nested; for a single tmux hop use chafa directly -
+# double-wrapping there leaves a layer nothing strips, which breaks it.
+printf '\033Ptmux;'
+chafa "$@" --passthrough=tmux | perl -0777 -pe 's/\x1b/\x1b\x1b/g'
+printf '\033\\'
