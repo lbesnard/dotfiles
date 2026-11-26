@@ -156,13 +156,15 @@ fi
 # from inside an existing tmux pane - e.g. to ssh into a remote tmux session
 # without nesting it inside this one (kitty/sixel image passthrough breaks
 # across nested tmux layers; see tmux/tmux.conf.ssh_laptop).
-# NO_TMUX is passed via --command (a config override Ghostty forwards with
-# the new-window request) rather than just exported here, so it applies even
-# if Ghostty hands this off to an already-running instance over IPC instead
-# of forking a fresh process that would inherit our environment directly.
+# gtk-single-instance=false is required: by default ghostty proxies a new
+# window to the already-running instance over IPC, which ignores --command
+# (confirmed - it silently fell back to the configured `command = zsh` and
+# reattached to the existing tmux). Forcing a standalone instance means this
+# invocation's own CLI args (and env) actually apply.
 if (( $+commands[ghostty] )); then
     notmux() {
-        command ghostty --command="env NO_TMUX=1 zsh -il" >/dev/null 2>&1 &
+        command ghostty --gtk-single-instance=false \
+            --command="env NO_TMUX=1 zsh -il" >/dev/null 2>&1 &
         disown
     }
 fi
