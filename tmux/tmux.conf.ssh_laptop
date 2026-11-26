@@ -305,7 +305,8 @@ bind-key C-j choose-tree
 
 # yazi image preview
 set -g default-terminal "tmux-256color"
-set -g allow-passthrough on
+set -g allow-passthrough all
+set -g input-buffer-size 104857600
 set -ga update-environment TERM
 set -ga update-environment TERM_PROGRAM
 
